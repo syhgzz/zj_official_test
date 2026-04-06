@@ -14,7 +14,7 @@ import json
 import re
 import zipfile
 from pathlib import Path
-from typing import Iterable, List, Tuple
+from typing import Dict, List, Optional
 import xml.etree.ElementTree as ET
 
 NS = {"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"}
@@ -58,19 +58,42 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def iter_paragraph_texts(docx_path: Path) -> Iterable[str]:
-    """Yield paragraph texts from word/document.xml in document order."""
+def local_name(tag: str) -> str:
+    if "}" in tag:
+        return tag.split("}", 1)[1]
+    return tag
+
+
+def read_document_body(docx_path: Path) -> ET.Element:
     with zipfile.ZipFile(docx_path, "r") as zf:
         xml_bytes = zf.read("word/document.xml")
 
     root = ET.fromstring(xml_bytes)
-    for para in root.findall(".//w:body//w:p", NS):
-        runs = para.findall(".//w:t", NS)
-        if not runs:
-            continue
-        text = "".join((node.text or "") for node in runs).strip()
-        if text:
-            yield text
+    body = root.find(".//w:body", NS)
+    if body is None:
+        raise ValueError("Invalid DOCX: missing word body")
+    return body
+
+
+def get_paragraph_text(para: ET.Element) -> str:
+    runs = para.findall(".//w:t", NS)
+    if not runs:
+        return ""
+    text = "".join((node.text or "") for node in runs).strip()
+    return clean_heading_text(text)
+
+
+def get_table_rows(table: ET.Element) -> List[List[str]]:
+    rows: List[List[str]] = []
+    for tr in table.findall("./w:tr", NS):
+        row: List[str] = []
+        for tc in tr.findall("./w:tc", NS):
+            text_nodes = tc.findall(".//w:t", NS)
+            text = clean_heading_text("".join((node.text or "") for node in text_nodes))
+            row.append(text)
+        if any(cell for cell in row):
+            rows.append(row)
+    return rows
 
 
 def normalize_path(path: str) -> str:
@@ -90,44 +113,166 @@ def should_check_for_path(line: str) -> bool:
     return False
 
 
+def parse_description(line: str) -> Optional[str]:
+    match = re.search(r"接口描述\s*[:：]\s*(.+)", line)
+    if not match:
+        return None
+    text = clean_heading_text(match.group(1))
+    return text or None
+
+
+def detect_name_column(header: List[str]) -> int:
+    candidates = ("参数名", "参数", "参数名称", "字段名", "字段", "名称")
+    for idx, cell in enumerate(header):
+        if any(key in cell for key in candidates):
+            return idx
+    return 0
+
+
+def normalize_parameter_name(value: str) -> str:
+    text = clean_heading_text(value).lstrip("•-* ")
+    if not text:
+        return ""
+
+    for sep in ("（", "(", " ", "，", ",", "：", ":"):
+        if sep in text:
+            text = text.split(sep, 1)[0]
+    return text.strip()
+
+
+def extract_parameter_names(rows: List[List[str]]) -> List[str]:
+    if not rows:
+        return []
+
+    start_idx = 0
+    name_col = 0
+
+    first_row = rows[0]
+    if any("参数" in cell or "字段" in cell or "名称" in cell for cell in first_row):
+        name_col = detect_name_column(first_row)
+        start_idx = 1
+
+    params: List[str] = []
+    seen = set()
+    for row in rows[start_idx:]:
+        if name_col >= len(row):
+            continue
+        raw = row[name_col]
+        name = normalize_parameter_name(raw)
+        if not name:
+            continue
+        if name in {"参数", "参数名", "参数名称", "字段", "字段名", "名称"}:
+            continue
+        if name in seen:
+            continue
+        seen.add(name)
+        params.append(name)
+    return params
+
+
 def extract_interfaces(docx_path: Path) -> List[dict]:
     current_number = ""
     current_title = ""
+    current_module = ""
+    current_interface_path: Optional[str] = None
+    pending_request_params_path: Optional[str] = None
 
     seen_paths = set()
+    path_to_record: Dict[str, dict] = {}
     interfaces: List[dict] = []
 
-    for line in iter_paragraph_texts(docx_path):
-        num_match = NUM_HEADING_RE.match(line)
-        if num_match:
-            current_number = num_match.group(1)
-            current_title = clean_heading_text(num_match.group(2))
-            continue
+    body = read_document_body(docx_path)
 
-        cn_match = CN_HEADING_RE.match(line)
-        if cn_match:
-            current_number = cn_match.group(1)
-            current_title = clean_heading_text(cn_match.group(2))
-            continue
+    for child in list(body):
+        tag = local_name(child.tag)
 
-        if not should_check_for_path(line):
-            continue
-
-        for raw in PATH_RE.findall(line):
-            path = normalize_path(raw)
-            if not path or path == "/api/v1":
-                continue
-            if path in seen_paths:
+        if tag == "p":
+            line = get_paragraph_text(child)
+            if not line:
                 continue
 
-            seen_paths.add(path)
-            interfaces.append(
-                {
+            num_match = NUM_HEADING_RE.match(line)
+            if num_match:
+                current_number = num_match.group(1)
+                current_title = clean_heading_text(num_match.group(2))
+                level = current_number.count(".") + 1
+                if level == 2 and ("模块" in current_title or "接口" in current_title):
+                    current_module = current_title
+                pending_request_params_path = None
+                continue
+
+            cn_match = CN_HEADING_RE.match(line)
+            if cn_match:
+                current_number = cn_match.group(1)
+                current_title = clean_heading_text(cn_match.group(2))
+                if "接口" in current_title or "模块" in current_title:
+                    current_module = current_title
+                pending_request_params_path = None
+                continue
+
+            if "请求参数" in line:
+                pending_request_params_path = current_interface_path
+                continue
+
+            if "路径参数" in line:
+                pending_request_params_path = None
+                continue
+
+            if "响应示例" in line or "响应数据结构定义" in line:
+                pending_request_params_path = None
+
+            description = parse_description(line)
+            if description and current_interface_path:
+                record = path_to_record.get(current_interface_path)
+                if record and not record.get("description"):
+                    record["description"] = description
+                continue
+
+            if not should_check_for_path(line):
+                continue
+
+            for raw in PATH_RE.findall(line):
+                path = normalize_path(raw)
+                if not path or path == "/api/v1":
+                    continue
+
+                current_interface_path = path
+                pending_request_params_path = None
+
+                if path in seen_paths:
+                    continue
+
+                seen_paths.add(path)
+                record = {
                     "path": path,
                     "number": current_number,
                     "title": current_title,
+                    "description": "",
+                    "parameter": [],
+                    "module": current_module,
                 }
-            )
+                interfaces.append(record)
+                path_to_record[path] = record
+
+        elif tag == "tbl":
+            if not pending_request_params_path:
+                continue
+
+            record = path_to_record.get(pending_request_params_path)
+            pending_request_params_path = None
+            if not record:
+                continue
+
+            rows = get_table_rows(child)
+            params = extract_parameter_names(rows)
+            if not params:
+                continue
+
+            existing = set(record["parameter"])
+            for param in params:
+                if param not in existing:
+                    record["parameter"].append(param)
+                    existing.add(param)
 
     return interfaces
 

@@ -2,241 +2,565 @@
   {
     "path": "/api/v1/overview/realtime",
     "number": "2.1.1",
-    "title": "获取系统实时概览"
+    "title": "获取系统实时概览",
+    "description": "获取系统整体运行状态的实时快照，包含各模块的核心指标",
+    "parameter": [],
+    "module": "系统概览接口"
   },
   {
     "path": "/api/v1/overview/summary",
     "number": "2.2.1",
-    "title": "获取系统综合统计"
+    "title": "获取系统综合统计",
+    "description": "获取系统综合统计数据，支持按日/周/月聚合",
+    "parameter": [
+      "interval",
+      "startTime",
+      "endTime"
+    ],
+    "module": "系统概览接口"
   },
   {
     "path": "/api/v1/upns/overview",
     "number": "3.1.1",
-    "title": "模块概览"
+    "title": "模块概览",
+    "description": "获取短临降水模块的实时概览数据",
+    "parameter": [],
+    "module": "短临降水预警模块（UPNS）"
   },
   {
     "path": "/api/v1/upns/stations",
     "number": "3.1.2",
-    "title": "站点列表及状态"
+    "title": "站点列表及状态",
+    "description": "获取降水监测站点列表及当前状态，支持分页和筛选",
+    "parameter": [
+      "pageNum",
+      "pageSize",
+      "status",
+      "regionCode"
+    ],
+    "module": "短临降水预警模块（UPNS）"
   },
   {
     "path": "/api/v1/upns/stations/{code}/realtime",
     "number": "3.1.3",
-    "title": "单站实时数据"
+    "title": "单站实时数据",
+    "description": "获取指定站点的实时监测数据（清洗补全后）",
+    "parameter": [],
+    "module": "短临降水预警模块（UPNS）"
   },
   {
     "path": "/api/v1/upns/stations/{code}/history",
     "number": "3.1.4",
-    "title": "单站历史趋势"
+    "title": "单站历史趋势",
+    "description": "获取指定站点历史趋势数据，支持时间聚合，适配图表库",
+    "parameter": [
+      "startTime",
+      "endTime",
+      "interval",
+      "metrics"
+    ],
+    "module": "短临降水预警模块（UPNS）"
   },
   {
     "path": "/api/v1/upns/statistics/regional",
     "number": "3.1.5",
-    "title": "区域统计"
+    "title": "区域统计",
+    "description": "获取按行政区划聚合的降水统计数据",
+    "parameter": [
+      "startTime",
+      "endTime",
+      "interval",
+      "dimension",
+      "regionCode"
+    ],
+    "module": "短临降水预警模块（UPNS）"
   },
   {
     "path": "/api/v1/upns/warnings/summary",
     "number": "3.1.6",
-    "title": "预警汇总"
+    "title": "预警汇总",
+    "description": "获取降水预警汇总统计",
+    "parameter": [
+      "startTime",
+      "endTime",
+      "level"
+    ],
+    "module": "短临降水预警模块（UPNS）"
   },
   {
     "path": "/api/v1/upns/statistics/rain/now",
     "number": "3.1.7",
-    "title": "降雨量实时统计"
+    "title": "降雨量实时统计",
+    "description": "获取前一小时降雨量前十的站点统计",
+    "parameter": [],
+    "module": "短临降水预警模块（UPNS）"
   },
   {
     "path": "/api/v1/upns/statistics/pwv/now",
     "number": "3.1.8",
-    "title": "大气可降水量实时统计"
+    "title": "大气可降水量实时统计",
+    "description": "获取当前大气可降水量前十的站点统计",
+    "parameter": [],
+    "module": "短临降水预警模块（UPNS）"
   },
   {
     "path": "/api/v1/udmds/overview",
     "number": "3.2.1",
-    "title": "模块概览"
+    "title": "模块概览",
+    "description": "获取形变监测模块的实时概览数据",
+    "parameter": [],
+    "module": "形变安全监测模块（UDMDS）"
   },
   {
     "path": "/api/v1/udmds/projects",
     "number": "3.2.2",
-    "title": "工程列表"
+    "title": "工程列表",
+    "description": "获取形变监测工程列表及状态，支持分页",
+    "parameter": [
+      "pageNum",
+      "pageSize",
+      "status",
+      "regionCode",
+      "minLon",
+      "maxLon",
+      "minLat",
+      "maxLat"
+    ],
+    "module": "形变安全监测模块（UDMDS）"
   },
   {
     "path": "/api/v1/udmds/points",
     "number": "3.2.3",
-    "title": "监测点列表"
+    "title": "监测点列表",
+    "description": "获取监测点列表及状态，支持多工程查询",
+    "parameter": [
+      "projectCode",
+      "deviceType",
+      "hasAlert",
+      "minLon",
+      "maxLon",
+      "minLat",
+      "maxLat"
+    ],
+    "module": "形变安全监测模块（UDMDS）"
   },
   {
     "path": "/api/v1/udmds/points/{code}/realtime",
     "number": "3.2.4",
-    "title": "单点实时数据"
+    "title": "单点实时数据",
+    "description": "获取指定监测点的实时数据（清洗补全后）",
+    "parameter": [
+      "deviceTypes"
+    ],
+    "module": "形变安全监测模块（UDMDS）"
   },
   {
     "path": "/api/v1/udmds/points/{code}/history",
     "number": "3.2.5",
-    "title": "单点历史趋势"
+    "title": "单点历史趋势",
+    "description": "获取指定监测点历史趋势数据，支持时间聚合",
+    "parameter": [
+      "startTime",
+      "endTime",
+      "interval",
+      "deviceType"
+    ],
+    "module": "形变安全监测模块（UDMDS）"
   },
   {
     "path": "/api/v1/udmds/statistics/project",
     "number": "3.2.6",
-    "title": "工程统计"
+    "title": "工程统计",
+    "description": "获取工程级别的聚合统计数据",
+    "parameter": [
+      "startTime",
+      "endTime",
+      "interval",
+      "projectCode"
+    ],
+    "module": "形变安全监测模块（UDMDS）"
   },
   {
     "path": "/api/v1/udmds/alerts/summary",
     "number": "3.2.7",
-    "title": "告警汇总"
+    "title": "告警汇总",
+    "description": "获取形变告警汇总统计",
+    "parameter": [
+      "startTime",
+      "endTime",
+      "level",
+      "projectCode"
+    ],
+    "module": "形变安全监测模块（UDMDS）"
   },
   {
     "path": "/api/v1/ugss/overview",
     "number": "3.3.1",
-    "title": "模块概览"
+    "title": "模块概览",
+    "description": "获取GNSS干扰监测模块的实时概览数据",
+    "parameter": [],
+    "module": "GNSS干扰监测模块（UGSS）"
   },
   {
     "path": "/api/v1/ugss/stations",
     "number": "3.3.2",
-    "title": "基站列表"
+    "title": "基站列表",
+    "description": "获取GNSS基准站列表及当前状态",
+    "parameter": [
+      "pageNum",
+      "pageSize",
+      "status",
+      "regionCode"
+    ],
+    "module": "GNSS干扰监测模块（UGSS）"
   },
   {
     "path": "/api/v1/ugss/stations/{code}/realtime",
     "number": "3.3.3",
-    "title": "单站实时数据"
+    "title": "单站实时数据",
+    "description": "获取指定基站的实时信号质量数据",
+    "parameter": [],
+    "module": "GNSS干扰监测模块（UGSS）"
   },
   {
     "path": "/api/v1/ugss/events",
     "number": "3.3.4",
-    "title": "干扰事件列表"
+    "title": "干扰事件列表",
+    "description": "获取GNSS干扰事件列表，支持时间范围和级别筛选",
+    "parameter": [
+      "pageNum",
+      "pageSize",
+      "startTime",
+      "endTime",
+      "level",
+      "status"
+    ],
+    "module": "GNSS干扰监测模块（UGSS）"
   },
   {
     "path": "/api/v1/ugss/statistics/frequency",
     "number": "3.3.5",
-    "title": "频率统计"
+    "title": "频率统计",
+    "description": "获取按频率维度的干扰统计",
+    "parameter": [
+      "startTime",
+      "endTime",
+      "interval"
+    ],
+    "module": "GNSS干扰监测模块（UGSS）"
   },
   {
     "path": "/api/v1/ugss/warnings/summary",
     "number": "3.3.6",
-    "title": "预警汇总"
+    "title": "预警汇总",
+    "description": "获取GNSS干扰预警汇总统计",
+    "parameter": [
+      "startTime",
+      "endTime",
+      "level",
+      "frequency"
+    ],
+    "module": "GNSS干扰监测模块（UGSS）"
   },
   {
     "path": "/api/v1/upss/overview",
     "number": "3.4.1",
-    "title": "模块概览"
+    "title": "模块概览",
+    "description": "获取沉降态势感知模块的概览数据",
+    "parameter": [],
+    "module": "沉降态势感知模块（UPSS）"
   },
   {
     "path": "/api/v1/upss/periods",
     "number": "3.4.2",
-    "title": "沉降期列表"
+    "title": "沉降期列表",
+    "description": "获取沉降期次列表",
+    "parameter": [
+      "pageNum",
+      "pageSize"
+    ],
+    "module": "沉降态势感知模块（UPSS）"
   },
   {
     "path": "/api/v1/upss/periods/{issue}/summary",
     "number": "3.4.3",
-    "title": "期次汇总"
+    "title": "期次汇总",
+    "description": "获取指定期次的沉降汇总统计",
+    "parameter": [],
+    "module": "沉降态势感知模块（UPSS）"
   },
   {
     "path": "/api/v1/upss/points/{code}/history",
     "number": "3.4.4",
-    "title": "单点沉降历史"
+    "title": "单点沉降历史",
+    "description": "获取指定点的沉降历史趋势",
+    "parameter": [
+      "startIssue",
+      "endIssue"
+    ],
+    "module": "沉降态势感知模块（UPSS）"
   },
   {
     "path": "/api/v1/upss/statistics/regional",
     "number": "3.4.5",
-    "title": "沉降地图（热力图）"
+    "title": "沉降地图（热力图）",
+    "description": "获取按行政区划聚合的沉降统计数据",
+    "parameter": [
+      "issue",
+      "dimension",
+      "regionCode",
+      "minLng",
+      "minLat",
+      "maxLng",
+      "maxLat",
+      "pageNum",
+      "pageSize"
+    ],
+    "module": "沉降态势感知模块（UPSS）"
   },
   {
     "path": "/api/v1/upss/statistics/gridRate",
     "number": "3.4.6",
-    "title": "沉降速率"
+    "title": "沉降速率",
+    "description": "获取指定区域内按规则网格计算的沉降速率或沉降速率梯度统计数据",
+    "parameter": [
+      "issue",
+      "minLng",
+      "minLat",
+      "maxLng",
+      "maxLat"
+    ],
+    "module": "沉降态势感知模块（UPSS）"
   },
   {
     "path": "/api/v1/upss/statistics/gridGradient",
     "number": "3.4.7",
-    "title": "沉降速率梯度"
+    "title": "沉降速率梯度",
+    "description": "获取指定区域内按规则网格计算的沉降速率或沉降速率梯度统计数据",
+    "parameter": [
+      "issue",
+      "minLng",
+      "minLat",
+      "maxLng",
+      "maxLat"
+    ],
+    "module": "沉降态势感知模块（UPSS）"
   },
   {
     "path": "/api/v1/upss/visualization/warning/issue",
     "number": "3.4.8",
-    "title": "预警信息"
+    "title": "预警信息",
+    "description": "获取指定期的沉降预警信息，包括时间、区域、位置和级别",
+    "parameter": [
+      "issue",
+      "startTime",
+      "endTime"
+    ],
+    "module": "沉降态势感知模块（UPSS）"
   },
   {
     "path": "/api/v1/upss/visualization/statistics/issue",
     "number": "3.4.9",
-    "title": "沉降态势统计"
+    "title": "沉降态势统计",
+    "description": "获取指定期次的沉降态势统计，包括不同区间结果的所占比例统计",
+    "parameter": [
+      "issue"
+    ],
+    "module": "沉降态势感知模块（UPSS）"
   },
   {
     "path": "/api/v1/upss/visualization/max-subsidence/timeseries",
     "number": "3.4.10",
-    "title": "最大沉降点时序统计"
+    "title": "最大沉降点时序统计",
+    "description": "获取最大沉降点在该时间跨度内每一年的沉降量时序结果",
+    "parameter": [
+      "startIssue",
+      "endIssue"
+    ],
+    "module": "沉降态势感知模块（UPSS）"
   },
   {
     "path": "/api/v1/upss/visualization/top-gradient",
     "number": "3.4.11",
-    "title": "前五沉降梯度值位置统计"
+    "title": "前五沉降梯度值位置统计",
+    "description": "获取指定时间范围内沉降梯度值前五的监测点位置统计（支持单期次或多期次查询）",
+    "parameter": [
+      "startIssue",
+      "endIssue"
+    ],
+    "module": "沉降态势感知模块（UPSS）"
   },
   {
     "path": "/api/v1/unga/overview",
     "number": "3.5.1",
-    "title": "模块概览"
+    "title": "模块概览",
+    "description": "获取走航甲烷检测模块的概览数据",
+    "parameter": [
+      "minLng",
+      "maxLng",
+      "minLat",
+      "maxLat"
+    ],
+    "module": "走航甲烷检测模块（UNGA）"
   },
   {
     "path": "/api/v1/unga/tasks",
     "number": "3.5.2",
-    "title": "检测任务列表"
+    "title": "检测任务列表",
+    "description": "获取走航检测任务列表及状态，支持分页",
+    "parameter": [
+      "pageNum",
+      "pageSize",
+      "taskId",
+      "status",
+      "regionCode",
+      "minLng",
+      "maxLng",
+      "minLat",
+      "maxLat"
+    ],
+    "module": "走航甲烷检测模块（UNGA）"
   },
   {
     "path": "/api/v1/unga/tasks/{id}/trajectory",
     "number": "3.5.3",
-    "title": "走航轨迹查询"
+    "title": "走航轨迹查询",
+    "description": "获取指定任务的走航轨迹数据及甲烷浓度分布",
+    "parameter": [
+      "minLng",
+      "maxLng",
+      "minLat",
+      "maxLat"
+    ],
+    "module": "走航甲烷检测模块（UNGA）"
   },
   {
     "path": "/api/v1/unga/leaks",
     "number": "3.5.4",
-    "title": "泄露点管理"
+    "title": "泄露点管理",
+    "description": "获取疑似泄露和已处置的泄露点列表",
+    "parameter": [
+      "packId",
+      "status",
+      "pageNum",
+      "pageSize",
+      "taskId",
+      "minLng",
+      "maxLng",
+      "minLat",
+      "maxLat"
+    ],
+    "module": "走航甲烷检测模块（UNGA）"
   },
   {
     "path": "/api/v1/unga/statistics",
     "number": "3.5.5",
-    "title": "统计分析"
+    "title": "统计分析",
+    "description": "获取走航检测的综合统计数据",
+    "parameter": [
+      "packId",
+      "minLng",
+      "maxLng",
+      "minLat",
+      "maxLat"
+    ],
+    "module": "走航甲烷检测模块（UNGA）"
   },
   {
     "path": "/api/v1/gnss-device/overview",
     "number": "3.6.1",
-    "title": "模块概览"
+    "title": "模块概览",
+    "description": "获取北斗设备状态统计概览",
+    "parameter": [],
+    "module": "北斗设备状态模块（GNSSDevice）"
   },
   {
     "path": "/api/v1/gnss-device/stations",
     "number": "3.6.2",
-    "title": "站点列表及状态"
+    "title": "站点列表及状态",
+    "description": "获取北斗二级基准站列表及实时状态",
+    "parameter": [
+      "pageNum",
+      "pageSize",
+      "status"
+    ],
+    "module": "北斗设备状态模块（GNSSDevice）"
   },
   {
     "path": "/api/v1/gnss-device/stations/{code}/realtime",
     "number": "3.6.3",
-    "title": "单站实时数据"
+    "title": "单站实时数据",
+    "description": "获取指定站点的实时GNSS数据",
+    "parameter": [],
+    "module": "北斗设备状态模块（GNSSDevice）"
   },
   {
     "path": "/api/v1/analysis/trend",
     "number": "4.1.1",
-    "title": "时间序列趋势分析"
+    "title": "时间序列趋势分析",
+    "description": "获取指定指标的时间序列趋势，支持同比/环比分析",
+    "parameter": [
+      "module",
+      "metric",
+      "startTime",
+      "endTime",
+      "interval",
+      "compareType",
+      "regionCode"
+    ],
+    "module": "综合分析接口"
   },
   {
     "path": "/api/v1/analysis/comparison",
     "number": "4.2.1",
-    "title": "多对象对比分析"
+    "title": "多对象对比分析",
+    "description": "对比多个对象（站点/工程/区域）在同一时间段的指标",
+    "parameter": [
+      "module",
+      "metric",
+      "targets",
+      "startTime",
+      "endTime",
+      "interval"
+    ],
+    "module": "综合分析接口"
   },
   {
     "path": "/api/v1/upns/risk",
     "number": "4.3.1",
-    "title": "短临降水风险评估"
+    "title": "短临降水风险评估",
+    "description": "获取短临降水模块的独立风险评估",
+    "parameter": [
+      "regionCode"
+    ],
+    "module": "综合分析接口"
   },
   {
     "path": "/api/v1/udmds/risk",
     "number": "4.3.2",
-    "title": "形变监测风险评估"
+    "title": "形变监测风险评估",
+    "description": "获取形变监测模块的独立风险评估",
+    "parameter": [
+      "projectCode"
+    ],
+    "module": "综合分析接口"
   },
   {
     "path": "/api/v1/ugss/risk",
     "number": "4.3.3",
-    "title": "GNSS干扰风险评估"
+    "title": "GNSS干扰风险评估",
+    "description": "获取GNSS干扰监测模块的独立风险评估",
+    "parameter": [],
+    "module": "综合分析接口"
   },
   {
     "path": "/api/v1/upss/risk",
     "number": "4.3.4",
-    "title": "沉降态势风险评估"
+    "title": "沉降态势风险评估",
+    "description": "获取沉降态势感知模块的独立风险评估",
+    "parameter": [
+      "regionCode"
+    ],
+    "module": "综合分析接口"
   }
 ]
