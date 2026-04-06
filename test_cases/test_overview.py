@@ -18,8 +18,18 @@ def test_get_realtime(client: APIClient):
     测试获取系统实时概览
     GET /api/v1/overview/realtime
     """
+    number = '2.1.1'
+    title = '获取系统实时概览'
     response = client.request('GET', '/api/v1/overview/realtime')
-    print_response('获取系统实时概览', 'GET', '/api/v1/overview/realtime', response, config.verbose)
+    print_response(
+        '获取系统实时概览',
+        'GET',
+        '/api/v1/overview/realtime',
+        response,
+        config.verbose,
+        number=number,
+        title=title,
+    )
 
     if config.save_response and response:
         save_response_to_file('overview_realtime', response, config.response_dir)
@@ -32,9 +42,19 @@ def test_get_summary(client: APIClient):
     测试获取系统综合统计
     GET /api/v1/overview/summary
     """
+    number = '2.2.1'
+    title = '获取系统综合统计'
     params = {}
     response = client.request('GET', '/api/v1/overview/summary', params=params)
-    print_response('获取系统综合统计', 'GET', '/api/v1/overview/summary', response, config.verbose)
+    print_response(
+        '获取系统综合统计',
+        'GET',
+        '/api/v1/overview/summary',
+        response,
+        config.verbose,
+        number=number,
+        title=title,
+    )
 
     if config.save_response and response:
         save_response_to_file('overview_summary', response, config.response_dir)

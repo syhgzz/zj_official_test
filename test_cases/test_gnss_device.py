@@ -17,8 +17,18 @@ def test_get_overview(client: APIClient):
     测试获取模块概览
     GET /api/v1/gnss-device/overview
     """
+    number = '3.6.1'
+    title = '模块概览'
     response = client.request('GET', '/api/v1/gnss-device/overview')
-    print_response('获取北斗设备模块概览', 'GET', '/api/v1/gnss-device/overview', response, config.verbose)
+    print_response(
+        '获取北斗设备模块概览',
+        'GET',
+        '/api/v1/gnss-device/overview',
+        response,
+        config.verbose,
+        number=number,
+        title=title,
+    )
 
     if config.save_response and response:
         save_response_to_file('gnss_device_overview', response, config.response_dir)
@@ -31,9 +41,19 @@ def test_get_stations(client: APIClient, page_num: int = 1, page_size: int = 20)
     测试获取站点列表
     GET /api/v1/gnss-device/stations
     """
+    number = '3.6.2'
+    title = '站点列表及状态'
     params = {'pageNum': page_num, 'pageSize': page_size}
     response = client.request('GET', '/api/v1/gnss-device/stations', params=params)
-    print_response('获取站点列表', 'GET', '/api/v1/gnss-device/stations', response, config.verbose)
+    print_response(
+        '获取站点列表',
+        'GET',
+        '/api/v1/gnss-device/stations',
+        response,
+        config.verbose,
+        number=number,
+        title=title,
+    )
 
     if config.save_response and response:
         save_response_to_file('gnss_device_stations', response, config.response_dir)
@@ -46,8 +66,18 @@ def test_get_station_realtime(client: APIClient, code: str = "BJ001"):
     测试获取站点实时数据
     GET /api/v1/gnss-device/stations/{code}/realtime
     """
+    number = '3.6.3'
+    title = '单站实时数据'
     response = client.request('GET', f'/api/v1/gnss-device/stations/{code}/realtime')
-    print_response('获取站点实时数据', 'GET', f'/api/v1/gnss-device/stations/{code}/realtime', response, config.verbose)
+    print_response(
+        '获取站点实时数据',
+        'GET',
+        f'/api/v1/gnss-device/stations/{code}/realtime',
+        response,
+        config.verbose,
+        number=number,
+        title=title,
+    )
 
     if config.save_response and response:
         save_response_to_file('gnss_device_station_realtime', response, config.response_dir)

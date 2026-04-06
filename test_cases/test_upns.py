@@ -14,8 +14,18 @@ from config.config import config
 
 def test_get_overview(client: APIClient):
     """测试获取模块概览"""
+    number = '3.1.1'
+    title = '模块概览'
     response = client.request('GET', '/api/v1/upns/overview')
-    print_response('获取短临降水模块概览', 'GET', '/api/v1/upns/overview', response, config.verbose)
+    print_response(
+        '获取短临降水模块概览',
+        'GET',
+        '/api/v1/upns/overview',
+        response,
+        config.verbose,
+        number=number,
+        title=title,
+    )
     if config.save_response and response:
         save_response_to_file('upns_overview', response, config.response_dir)
     return response
@@ -23,9 +33,19 @@ def test_get_overview(client: APIClient):
 
 def test_get_stations(client: APIClient):
     """测试获取监测站点列表"""
+    number = '3.1.2'
+    title = '站点列表及状态'
     params = {'pageNum': 1, 'pageSize': 20}
     response = client.request('GET', '/api/v1/upns/stations', params=params)
-    print_response('获取监测站点列表', 'GET', '/api/v1/upns/stations', response, config.verbose)
+    print_response(
+        '获取监测站点列表',
+        'GET',
+        '/api/v1/upns/stations',
+        response,
+        config.verbose,
+        number=number,
+        title=title,
+    )
     if config.save_response and response:
         save_response_to_file('upns_stations', response, config.response_dir)
     return response
@@ -33,8 +53,18 @@ def test_get_stations(client: APIClient):
 
 def test_get_station_realtime(client: APIClient, code: str = "ST001"):
     """测试获取站点实时数据"""
+    number = '3.1.3'
+    title = '单站实时数据'
     response = client.request('GET', f'/api/v1/upns/stations/{code}/realtime')
-    print_response('获取站点实时数据', 'GET', f'/api/v1/upns/stations/{code}/realtime', response, config.verbose)
+    print_response(
+        '获取站点实时数据',
+        'GET',
+        f'/api/v1/upns/stations/{code}/realtime',
+        response,
+        config.verbose,
+        number=number,
+        title=title,
+    )
     if config.save_response and response:
         save_response_to_file('upns_station_realtime', response, config.response_dir)
     return response
@@ -42,9 +72,19 @@ def test_get_station_realtime(client: APIClient, code: str = "ST001"):
 
 def test_get_station_history(client: APIClient, code: str = "ST001"):
     """测试获取站点历史数据"""
+    number = '3.1.4'
+    title = '单站历史趋势'
     params = {'interval': '1h'}
     response = client.request('GET', f'/api/v1/upns/stations/{code}/history', params=params)
-    print_response('获取站点历史数据', 'GET', f'/api/v1/upns/stations/{code}/history', response, config.verbose)
+    print_response(
+        '获取站点历史数据',
+        'GET',
+        f'/api/v1/upns/stations/{code}/history',
+        response,
+        config.verbose,
+        number=number,
+        title=title,
+    )
     if config.save_response and response:
         save_response_to_file('upns_station_history', response, config.response_dir)
     return response
@@ -52,8 +92,18 @@ def test_get_station_history(client: APIClient, code: str = "ST001"):
 
 def test_get_regional_statistics(client: APIClient):
     """测试获取区域降水统计"""
+    number = '3.1.5'
+    title = '区域统计'
     response = client.request('GET', '/api/v1/upns/statistics/regional')
-    print_response('获取区域降水统计', 'GET', '/api/v1/upns/statistics/regional', response, config.verbose)
+    print_response(
+        '获取区域降水统计',
+        'GET',
+        '/api/v1/upns/statistics/regional',
+        response,
+        config.verbose,
+        number=number,
+        title=title,
+    )
     if config.save_response and response:
         save_response_to_file('upns_regional_statistics', response, config.response_dir)
     return response
@@ -61,8 +111,18 @@ def test_get_regional_statistics(client: APIClient):
 
 def test_get_warnings_summary(client: APIClient):
     """测试获取降水预警汇总"""
+    number = '3.1.6'
+    title = '预警汇总'
     response = client.request('GET', '/api/v1/upns/warnings/summary')
-    print_response('获取降水预警汇总', 'GET', '/api/v1/upns/warnings/summary', response, config.verbose)
+    print_response(
+        '获取降水预警汇总',
+        'GET',
+        '/api/v1/upns/warnings/summary',
+        response,
+        config.verbose,
+        number=number,
+        title=title,
+    )
     if config.save_response and response:
         save_response_to_file('upns_warnings_summary', response, config.response_dir)
     return response
@@ -70,8 +130,18 @@ def test_get_warnings_summary(client: APIClient):
 
 def test_get_rain_statistics(client: APIClient):
     """测试获取降雨量统计"""
+    number = '3.1.7'
+    title = '降雨量实时统计'
     response = client.request('GET', '/api/v1/upns/statistics/rain/now')
-    print_response('获取降雨量统计', 'GET', '/api/v1/upns/statistics/rain/now', response, config.verbose)
+    print_response(
+        '获取降雨量统计',
+        'GET',
+        '/api/v1/upns/statistics/rain/now',
+        response,
+        config.verbose,
+        number=number,
+        title=title,
+    )
     if config.save_response and response:
         save_response_to_file('upns_rain_statistics', response, config.response_dir)
     return response
@@ -79,8 +149,18 @@ def test_get_rain_statistics(client: APIClient):
 
 def test_get_pwv_statistics(client: APIClient):
     """测试获取大气可降水量统计"""
+    number = '3.1.8'
+    title = '大气可降水量实时统计'
     response = client.request('GET', '/api/v1/upns/statistics/pwv/now')
-    print_response('获取大气可降水量统计', 'GET', '/api/v1/upns/statistics/pwv/now', response, config.verbose)
+    print_response(
+        '获取大气可降水量统计',
+        'GET',
+        '/api/v1/upns/statistics/pwv/now',
+        response,
+        config.verbose,
+        number=number,
+        title=title,
+    )
     if config.save_response and response:
         save_response_to_file('upns_pwv_statistics', response, config.response_dir)
     return response

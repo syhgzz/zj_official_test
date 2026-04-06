@@ -14,8 +14,18 @@ from config.config import config
 
 def test_get_overview(client: APIClient):
     """测试获取模块概览"""
+    number = '3.3.1'
+    title = '模块概览'
     response = client.request('GET', '/api/v1/ugss/overview')
-    print_response('获取GNSS干扰模块概览', 'GET', '/api/v1/ugss/overview', response, config.verbose)
+    print_response(
+        '获取GNSS干扰模块概览',
+        'GET',
+        '/api/v1/ugss/overview',
+        response,
+        config.verbose,
+        number=number,
+        title=title,
+    )
     if config.save_response and response:
         save_response_to_file('ugss_overview', response, config.response_dir)
     return response
@@ -23,9 +33,19 @@ def test_get_overview(client: APIClient):
 
 def test_get_stations(client: APIClient):
     """测试获取基准站列表"""
+    number = '3.3.2'
+    title = '基站列表'
     params = {'pageNum': 1, 'pageSize': 20}
     response = client.request('GET', '/api/v1/ugss/stations', params=params)
-    print_response('获取基准站列表', 'GET', '/api/v1/ugss/stations', response, config.verbose)
+    print_response(
+        '获取基准站列表',
+        'GET',
+        '/api/v1/ugss/stations',
+        response,
+        config.verbose,
+        number=number,
+        title=title,
+    )
     if config.save_response and response:
         save_response_to_file('ugss_stations', response, config.response_dir)
     return response
@@ -33,8 +53,18 @@ def test_get_stations(client: APIClient):
 
 def test_get_station_realtime(client: APIClient, code: str = "GS001"):
     """测试获取基站实时数据"""
+    number = '3.3.3'
+    title = '单站实时数据'
     response = client.request('GET', f'/api/v1/ugss/stations/{code}/realtime')
-    print_response('获取基站实时数据', 'GET', f'/api/v1/ugss/stations/{code}/realtime', response, config.verbose)
+    print_response(
+        '获取基站实时数据',
+        'GET',
+        f'/api/v1/ugss/stations/{code}/realtime',
+        response,
+        config.verbose,
+        number=number,
+        title=title,
+    )
     if config.save_response and response:
         save_response_to_file('ugss_station_realtime', response, config.response_dir)
     return response
@@ -42,9 +72,19 @@ def test_get_station_realtime(client: APIClient, code: str = "GS001"):
 
 def test_get_events(client: APIClient):
     """测试获取干扰事件列表"""
+    number = '3.3.4'
+    title = '干扰事件列表'
     params = {'pageNum': 1, 'pageSize': 20}
     response = client.request('GET', '/api/v1/ugss/events', params=params)
-    print_response('获取干扰事件列表', 'GET', '/api/v1/ugss/events', response, config.verbose)
+    print_response(
+        '获取干扰事件列表',
+        'GET',
+        '/api/v1/ugss/events',
+        response,
+        config.verbose,
+        number=number,
+        title=title,
+    )
     if config.save_response and response:
         save_response_to_file('ugss_events', response, config.response_dir)
     return response
@@ -52,9 +92,19 @@ def test_get_events(client: APIClient):
 
 def test_get_frequency_statistics(client: APIClient):
     """测试获取频率干扰统计"""
+    number = '3.3.5'
+    title = '频率统计'
     params = {'interval': '1h'}
     response = client.request('GET', '/api/v1/ugss/statistics/frequency', params=params)
-    print_response('获取频率干扰统计', 'GET', '/api/v1/ugss/statistics/frequency', response, config.verbose)
+    print_response(
+        '获取频率干扰统计',
+        'GET',
+        '/api/v1/ugss/statistics/frequency',
+        response,
+        config.verbose,
+        number=number,
+        title=title,
+    )
     if config.save_response and response:
         save_response_to_file('ugss_frequency_statistics', response, config.response_dir)
     return response
@@ -62,8 +112,18 @@ def test_get_frequency_statistics(client: APIClient):
 
 def test_get_warnings_summary(client: APIClient):
     """测试获取预警汇总统计"""
+    number = '3.3.6'
+    title = '预警汇总'
     response = client.request('GET', '/api/v1/ugss/warnings/summary')
-    print_response('获取预警汇总统计', 'GET', '/api/v1/ugss/warnings/summary', response, config.verbose)
+    print_response(
+        '获取预警汇总统计',
+        'GET',
+        '/api/v1/ugss/warnings/summary',
+        response,
+        config.verbose,
+        number=number,
+        title=title,
+    )
     if config.save_response and response:
         save_response_to_file('ugss_warnings_summary', response, config.response_dir)
     return response

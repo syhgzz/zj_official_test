@@ -333,7 +333,9 @@ def print_response(
     method: str,
     path: str,
     response: Any,
-    verbose: bool = True
+    verbose: bool = True,
+    number: str = '',
+    title: str = ''
 ):
     """
     输出单接口测试结果（标准流简洁行 + 文件日志）
@@ -344,6 +346,8 @@ def print_response(
         path: API路径
         response: 响应数据
         verbose: 保留参数,兼容旧调用
+        number: 接口编号(如 3.1.1)
+        title: 接口标题(如 模块概览)
     """
     _ = verbose
     success, reason, code = _evaluate_response(response)
@@ -351,6 +355,8 @@ def print_response(
 
     method = (method or '-').upper()
     path = path or '-'
+    number = (number or '').strip()
+    title = (title or '').strip()
 
     module_key = _CAPTURE_STATE.get('current_module_key') or 'unknown'
     module_name = _CAPTURE_STATE.get('current_module_name') or module_key
@@ -373,7 +379,9 @@ def print_response(
         progress_prefix = _format_progress(module_key, global_index, global_total, module_index, module_total) + ' '
 
     status_text = 'SUCCESS' if success else 'FAILED'
-    line = f"{progress_prefix}[{status_text}] {api_name} | {method} {path}"
+    display_title = title or (api_name or '-').strip() or '-'
+    number_prefix = f"[{number}] " if number else ''
+    line = f"{progress_prefix}[{status_text}] {number_prefix}{display_title} | {method} {path}"
     if not success and reason:
         line += f" | 原因: {reason}"
 
@@ -384,6 +392,8 @@ def print_response(
         'module_key': module_key,
         'module_name': module_name,
         'api_name': api_name,
+        'number': number,
+        'title': display_title,
         'method': method,
         'path': path,
         'success': success,
@@ -401,7 +411,7 @@ def print_response(
         log_line = (
             f"- {record['timestamp']} "
             f"{_format_progress(module_key, global_index, global_total, module_index, module_total)} "
-            f"[{status_text}] {api_name} | {method} {path}"
+            f"[{status_text}] {number_prefix}{display_title} | {method} {path}"
         )
         if not success and reason:
             log_line += f" | 原因: {_truncate_text(reason)}"
