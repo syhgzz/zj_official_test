@@ -1,0 +1,79 @@
+# -*- coding: utf-8 -*-
+"""
+北斗设备状态模块API测试
+"""
+import sys
+import os
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from lib.api_client import APIClient
+from lib.response_printer import print_response, save_response_to_file
+from config.config import config
+
+
+def test_get_overview(client: APIClient):
+    """
+    测试获取模块概览
+    GET /api/v1/gnss-device/overview
+    """
+    response = client.request('GET', '/api/v1/gnss-device/overview')
+    print_response('获取北斗设备模块概览', 'GET', '/api/v1/gnss-device/overview', response, config.verbose)
+
+    if config.save_response and response:
+        save_response_to_file('gnss_device_overview', response, config.response_dir)
+
+    return response
+
+
+def test_get_stations(client: APIClient, page_num: int = 1, page_size: int = 20):
+    """
+    测试获取站点列表
+    GET /api/v1/gnss-device/stations
+    """
+    params = {'pageNum': page_num, 'pageSize': page_size}
+    response = client.request('GET', '/api/v1/gnss-device/stations', params=params)
+    print_response('获取站点列表', 'GET', '/api/v1/gnss-device/stations', response, config.verbose)
+
+    if config.save_response and response:
+        save_response_to_file('gnss_device_stations', response, config.response_dir)
+
+    return response
+
+
+def test_get_station_realtime(client: APIClient, code: str = "BJ001"):
+    """
+    测试获取站点实时数据
+    GET /api/v1/gnss-device/stations/{code}/realtime
+    """
+    response = client.request('GET', f'/api/v1/gnss-device/stations/{code}/realtime')
+    print_response('获取站点实时数据', 'GET', f'/api/v1/gnss-device/stations/{code}/realtime', response, config.verbose)
+
+    if config.save_response and response:
+        save_response_to_file('gnss_device_station_realtime', response, config.response_dir)
+
+    return response
+
+
+def run_all_tests():
+    """运行北斗设备状态模块的所有测试"""
+    client = APIClient(config.host, config.app_key, config.app_secret, config.timeout)
+
+    print("\n" + "#" * 60)
+    print("#" + " " * 16 + "北斗设备状态模块测试" + " " * 16 + "#")
+    print("#" * 60 + "\n")
+
+    # 测试1: 获取模块概览
+    test_get_overview(client)
+
+    # 测试2: 获取站点列表
+    test_get_stations(client)
+
+    # 测试3: 获取站点实时数据
+    test_get_station_realtime(client)
+
+    print("\n北斗设备状态模块测试完成!\n")
+
+
+if __name__ == '__main__':
+    run_all_tests()
