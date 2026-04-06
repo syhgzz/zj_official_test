@@ -5,6 +5,7 @@ Output JSON records contain:
 - path: API path like /api/v1/overview/realtime
 - number: section number like 2.1.1
 - title: section title like 获取系统实时概览
+- response_example: response example text under 响应示例/相应示例
 """
 
 from __future__ import annotations
@@ -170,12 +171,81 @@ def extract_parameter_names(rows: List[List[str]]) -> List[str]:
     return params
 
 
+def is_response_example_heading(line: str) -> bool:
+    """Check whether a paragraph marks response example section."""
+    return "响应示例" in line or "相应示例" in line
+
+
+def is_response_example_boundary(line: str) -> bool:
+    """Detect boundaries that end response-example capture."""
+    if not line:
+        return False
+
+    if is_response_example_heading(line):
+        return True
+
+    if "请求参数" in line or "路径参数" in line or "响应数据结构定义" in line:
+        return True
+
+    if NUM_HEADING_RE.match(line) or CN_HEADING_RE.match(line):
+        return True
+
+    if "接口地址" in line:
+        return True
+
+    if any(method in line for method in HTTP_METHODS) and "/api/" in line:
+        return True
+
+    return False
+
+
+def format_table_as_text(rows: List[List[str]]) -> str:
+    """Format table rows into plain text for response example storage."""
+    if not rows:
+        return ""
+
+    lines = []
+    for row in rows:
+        cells = [cell for cell in row if cell]
+        if cells:
+            lines.append(" | ".join(cells))
+    return "\n".join(lines).strip()
+
+
+def save_response_example(
+    path_to_record: Dict[str, dict],
+    interface_path: Optional[str],
+    chunks: List[str],
+) -> None:
+    """Persist accumulated response-example chunks to target record."""
+    if not interface_path or not chunks:
+        return
+
+    record = path_to_record.get(interface_path)
+    if not record:
+        return
+
+    content = "\n".join(
+        chunk.strip() for chunk in chunks if chunk and chunk.strip()
+    ).strip()
+    if not content:
+        return
+
+    existing = record.get("response_example", "")
+    if existing:
+        record["response_example"] = f"{existing}\n{content}"
+    else:
+        record["response_example"] = content
+
+
 def extract_interfaces(docx_path: Path) -> List[dict]:
     current_number = ""
     current_title = ""
     current_module = ""
     current_interface_path: Optional[str] = None
     pending_request_params_path: Optional[str] = None
+    pending_response_example_path: Optional[str] = None
+    pending_response_example_chunks: List[str] = []
 
     seen_paths = set()
     path_to_record: Dict[str, dict] = {}
@@ -191,6 +261,15 @@ def extract_interfaces(docx_path: Path) -> List[dict]:
             if not line:
                 continue
 
+            if pending_response_example_path and is_response_example_boundary(line):
+                save_response_example(
+                    path_to_record,
+                    pending_response_example_path,
+                    pending_response_example_chunks,
+                )
+                pending_response_example_path = None
+                pending_response_example_chunks = []
+
             num_match = NUM_HEADING_RE.match(line)
             if num_match:
                 current_number = num_match.group(1)
@@ -199,6 +278,8 @@ def extract_interfaces(docx_path: Path) -> List[dict]:
                 if level == 2 and ("模块" in current_title or "接口" in current_title):
                     current_module = current_title
                 pending_request_params_path = None
+                pending_response_example_path = None
+                pending_response_example_chunks = []
                 continue
 
             cn_match = CN_HEADING_RE.match(line)
@@ -208,18 +289,37 @@ def extract_interfaces(docx_path: Path) -> List[dict]:
                 if "接口" in current_title or "模块" in current_title:
                     current_module = current_title
                 pending_request_params_path = None
+                pending_response_example_path = None
+                pending_response_example_chunks = []
                 continue
 
             if "请求参数" in line:
                 pending_request_params_path = current_interface_path
+                pending_response_example_path = None
+                pending_response_example_chunks = []
                 continue
 
             if "路径参数" in line:
                 pending_request_params_path = None
+                pending_response_example_path = None
+                pending_response_example_chunks = []
                 continue
 
-            if "响应示例" in line or "响应数据结构定义" in line:
+            if is_response_example_heading(line):
                 pending_request_params_path = None
+                pending_response_example_path = current_interface_path
+                pending_response_example_chunks = []
+                continue
+
+            if "响应数据结构定义" in line:
+                pending_request_params_path = None
+                pending_response_example_path = None
+                pending_response_example_chunks = []
+                continue
+
+            if pending_response_example_path:
+                pending_response_example_chunks.append(line)
+                continue
 
             description = parse_description(line)
             if description and current_interface_path:
@@ -238,6 +338,8 @@ def extract_interfaces(docx_path: Path) -> List[dict]:
 
                 current_interface_path = path
                 pending_request_params_path = None
+                pending_response_example_path = None
+                pending_response_example_chunks = []
 
                 if path in seen_paths:
                     continue
@@ -250,11 +352,19 @@ def extract_interfaces(docx_path: Path) -> List[dict]:
                     "description": "",
                     "parameter": [],
                     "module": current_module,
+                    "response_example": "",
                 }
                 interfaces.append(record)
                 path_to_record[path] = record
 
         elif tag == "tbl":
+            if pending_response_example_path:
+                rows = get_table_rows(child)
+                table_text = format_table_as_text(rows)
+                if table_text:
+                    pending_response_example_chunks.append(table_text)
+                continue
+
             if not pending_request_params_path:
                 continue
 
@@ -273,6 +383,13 @@ def extract_interfaces(docx_path: Path) -> List[dict]:
                 if param not in existing:
                     record["parameter"].append(param)
                     existing.add(param)
+
+    if pending_response_example_path:
+        save_response_example(
+            path_to_record,
+            pending_response_example_path,
+            pending_response_example_chunks,
+        )
 
     return interfaces
 

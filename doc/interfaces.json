@@ -5,7 +5,8 @@
     "title": "获取系统实时概览",
     "description": "获取系统整体运行状态的实时快照，包含各模块的核心指标",
     "parameter": [],
-    "module": "系统概览接口"
+    "module": "系统概览接口",
+    "response_example": "{ \"code\": 200, \"msg\": \"操作成功\", \"data\": { \"snapshotTime\": 1709961600000, \"modules\": { \"upns\": { \"moduleName\": \"短临降水预警\", \"stationTotal\": 120, \"stationOnline\": 118, \"stationOnlineRate\": 98.3, \"activeWarningCount\": 5, \"currentMaxRain\": 45.5, \"currentMaxPWV\": 55.2 }, \"udmds\": { \"moduleName\": \"形变安全监测\", \"projectTotal\": 25, \"pointTotal\": 350, \"deviceOnlineRate\": 95.8, \"activeAlertCount\": 12, \"todayAlertCount\": 18, \"maxDisplacementPoint\": { \"pointCode\": \"PT001\", \"projectName\": \"朝阳区地铁监测\", \"maxDelta\": 15.5 } }, \"ugss\": { \"moduleName\": \"GNSS干扰监测\", \"stationTotal\": 80, \"stationOnline\": 78, \"stationOnlineRate\": 97.5, \"activeEventCount\": 3, \"activeWarningCount\": 2, \"avgCN0\": 42.5 }, \"upss\": { \"moduleName\": \"沉降态势感知\", \"latestIssue\": \"20221220\", \"totalPoints\": 10000, \"warningPointCount\": 300, \"maxSubsidence\": 125.5, \"maxSubsidencePoint\": { \"pointCode\": \"UPSS-PT-001\", \"longitude\": 116.4074, \"latitude\": 39.9042 } } }, \"systemStatus\": { \"dataIntegrity\": 99.2, \"serviceAvailability\": 99.8, \"lastUpdate\": 1709961600000 } }, \"timestamp\": 1709961600000}"
   },
   {
     "path": "/api/v1/overview/summary",
@@ -17,7 +18,8 @@
       "startTime",
       "endTime"
     ],
-    "module": "系统概览接口"
+    "module": "系统概览接口",
+    "response_example": "{ \"code\": 200, \"msg\": \"操作成功\", \"data\": { \"interval\": \"1d\", \"startTime\": 1709904000000, \"endTime\": 1709990400000, \"periods\": [ { \"period\": \"2026-03-09\", \"timestamp\": 1709904000000, \"modules\": { \"upns\": { \"warningTotal\": 8, \"warningLevelOne\": 2, \"warningLevelTwo\": 3, \"warningLevelThree\": 3, \"avgRain\": 12.5, \"maxRain\": 45.5, \"avgPWV\": 35.2, \"maxPWV\": 55.2, \"dataCompleteness\": 98.5 }, \"udmds\": { \"alertTotal\": 18, \"alertLevelOne\": 5, \"alertLevelTwo\": 8, \"alertLevelThree\": 5, \"affectedProjects\": 6, \"maxDisplacement\": 15.5, \"dataCompleteness\": 97.2 }, \"ugss\": { \"eventTotal\": 5, \"warningTotal\": 3, \"avgEventDuration\": 3600, \"affectedStations\": 12, \"avgCN0\": 42.5, \"dataCompleteness\": 99.1 }, \"upss\": { \"warningPointCount\": 300, \"avgSubsidence\": 25.5, \"maxSubsidence\": 125.5, \"rapidChangePointCount\": 50, \"dataCompleteness\": 100.0 } } } ] }, \"timestamp\": 1709961600000}"
   },
   {
     "path": "/api/v1/upns/overview",
@@ -25,7 +27,8 @@
     "title": "模块概览",
     "description": "获取短临降水模块的实时概览数据",
     "parameter": [],
-    "module": "短临降水预警模块（UPNS）"
+    "module": "短临降水预警模块（UPNS）",
+    "response_example": "{ \"code\": 200, \"msg\": \"操作成功\", \"data\": { \"snapshotTime\": 1709961600000, \"stations\": { \"total\": 120, \"online\": 118, \"offline\": 2, \"onlineRate\": 98.3 }, \"warnings\": { \"activeCount\": 5, \"todayCount\": 8, \"levelOneCount\": 2, \"levelTwoCount\": 2, \"levelThreeCount\": 1 }, \"currentConditions\": { \"avgTemperature\": 25.5, \"avgHumidity\": 65.0, \"avgRain\": 12.5, \"maxRain\": 45.5, \"maxRainStation\": \"ST001\", \"avgWindSpeed\": 3.5, \"avgPressure\": 1013.2, \"avgPWV\": 35.2, \"maxPWV\": 55.2, \"maxPWVStation\": \"ST001\" }, \"dataQuality\": { \"completeness\": 98.5, \"anomalyFiltered\": 12, \"interpolated\": 5 } }, \"timestamp\": 1709961600000}"
   },
   {
     "path": "/api/v1/upns/stations",
@@ -38,7 +41,8 @@
       "status",
       "regionCode"
     ],
-    "module": "短临降水预警模块（UPNS）"
+    "module": "短临降水预警模块（UPNS）",
+    "response_example": "{ \"code\": 200, \"msg\": \"操作成功\", \"data\": { \"total\": 120, \"pageNum\": 1, \"pageSize\": 20, \"stations\": [ { \"stationCode\": \"ST001\", \"stationName\": \"朝阳观测站\", \"longitude\": 116.4074, \"latitude\": 39.9042, \"altitude\": 50.5, \"regionCode\": \"110105\", \"regionName\": \"朝阳区\", \"status\": \"online\", \"lastUpdateTime\": 1709961600000, \"currentData\": { \"temperature\": 25.5, \"humidity\": 65.0, \"rain\": 45.5, \"windSpeed\": 3.5, \"windDirection\": 180.0, \"pressure\": 1013.2, \"pwv\": 55.2 }, \"hasWarning\": true, \"warningLevel\": 1 } ] }, \"timestamp\": 1709961600000}"
   },
   {
     "path": "/api/v1/upns/stations/{code}/realtime",
@@ -46,7 +50,8 @@
     "title": "单站实时数据",
     "description": "获取指定站点的实时监测数据（清洗补全后）",
     "parameter": [],
-    "module": "短临降水预警模块（UPNS）"
+    "module": "短临降水预警模块（UPNS）",
+    "response_example": "{ \"code\": 200, \"msg\": \"操作成功\", \"data\": { \"stationCode\": \"ST001\", \"stationName\": \"朝阳观测站\", \"longitude\": 116.4074, \"latitude\": 39.9042, \"altitude\": 50.5, \"data\": { \"temperature\": 25.5, \"humidity\": 65.0, \"rain\": 45.5, \"windSpeed\": 3.5, \"windDirection\": 180.0, \"pressure\": 1013.2, \"pwv\": 55.2 }, \"dataTime\": 1709961600000, \"dataQuality\": { \"completeness\": 100.0, \"isInterpolated\": false, \"isFiltered\": false }, \"warningStatus\": { \"hasWarning\": true, \"level\": 1, \"threshold\": 50.0, \"exceedValue\": 5.2 } }, \"timestamp\": 1709961600000}"
   },
   {
     "path": "/api/v1/upns/stations/{code}/history",
@@ -59,7 +64,8 @@
       "interval",
       "metrics"
     ],
-    "module": "短临降水预警模块（UPNS）"
+    "module": "短临降水预警模块（UPNS）",
+    "response_example": "{ \"code\": 200, \"msg\": \"操作成功\", \"data\": { \"stationCode\": \"ST001\", \"stationName\": \"朝阳观测站\", \"interval\": \"1h\", \"startTime\": 1709904000000, \"endTime\": 1709990400000, \"timeSeries\": { \"timestamps\": [ 1709904000000, 1709907600000, 1709911200000 ], \"temperature\": [25.2, 25.5, 25.8], \"humidity\": [63.0, 65.0, 67.0], \"rain\": [0.0, 5.5, 45.5], \"windSpeed\": [2.5, 3.5, 4.5], \"windDirection\": [170.0, 180.0, 190.0], \"pressure\": [1013.5, 1013.2, 1012.9], \"pwv\": [32.0, 35.5, 55.2] }, \"statistics\": { \"temperature\": {\"avg\": 25.5, \"max\": 25.8, \"min\": 25.2}, \"rain\": {\"sum\": 51.0, \"max\": 45.5, \"min\": 0.0}, \"pwv\": {\"avg\": 40.9, \"max\": 55.2, \"min\": 32.0} }, \"dataQuality\": { \"expectedPoints\": 24, \"actualPoints\": 24, \"interpolatedPoints\": 2, \"completeness\": 100.0 } }, \"timestamp\": 1709961600000}"
   },
   {
     "path": "/api/v1/upns/statistics/regional",
@@ -73,7 +79,8 @@
       "dimension",
       "regionCode"
     ],
-    "module": "短临降水预警模块（UPNS）"
+    "module": "短临降水预警模块（UPNS）",
+    "response_example": "{ \"code\": 200, \"msg\": \"操作成功\", \"data\": { \"interval\": \"1h\", \"dimension\": \"admin\", \"startTime\": 1709904000000, \"endTime\": 1709990400000, \"regions\": [ { \"regionCode\": \"110105\", \"regionName\": \"朝阳区\", \"stationCount\": 25, \"onlineStationCount\": 25, \"timeSeries\": { \"timestamps\": [1709904000000, 1709907600000], \"avgRain\": [5.2, 12.5], \"maxRain\": [15.5, 45.5], \"sumRain\": [130.0, 312.5], \"avgPWV\": [32.0, 38.5], \"maxPWV\": [45.0, 55.2] }, \"statistics\": { \"totalRain\": 442.5, \"avgRain\": 17.7, \"maxRain\": 45.5, \"maxRainStation\": \"ST001\", \"avgPWV\": 35.2, \"maxPWV\": 55.2 }, \"warningSummary\": { \"warningCount\": 3, \"levelOneCount\": 1, \"levelTwoCount\": 1, \"levelThreeCount\": 1 } } ] }, \"timestamp\": 1709961600000}"
   },
   {
     "path": "/api/v1/upns/warnings/summary",
@@ -85,7 +92,8 @@
       "endTime",
       "level"
     ],
-    "module": "短临降水预警模块（UPNS）"
+    "module": "短临降水预警模块（UPNS）",
+    "response_example": "{ \"code\": 200, \"msg\": \"操作成功\", \"data\": { \"startTime\": 1709904000000, \"endTime\": 1709990400000, \"summary\": { \"totalCount\": 8, \"levelOneCount\": 2, \"levelTwoCount\": 3, \"levelThreeCount\": 3, \"affectedStationCount\": 15, \"affectedRegionCount\": 5 }, \"levelDistribution\": [ {\"level\": 1, \"count\": 2, \"percentage\": 25.0}, {\"level\": 2, \"count\": 3, \"percentage\": 37.5}, {\"level\": 3, \"count\": 3, \"percentage\": 37.5} ], \"timeDistribution\": [ {\"hour\": \"2026-03-09T14:00:00\", \"count\": 2}, {\"hour\": \"2026-03-09T15:00:00\", \"count\": 6} ], \"warnings\": [ { \"warningId\": \"UPNS-W-20260309001\", \"code\": \"PW-20260309-001\", \"time\": 1709961600000, \"level\": 1, \"threshold\": 50.0, \"stationCount\": 5, \"affectedArea\": \"朝阳区\", \"maxPWV\": 55.2, \"maxPWVStation\": \"ST001\" } ] }, \"timestamp\": 1709961600000}"
   },
   {
     "path": "/api/v1/upns/statistics/rain/now",
@@ -93,7 +101,8 @@
     "title": "降雨量实时统计",
     "description": "获取前一小时降雨量前十的站点统计",
     "parameter": [],
-    "module": "短临降水预警模块（UPNS）"
+    "module": "短临降水预警模块（UPNS）",
+    "response_example": "{ \"code\": 200, \"msg\": \"操作成功\", \"data\": { \"period\": \"last_hour\", \"startTime\": 1709961600000, \"endTime\": 1709965200000, \"topStations\": [ { \"rank\": 1, \"stationCode\": \"ST001\", \"stationName\": \"朝阳观测站\", \"longitude\": 116.4074, \"latitude\": 39.9042, \"rain\": 45.5, \"regionName\": \"朝阳区\" }, { \"rank\": 2, \"stationCode\": \"ST002\", \"stationName\": \"海淀观测站\", \"longitude\": 116.2984, \"latitude\": 39.9588, \"rain\": 38.2, \"regionName\": \"海淀区\" } ], \"statistics\": { \"totalStations\": 120, \"measuredStations\": 115, \"avgRain\": 12.5, \"maxRain\": 45.5, \"minRain\": 0.0 } }, \"timestamp\": 1709961600000}"
   },
   {
     "path": "/api/v1/upns/statistics/pwv/now",
@@ -101,7 +110,8 @@
     "title": "大气可降水量实时统计",
     "description": "获取当前大气可降水量前十的站点统计",
     "parameter": [],
-    "module": "短临降水预警模块（UPNS）"
+    "module": "短临降水预警模块（UPNS）",
+    "response_example": "{ \"code\": 200, \"msg\": \"操作成功\", \"data\": { \"snapshotTime\": 1709961600000, \"topStations\": [ { \"rank\": 1, \"stationCode\": \"ST001\", \"stationName\": \"朝阳观测站\", \"longitude\": 116.4074, \"latitude\": 39.9042, \"pwv\": 55.2, \"temperature\": 25.5, \"humidity\": 65.0, \"regionName\": \"朝阳区\" }, { \"rank\": 2, \"stationCode\": \"ST003\", \"stationName\": \"丰台观测站\", \"longitude\": 116.2870, \"latitude\": 39.8585, \"pwv\": 48.5, \"temperature\": 26.0, \"humidity\": 68.0, \"regionName\": \"丰台区\" } ], \"statistics\": { \"totalStations\": 120, \"measuredStations\": 118, \"avgPWV\": 35.2, \"maxPWV\": 55.2, \"minPWV\": 15.5 } }, \"timestamp\": 1709961600000}"
   },
   {
     "path": "/api/v1/udmds/overview",
@@ -109,7 +119,8 @@
     "title": "模块概览",
     "description": "获取形变监测模块的实时概览数据",
     "parameter": [],
-    "module": "形变安全监测模块（UDMDS）"
+    "module": "形变安全监测模块（UDMDS）",
+    "response_example": "{ \"code\": 200, \"msg\": \"操作成功\", \"data\": { \"snapshotTime\": 1709961600000, \"projects\": { \"total\": 25, \"activeProjects\": 23, \"pointsTotal\": 350, \"pointsWithAlert\": 18 }, \"devices\": { \"total\": 400, \"online\": 383, \"offline\": 17, \"onlineRate\": 95.8, \"byType\": { \"accelerometer\": {\"total\": 100, \"online\": 98, \"onlineRate\": 98.0}, \"fissures\": {\"total\": 100, \"online\": 95, \"onlineRate\": 95.0}, \"inclinometer\": {\"total\": 100, \"online\": 96, \"onlineRate\": 96.0}, \"displacement\": {\"total\": 100, \"online\": 94, \"onlineRate\": 94.0} } }, \"alerts\": { \"activeCount\": 12, \"todayCount\": 18, \"levelOneCount\": 5, \"levelTwoCount\": 7, \"levelThreeCount\": 6, \"maxDisplacement\": 15.5, \"maxDisplacementPoint\": { \"pointCode\": \"PT001\", \"projectName\": \"朝阳区地铁监测\", \"direction\": \"E\", \"value\": 15.5 } }, \"dataQuality\": { \"completeness\": 97.2, \"anomalyFiltered\": 25, \"interpolated\": 8 } }, \"timestamp\": 1709961600000}"
   },
   {
     "path": "/api/v1/udmds/projects",
@@ -126,7 +137,8 @@
       "minLat",
       "maxLat"
     ],
-    "module": "形变安全监测模块（UDMDS）"
+    "module": "形变安全监测模块（UDMDS）",
+    "response_example": "{ \"code\": 200, \"msg\": \"操作成功\", \"data\": { \"total\": 25, \"pageNum\": 1, \"pageSize\": 20, \"projects\": [ { \"projectCode\": \"PRJ001\", \"projectName\": \"朝阳区地铁监测\", \"longitude\": 116.4074, \"latitude\": 39.9042, \"regionCode\": \"110105\", \"regionName\": \"朝阳区\", \"status\": \"active\", \"pointCount\": 25, \"activeAlertCount\": 5, \"deviceOnlineRate\": 96.0, \"lastUpdateTime\": 1709961600000 } ] }, \"timestamp\": 1709961600000}"
   },
   {
     "path": "/api/v1/udmds/points",
@@ -142,7 +154,8 @@
       "minLat",
       "maxLat"
     ],
-    "module": "形变安全监测模块（UDMDS）"
+    "module": "形变安全监测模块（UDMDS）",
+    "response_example": "{ \"code\": 200, \"msg\": \"操作成功\", \"data\": { \"projectCode\": \"PRJ001\", \"projectName\": \"朝阳区地铁监测\", \"points\": [ { \"pointCode\": \"PT001\", \"pointName\": \"监测点1号\", \"longitude\": 116.4074, \"latitude\": 39.9042, \"deviceTypes\": [\"accelerometer\", \"inclinometer\", \"displacement\"], \"hasAlert\": true, \"alertLevel\": 1, \"lastUpdateTime\": 1709961600000, \"currentStatus\": { \"displacement\": { \"deltaE\": 15.5, \"deltaN\": 8.2, \"deltaU\": 12.3 }, \"accelerometer\": { \"gx\": 0.05, \"gy\": 0.03, \"gz\": 9.81 } } } ] }, \"timestamp\": 1709961600000}"
   },
   {
     "path": "/api/v1/udmds/points/{code}/realtime",
@@ -152,7 +165,8 @@
     "parameter": [
       "deviceTypes"
     ],
-    "module": "形变安全监测模块（UDMDS）"
+    "module": "形变安全监测模块（UDMDS）",
+    "response_example": "{ \"code\": 200, \"msg\": \"操作成功\", \"data\": { \"pointCode\": \"PT001\", \"pointName\": \"监测点1号\", \"projectCode\": \"PRJ001\", \"projectName\": \"朝阳区地铁监测\", \"longitude\": 116.4074, \"latitude\": 39.9042, \"data\": { \"accelerometer\": { \"gx\": 0.05, \"gy\": 0.03, \"gz\": 9.81, \"dataTime\": 1709961600000 }, \"fissures\": { \"value\": 2.5, \"dataTime\": 1709961600000 }, \"inclinometer\": { \"x\": 1.5, \"y\": 0.8, \"z\": 88.5, \"angle\": 1.7, \"azi\": 28.5, \"dataTime\": 1709961600000 }, \"displacement\": { \"deltaE\": 15.5, \"deltaN\": 8.2, \"deltaU\": 12.3, \"dataTime\": 1709961600000 } }, \"dataQuality\": { \"completeness\": 100.0, \"interpolatedCount\": 0, \"filteredCount\": 0 }, \"alertStatus\": { \"hasAlert\": true, \"alerts\": [ { \"deviceType\": \"displacement\", \"direction\": \"E\", \"level\": 1, \"threshold\": 20.0, \"currentValue\": 15.5, \"trend\": \"increasing\" } ] } }, \"timestamp\": 1709961600000}"
   },
   {
     "path": "/api/v1/udmds/points/{code}/history",
@@ -165,7 +179,8 @@
       "interval",
       "deviceType"
     ],
-    "module": "形变安全监测模块（UDMDS）"
+    "module": "形变安全监测模块（UDMDS）",
+    "response_example": "{ \"code\": 200, \"msg\": \"操作成功\", \"data\": { \"pointCode\": \"PT001\", \"pointName\": \"监测点1号\", \"deviceType\": \"displacement\", \"interval\": \"1h\", \"startTime\": 1709904000000, \"endTime\": 1709990400000, \"timeSeries\": { \"timestamps\": [1709904000000, 1709907600000, 1709911200000], \"deltaE\": [10.2, 12.5, 15.5], \"deltaN\": [5.5, 6.8, 8.2], \"deltaU\": [8.0, 10.0, 12.3] }, \"statistics\": { \"deltaE\": {\"avg\": 12.7, \"max\": 15.5, \"min\": 10.2, \"trend\": 0.85}, \"deltaN\": {\"avg\": 6.8, \"max\": 8.2, \"min\": 5.5, \"trend\": 0.52}, \"deltaU\": {\"avg\": 10.1, \"max\": 12.3, \"min\": 8.0, \"trend\": 0.76} }, \"dataQuality\": { \"expectedPoints\": 24, \"actualPoints\": 24, \"interpolatedPoints\": 1, \"completeness\": 100.0 }, \"alertHistory\": { \"alertCount\": 5, \"levelOneCount\": 2, \"levelTwoCount\": 2, \"levelThreeCount\": 1 } }, \"timestamp\": 1709961600000}"
   },
   {
     "path": "/api/v1/udmds/statistics/project",
@@ -178,7 +193,8 @@
       "interval",
       "projectCode"
     ],
-    "module": "形变安全监测模块（UDMDS）"
+    "module": "形变安全监测模块（UDMDS）",
+    "response_example": "{ \"code\": 200, \"msg\": \"操作成功\", \"data\": { \"interval\": \"1d\", \"startTime\": 1709904000000, \"endTime\": 1709990400000, \"projects\": [ { \"projectCode\": \"PRJ001\", \"projectName\": \"朝阳区地铁监测\", \"pointCount\": 25, \"onlineDeviceCount\": 96, \"totalDeviceCount\": 100, \"onlineRate\": 96.0, \"statistics\": { \"displacement\": { \"maxDeltaE\": 15.5, \"maxDeltaN\": 8.2, \"maxDeltaU\": 12.3, \"avgDeltaE\": 8.5, \"avgDeltaN\": 4.2, \"avgDeltaU\": 6.8 }, \"accelerometer\": { \"maxVibration\": 0.15, \"avgVibration\": 0.05 } }, \"alertSummary\": { \"totalAlerts\": 5, \"levelOneCount\": 2, \"affectedPoints\": 3 }, \"dataQuality\": { \"completeness\": 98.5, \"anomalyFiltered\": 5, \"interpolated\": 2 } } ] }, \"timestamp\": 1709961600000}"
   },
   {
     "path": "/api/v1/udmds/alerts/summary",
@@ -191,7 +207,8 @@
       "level",
       "projectCode"
     ],
-    "module": "形变安全监测模块（UDMDS）"
+    "module": "形变安全监测模块（UDMDS）",
+    "response_example": "{ \"code\": 200, \"msg\": \"操作成功\", \"data\": { \"startTime\": 1709904000000, \"endTime\": 1709990400000, \"summary\": { \"totalCount\": 18, \"levelOneCount\": 5, \"levelTwoCount\": 7, \"levelThreeCount\": 6, \"affectedProjects\": 6, \"affectedPoints\": 12 }, \"levelDistribution\": [ {\"level\": 1, \"count\": 5, \"percentage\": 27.8}, {\"level\": 2, \"count\": 7, \"percentage\": 38.9}, {\"level\": 3, \"count\": 6, \"percentage\": 33.3} ], \"directionDistribution\": [ {\"direction\": \"E\", \"count\": 8, \"percentage\": 44.4}, {\"direction\": \"N\", \"count\": 5, \"percentage\": 27.8}, {\"direction\": \"U\", \"count\": 5, \"percentage\": 27.8} ], \"topAlertPoints\": [ { \"pointCode\": \"PT001\", \"pointName\": \"监测点1号\", \"projectName\": \"朝阳区地铁监测\", \"alertCount\": 5, \"maxLevel\": 1, \"maxDisplacement\": 15.5 } ], \"alerts\": [ { \"alertId\": \"UDMDS-A-20260309001\", \"code\": \"DF-20260309-001\", \"time\": 1709961600000, \"level\": 1, \"direction\": \"E\", \"threshold\": 20.0, \"pointCode\": \"PT001\", \"pointName\": \"监测点1号\", \"projectName\": \"朝阳区地铁监测\", \"currentValue\": 15.5, \"trend\": \"increasing\" } ] }, \"timestamp\": 1709961600000}"
   },
   {
     "path": "/api/v1/ugss/overview",
@@ -199,7 +216,8 @@
     "title": "模块概览",
     "description": "获取GNSS干扰监测模块的实时概览数据",
     "parameter": [],
-    "module": "GNSS干扰监测模块（UGSS）"
+    "module": "GNSS干扰监测模块（UGSS）",
+    "response_example": "{ \"code\": 200, \"msg\": \"操作成功\", \"data\": { \"snapshotTime\": 1709961600000, \"stations\": { \"total\": 80, \"online\": 78, \"offline\": 2, \"onlineRate\": 97.5 }, \"events\": { \"activeCount\": 3, \"todayCount\": 5, \"totalDuration\": 18000, \"avgDuration\": 3600, \"affectedStationCount\": 12 }, \"warnings\": { \"activeCount\": 2, \"todayCount\": 3, \"levelOneCount\": 1, \"levelTwoCount\": 1, \"levelThreeCount\": 1 }, \"signalQuality\": { \"avgCN0\": 42.5, \"minCN0\": 32.5, \"minCN0Station\": \"GS001\", \"frequencyDistribution\": [ {\"frequency\": 0, \"frequencyName\": \"BDS B1C\", \"avgCN0\": 43.5}, {\"frequency\": 1, \"frequencyName\": \"BDS B1I\", \"avgCN0\": 42.8} ] }, \"dataQuality\": { \"completeness\": 99.1, \"anomalyFiltered\": 8, \"interpolated\": 3 } }, \"timestamp\": 1709961600000}"
   },
   {
     "path": "/api/v1/ugss/stations",
@@ -212,7 +230,8 @@
       "status",
       "regionCode"
     ],
-    "module": "GNSS干扰监测模块（UGSS）"
+    "module": "GNSS干扰监测模块（UGSS）",
+    "response_example": "{ \"code\": 200, \"msg\": \"操作成功\", \"data\": { \"total\": 80, \"pageNum\": 1, \"pageSize\": 20, \"stations\": [ { \"stationCode\": \"GS001\", \"stationName\": \"GNSS基准站1号\", \"longitude\": 116.4074, \"latitude\": 39.9042, \"altitude\": 80.5, \"regionCode\": \"110105\", \"regionName\": \"朝阳区\", \"status\": \"online\", \"lastUpdateTime\": 1709961600000, \"currentSignal\": { \"avgCN0\": 42.5, \"minCN0\": 35.5, \"frequencyCN0\": [ {\"frequency\": 0, \"frequencyName\": \"BDS B1C\", \"cn0\": 43.5}, {\"frequency\": 1, \"frequencyName\": \"BDS B1I\", \"cn0\": 42.8} ] }, \"hasWarning\": true, \"warningLevel\": 1, \"affectedByEvent\": true } ] }, \"timestamp\": 1709961600000}"
   },
   {
     "path": "/api/v1/ugss/stations/{code}/realtime",
@@ -220,7 +239,8 @@
     "title": "单站实时数据",
     "description": "获取指定基站的实时信号质量数据",
     "parameter": [],
-    "module": "GNSS干扰监测模块（UGSS）"
+    "module": "GNSS干扰监测模块（UGSS）",
+    "response_example": "{ \"code\": 200, \"msg\": \"操作成功\", \"data\": { \"stationCode\": \"GS001\", \"stationName\": \"GNSS基准站1号\", \"longitude\": 116.4074, \"latitude\": 39.9042, \"altitude\": 80.5, \"dataTime\": 1709961600000, \"signalData\": { \"avgCN0\": 42.5, \"frequencyCN0\": [ {\"frequency\": 0, \"frequencyName\": \"BDS B1C\", \"cn0\": 43.5}, {\"frequency\": 1, \"frequencyName\": \"BDS B1I\", \"cn0\": 42.8}, {\"frequency\": 2, \"frequencyName\": \"BDS B2a\", \"cn0\": 41.5}, {\"frequency\": 3, \"frequencyName\": \"GPS L1\", \"cn0\": 44.2} ] }, \"warningStatus\": { \"hasWarning\": true, \"warnings\": [ { \"frequency\": 0, \"frequencyName\": \"BDS B1C\", \"level\": 1, \"threshold\": 35.0, \"currentValue\": 32.5 } ] }, \"eventStatus\": { \"isAffected\": true, \"activeEventCount\": 1, \"events\": [ { \"eventCode\": \"UGSS-E-20260309001\", \"level\": 1, \"startTime\": 1709961600000 } ] }, \"dataQuality\": { \"completeness\": 100.0, \"isInterpolated\": false } }, \"timestamp\": 1709961600000}"
   },
   {
     "path": "/api/v1/ugss/events",
@@ -235,7 +255,8 @@
       "level",
       "status"
     ],
-    "module": "GNSS干扰监测模块（UGSS）"
+    "module": "GNSS干扰监测模块（UGSS）",
+    "response_example": "{ \"code\": 200, \"msg\": \"操作成功\", \"data\": { \"total\": 20, \"pageNum\": 1, \"pageSize\": 20, \"events\": [ { \"eventCode\": \"UGSS-E-20260309001\", \"startTime\": 1709961600000, \"endTime\": null, \"duration\": 3600, \"status\": \"active\", \"maxLevel\": 1, \"frequency\": 0, \"frequencyName\": \"BDS B1C\", \"affectedStationCount\": 8, \"rangeGeoJSON\": \"{\\\"type\\\":\\\"Polygon\\\",\\\"coordinates\\\":[[[116.3,39.9],[116.5,39.9],[116.5,40.0],[116.3,40.0],[116.3,39.9]]]}\", \"maxSeverityRangeGeoJSON\": \"{\\\"type\\\":\\\"Polygon\\\",\\\"coordinates\\\":[[[116.35,39.92],[116.4,39.92],[116.4,39.95],[116.35,39.95],[116.35,39.92]]]}\" } ] }, \"timestamp\": 1709961600000}"
   },
   {
     "path": "/api/v1/ugss/statistics/frequency",
@@ -247,7 +268,8 @@
       "endTime",
       "interval"
     ],
-    "module": "GNSS干扰监测模块（UGSS）"
+    "module": "GNSS干扰监测模块（UGSS）",
+    "response_example": "{ \"code\": 200, \"msg\": \"操作成功\", \"data\": { \"interval\": \"1h\", \"startTime\": 1709904000000, \"endTime\": 1709990400000, \"timeSeries\": { \"timestamps\": [1709904000000, 1709907600000], \"frequencies\": [ { \"frequency\": 0, \"frequencyName\": \"BDS B1C\", \"avgCN0\": [42.5, 41.2], \"minCN0\": [35.5, 32.5], \"warningCount\": [0, 2], \"eventCount\": [0, 1] }, { \"frequency\": 1, \"frequencyName\": \"BDS B1I\", \"avgCN0\": [43.2, 42.8], \"minCN0\": [38.5, 37.2], \"warningCount\": [0, 0], \"eventCount\": [0, 0] } ] }, \"summary\": { \"totalEvents\": 5, \"totalWarnings\": 3, \"frequencyWithMostEvents\": { \"frequency\": 0, \"frequencyName\": \"BDS B1C\", \"eventCount\": 3 }, \"frequencyWithLowestCN0\": { \"frequency\": 0, \"frequencyName\": \"BDS B1C\", \"minCN0\": 32.5 } } }, \"timestamp\": 1709961600000}"
   },
   {
     "path": "/api/v1/ugss/warnings/summary",
@@ -260,7 +282,8 @@
       "level",
       "frequency"
     ],
-    "module": "GNSS干扰监测模块（UGSS）"
+    "module": "GNSS干扰监测模块（UGSS）",
+    "response_example": "{ \"code\": 200, \"msg\": \"操作成功\", \"data\": { \"startTime\": 1709904000000, \"endTime\": 1709990400000, \"summary\": { \"totalCount\": 3, \"levelOneCount\": 1, \"levelTwoCount\": 1, \"levelThreeCount\": 1, \"affectedStationCount\": 8, \"frequencyTypes\": [0, 1] }, \"levelDistribution\": [ {\"level\": 1, \"count\": 1, \"percentage\": 33.3}, {\"level\": 2, \"count\": 1, \"percentage\": 33.3}, {\"level\": 3, \"count\": 1, \"percentage\": 33.3} ], \"frequencyDistribution\": [ {\"frequency\": 0, \"frequencyName\": \"BDS B1C\", \"count\": 2}, {\"frequency\": 1, \"frequencyName\": \"BDS B1I\", \"count\": 1} ], \"warnings\": [ { \"warningId\": \"UGSS-W-20260309001\", \"code\": \"GNSS-20260309-001\", \"time\": 1709961600000, \"level\": 1, \"frequency\": 0, \"frequencyName\": \"BDS B1C\", \"threshold\": 35.0, \"stationCount\": 5, \"minCN0\": 32.5, \"minCN0Station\": \"GS001\" } ] }, \"timestamp\": 1709961600000}"
   },
   {
     "path": "/api/v1/upss/overview",
@@ -268,7 +291,8 @@
     "title": "模块概览",
     "description": "获取沉降态势感知模块的概览数据",
     "parameter": [],
-    "module": "沉降态势感知模块（UPSS）"
+    "module": "沉降态势感知模块（UPSS）",
+    "response_example": "{ \"code\": 200, \"msg\": \"操作成功\", \"data\": { \"latestIssue\": \"20221220\", \"issueDate\": \"2022-12-20\", \"points\": { \"total\": 10000, \"warningPoints\": 300, \"warningRate\": 3.0 }, \"subsidence\": { \"maxSubsidence\": 125.5, \"maxSubsidencePoint\": { \"pointCode\": \"UPSS-PT-001\", \"longitude\": 116.4074, \"latitude\": 39.9042 }, \"avgSubsidence\": 25.5, \"rapidChangePoints\": 50 }, \"distribution\": { \"range0to20\": {\"count\": 8500, \"percentage\": 85.0}, \"range20to50\": {\"count\": 1200, \"percentage\": 12.0}, \"range50to100\": {\"count\": 250, \"percentage\": 2.5}, \"rangeAbove100\": {\"count\": 50, \"percentage\": 0.5} }, \"dataQuality\": { \"completeness\": 100.0, \"interpolated\": 15, \"verified\": 10000 } }, \"timestamp\": 1709961600000}"
   },
   {
     "path": "/api/v1/upss/periods",
@@ -279,7 +303,8 @@
       "pageNum",
       "pageSize"
     ],
-    "module": "沉降态势感知模块（UPSS）"
+    "module": "沉降态势感知模块（UPSS）",
+    "response_example": "{ \"code\": 200, \"msg\": \"操作成功\", \"data\": { \"total\": 50, \"pageNum\": 1, \"pageSize\": 20, \"periods\": [ { \"issue\": \"20221220\", \"issueDate\": \"2022-12-20\", \"prevIssue\": \"20221210\", \"daysInterval\": 10, \"totalPoints\": 10000, \"warningPoints\": 300, \"maxSubsidence\": 125.5, \"avgSubsidence\": 25.5 } ] }, \"timestamp\": 1709961600000}"
   },
   {
     "path": "/api/v1/upss/periods/{issue}/summary",
@@ -287,7 +312,8 @@
     "title": "期次汇总",
     "description": "获取指定期次的沉降汇总统计",
     "parameter": [],
-    "module": "沉降态势感知模块（UPSS）"
+    "module": "沉降态势感知模块（UPSS）",
+    "response_example": "{ \"code\": 200, \"msg\": \"操作成功\", \"data\": { \"issue\": \"20221220\", \"issueDate\": \"2022-12-20\", \"prevIssue\": \"20221210\", \"daysInterval\": 10, \"points\": { \"total\": 10000, \"measured\": 10000, \"completeness\": 100.0 }, \"subsidenceStats\": { \"max\": 125.5, \"min\": 0.5, \"avg\": 25.5, \"stdDev\": 18.2 }, \"distribution\": [ {\"range\": \"0-20mm\", \"count\": 8500, \"percentage\": 85.0}, {\"range\": \"20-50mm\", \"count\": 1200, \"percentage\": 12.0}, {\"range\": \"50-100mm\", \"count\": 250, \"percentage\": 2.5}, {\"range\": \">100mm\", \"count\": 50, \"percentage\": 0.5} ], \"topPoints\": [ { \"rank\": 1, \"pointCode\": \"UPSS-PT-001\", \"longitude\": 116.4074, \"latitude\": 39.9042, \"subsidence\": 125.5, \"rate\": 25.5 } ], \"rapidChangePoints\": { \"threshold\": 50, \"count\": 50, \"points\": [ { \"pointCode\": \"UPSS-PT-001\", \"longitude\": 116.4074, \"latitude\": 39.9042, \"subsidence\": 125.5, \"rate\": 25.5 } ] } }, \"timestamp\": 1709961600000}"
   },
   {
     "path": "/api/v1/upss/points/{code}/history",
@@ -298,7 +324,8 @@
       "startIssue",
       "endIssue"
     ],
-    "module": "沉降态势感知模块（UPSS）"
+    "module": "沉降态势感知模块（UPSS）",
+    "response_example": "{ \"code\": 200, \"msg\": \"操作成功\", \"data\": { \"pointCode\": \"UPSS-PT-001\", \"longitude\": 116.4074, \"latitude\": 39.9042, \"timeSeries\": { \"issues\": [\"20221120\", \"20221130\", \"20221210\", \"20221220\"], \"dates\": [\"2022-11-20\", \"2022-11-30\", \"2022-12-10\", \"2022-12-20\"], \"subsidence\": [50.0, 75.0, 100.0, 125.5], \"rate\": [12.5, 25.0, 25.0, 25.5], \"cumulative\": [50.0, 75.0, 100.0, 125.5] }, \"statistics\": { \"totalSubsidence\": 125.5, \"avgRate\": 22.0, \"maxRate\": 25.5, \"acceleration\": 0.5 }, \"trendAnalysis\": { \"trend\": \"accelerating\", \"confidence\": 0.95 } }, \"timestamp\": 1709961600000}"
   },
   {
     "path": "/api/v1/upss/statistics/regional",
@@ -316,7 +343,8 @@
       "pageNum",
       "pageSize"
     ],
-    "module": "沉降态势感知模块（UPSS）"
+    "module": "沉降态势感知模块（UPSS）",
+    "response_example": "{ \"code\": 200, \"msg\": \"操作成功\", \"data\": { \"issue\": \"20221220\", \"dimension\": \"admin\", \"regionCode\": \"110105\", \"regionName\": \"朝阳区\", \"dataType\": \"points\", \"total\": 2000, \"pageNum\": 1, \"pageSize\": 1000, \"points\": [ { \"pointCode\": \"100001\", \"longitude\": 116.4074, \"latitude\": 39.9042, \"precision\": 3, \"subsidence\": 125.5, \"timestamp\": 1709961600000 }, { \"pointCode\": \"100002\", \"longitude\": 116.4174, \"latitude\": 39.9142, \"precision\": 3, \"subsidence\": 85.5, \"timestamp\": 1709961600000 } ] }, \"timestamp\": 1709961600000}"
   },
   {
     "path": "/api/v1/upss/statistics/gridRate",
@@ -330,7 +358,8 @@
       "maxLng",
       "maxLat"
     ],
-    "module": "沉降态势感知模块（UPSS）"
+    "module": "沉降态势感知模块（UPSS）",
+    "response_example": "{ \"code\": 200, \"msg\": \"操作成功\", \"data\": { \"issue\": \"20221220\", \"gridBounds\": { \"leftLon\": 116.0, \"topLat\": 40.0, \"rightLon\": 117.0, \"bottomLat\": 39.0, \"precision\": 0.01, \"hNum\": 100, \"vNum\": 100 }, \"points\": [ { \"longitude\": 116.4074, \"latitude\": 39.9042, \"precision\": 3, \"value\": 25.5 }, { \"longitude\": 116.4174, \"latitude\": 39.9142, \"precision\": 3, \"value\": 18.5 } ], \"statistics\": { \"maxValue\": 50.0, \"minValue\": 0.5, \"avgValue\": 15.2, \"stdDev\": 10.3 }, \"distribution\": [ {\"range\": \"0-10\", \"count\": 5000, \"percentage\": 50.0}, {\"range\": \"10-20\", \"count\": 3000, \"percentage\": 30.0}, {\"range\": \"20-30\", \"count\": 1500, \"percentage\": 15.0}, {\"range\": \">30\", \"count\": 500, \"percentage\": 5.0} ] }, \"timestamp\": 1709961600000}"
   },
   {
     "path": "/api/v1/upss/statistics/gridGradient",
@@ -344,7 +373,8 @@
       "maxLng",
       "maxLat"
     ],
-    "module": "沉降态势感知模块（UPSS）"
+    "module": "沉降态势感知模块（UPSS）",
+    "response_example": "{ \"code\": 200, \"msg\": \"操作成功\", \"data\": { \"issue\": \"20221220\", \"gridBounds\": { \"leftLon\": 116.0, \"topLat\": 40.0, \"rightLon\": 117.0, \"bottomLat\": 39.0, \"precision\": 0.01, \"hNum\": 100, \"vNum\": 100 }, \"points\": [ { \"longitude\": 116.4074, \"latitude\": 39.9042, \"precision\": 3, \"value\": 25.5 }, { \"longitude\": 116.4174, \"latitude\": 39.9142, \"precision\": 3, \"value\": 18.5 } ], \"statistics\": { \"maxValue\": 50.0, \"minValue\": 0.5, \"avgValue\": 15.2, \"stdDev\": 10.3 }, \"distribution\": [ {\"range\": \"0-10\", \"count\": 5000, \"percentage\": 50.0}, {\"range\": \"10-20\", \"count\": 3000, \"percentage\": 30.0}, {\"range\": \"20-30\", \"count\": 1500, \"percentage\": 15.0}, {\"range\": \">30\", \"count\": 500, \"percentage\": 5.0} ] }, \"timestamp\": 1709961600000}"
   },
   {
     "path": "/api/v1/upss/visualization/warning/issue",
@@ -356,7 +386,8 @@
       "startTime",
       "endTime"
     ],
-    "module": "沉降态势感知模块（UPSS）"
+    "module": "沉降态势感知模块（UPSS）",
+    "response_example": "{ \"code\": 200, \"msg\": \"操作成功\", \"data\": { \"issue\": \"20221220\", \"issueDate\": \"2022-12-20\", \"warnings\": [ { \"pointCode\": \"UPSS-PT-001\", \"time\": 1671523200000, \"longitude\": 116.4074, \"latitude\": 39.9042, \"level\": 1, \"subsidence\": 125.5, \"rate\": 25.5, \"regionName\": \"朝阳区\" }, { \"pointCode\": \"UPSS-PT-002\", \"time\": 1671523200000, \"longitude\": 116.4174, \"latitude\": 39.9142, \"level\": 2, \"subsidence\": 85.5, \"rate\": 18.5, \"regionName\": \"朝阳区\" } ], \"summary\": { \"total\": 300, \"levelOneCount\": 50, \"levelTwoCount\": 100, \"levelThreeCount\": 150 } }, \"timestamp\": 1709961600000}"
   },
   {
     "path": "/api/v1/upss/visualization/statistics/issue",
@@ -366,7 +397,8 @@
     "parameter": [
       "issue"
     ],
-    "module": "沉降态势感知模块（UPSS）"
+    "module": "沉降态势感知模块（UPSS）",
+    "response_example": "{ \"code\": 200, \"msg\": \"操作成功\", \"data\": { \"issue\": \"20221220\", \"issueDate\": \"2022-12-20\", \"intervalStats\": [ { \"range\": \"0-20mm\", \"count\": 8500, \"percentage\": 85.0 }, { \"range\": \"20-50mm\", \"count\": 1200, \"percentage\": 12.0 }, { \"range\": \"50-100mm\", \"count\": 250, \"percentage\": 2.5 }, { \"range\": \">100mm\", \"count\": 50, \"percentage\": 0.5 } ], \"statistics\": { \"totalPoints\": 10000, \"measuredPoints\": 10000, \"completeness\": 100.0, \"maxSubsidence\": 125.5, \"minSubsidence\": 0.5, \"avgSubsidence\": 25.5 } }, \"timestamp\": 1709961600000}"
   },
   {
     "path": "/api/v1/upss/visualization/max-subsidence/timeseries",
@@ -377,7 +409,8 @@
       "startIssue",
       "endIssue"
     ],
-    "module": "沉降态势感知模块（UPSS）"
+    "module": "沉降态势感知模块（UPSS）",
+    "response_example": "{ \"code\": 200, \"msg\": \"操作成功\", \"data\": { \"pointInfo\": { \"pointCode\": \"UPSS-PT-001\", \"longitude\": 116.4074, \"latitude\": 39.9042, \"regionName\": \"朝阳区\" }, \"timeSeries\": { \"issues\": [\"20201220\", \"20211220\", \"20221220\"], \"dates\": [\"2020-12-20\", \"2021-12-20\", \"2022-12-20\"], \"subsidence\": [50.0, 85.0, 125.5], \"rate\": [12.5, 17.5, 40.5] }, \"statistics\": { \"totalSubsidence\": 125.5, \"avgRate\": 23.5, \"maxRate\": 40.5, \"trend\": \"accelerating\" } }, \"timestamp\": 1709961600000}"
   },
   {
     "path": "/api/v1/upss/visualization/top-gradient",
@@ -388,7 +421,8 @@
       "startIssue",
       "endIssue"
     ],
-    "module": "沉降态势感知模块（UPSS）"
+    "module": "沉降态势感知模块（UPSS）",
+    "response_example": "{ \"code\": 200, \"msg\": \"操作成功\", \"data\": { \"startIssue\": \"20221210\", \"endIssue\": \"20221220\", \"topPoints\": [ { \"rank\": 1, \"pointCode\": \"UPSS-PT-001\", \"longitude\": 116.4074, \"latitude\": 39.9042, \"gradient\": 45.5, \"subsidence\": 125.5, \"rate\": 25.5, \"regionName\": \"朝阳区\" }, { \"rank\": 2, \"pointCode\": \"UPSS-PT-002\", \"longitude\": 116.4174, \"latitude\": 39.9142, \"gradient\": 38.2, \"subsidence\": 98.5, \"rate\": 22.0, \"regionName\": \"朝阳区\" }, { \"rank\": 3, \"pointCode\": \"UPSS-PT-003\", \"longitude\": 116.4274, \"latitude\": 39.9242, \"gradient\": 32.8, \"subsidence\": 85.3, \"rate\": 18.5, \"regionName\": \"海淀区\" }, { \"rank\": 4, \"pointCode\": \"UPSS-PT-004\", \"longitude\": 116.4374, \"latitude\": 39.9342, \"gradient\": 28.5, \"subsidence\": 72.0, \"rate\": 15.2, \"regionName\": \"海淀区\" }, { \"rank\": 5, \"pointCode\": \"UPSS-PT-005\", \"longitude\": 116.4474, \"latitude\": 39.9442, \"gradient\": 25.0, \"subsidence\": 65.8, \"rate\": 12.8, \"regionName\": \"西城区\" } ] }, \"timestamp\": 1709961600000}"
   },
   {
     "path": "/api/v1/unga/overview",
@@ -401,7 +435,8 @@
       "minLat",
       "maxLat"
     ],
-    "module": "走航甲烷检测模块（UNGA）"
+    "module": "走航甲烷检测模块（UNGA）",
+    "response_example": "{ \"code\": 200, \"msg\": \"操作成功\", \"data\": { \"snapshotTime\": 1709961600000, \"devices\": { \"total\": 15, \"online\": 12, \"offline\": 3, \"onlineRate\": 80.0 }, \"tasks\": { \"total\": 50, \"pending\": 5, \"inProgress\": 3, \"completed\": 42, \"todayMileage\": 235.5 }, \"warnings\": { \"activeCount\": 8, \"todayCount\": 12, \"levelOneCount\": 3, \"levelTwoCount\": 5, \"levelThreeCount\": 4, \"suspectedLeaks\": 8, \"confirmedLeaks\": 3 }, \"detectionQuality\": { \"completeness\": 95.0, \"coverageArea\": 45.5, \"avgGasConcentration\": 25.5, \"maxGasConcentration\": 155.2 } }, \"timestamp\": 1709961600000}"
   },
   {
     "path": "/api/v1/unga/tasks",
@@ -419,7 +454,8 @@
       "minLat",
       "maxLat"
     ],
-    "module": "走航甲烷检测模块（UNGA）"
+    "module": "走航甲烷检测模块（UNGA）",
+    "response_example": "{ \"code\": 200, \"msg\": \"操作成功\", \"data\": { \"total\": 50, \"pageNum\": 1, \"pageSize\": 20, \"tasks\": [ { \"taskId\": \"TASK001\", \"taskName\": \"朝阳区燃气管网检测\", \"regionCode\": \"110105\", \"regionName\": \"朝阳区\", \"status\": \"completed\", \"startTime\": 1709961600000, \"endTime\": 1709972400000, \"mileage\": 15.5, \"duration\": 3.0, \"suspectedLeakCount\": 2, \"confirmedLeakCount\": 1, \"maxGasConcentration\": 155.2, \"avgGasConcentration\": 25.5, \"trajectoryGeoJSON\": \"{\\\"type\\\":\\\"LineString\\\",\\\"coordinates\\\":[[116.3,39.9],[116.5,39.9]]}\" } ] }, \"timestamp\": 1709961600000}"
   },
   {
     "path": "/api/v1/unga/tasks/{id}/trajectory",
@@ -432,7 +468,8 @@
       "minLat",
       "maxLat"
     ],
-    "module": "走航甲烷检测模块（UNGA）"
+    "module": "走航甲烷检测模块（UNGA）",
+    "response_example": "{ \"code\": 200, \"msg\": \"操作成功\", \"data\": { \"taskId\": \"TASK001\", \"taskName\": \"朝阳区燃气管网检测\", \"trajectory\": { \"geoJSON\": \"{\\\"type\\\":\\\"LineString\\\",\\\"coordinates\\\":[[116.3,39.9],[116.5,39.9]]}\", \"samplingPoints\": [ { \"sequence\": 1, \"longitude\": 116.4074, \"latitude\": 39.9042, \"gasConcentration\": 25.5, \"timestamp\": 1709961600000 }, { \"sequence\": 2, \"longitude\": 116.4174, \"latitude\": 39.9142, \"gasConcentration\": 155.2, \"timestamp\": 1709961900000 } ] }, \"concentrationDistribution\": { \"low\": {\"count\": 80, \"percentage\": 80.0}, \"medium\": {\"count\": 15, \"percentage\": 15.0}, \"high\": {\"count\": 5, \"percentage\": 5.0} } }, \"timestamp\": 1709961600000}"
   },
   {
     "path": "/api/v1/unga/leaks",
@@ -450,7 +487,8 @@
       "minLat",
       "maxLat"
     ],
-    "module": "走航甲烷检测模块（UNGA）"
+    "module": "走航甲烷检测模块（UNGA）",
+    "response_example": "{ \"code\": 200, \"msg\": \"操作成功\", \"data\": { \"total\": 15, \"suspectedCount\": 8, \"confirmedCount\": 3, \"handledCount\": 4, \"leaks\": [ { \"leakId\": \"LEAK001\", \"taskId\": \"TASK001\", \"status\": \"suspected\", \"longitude\": 116.4074, \"latitude\": 39.9042, \"gasConcentration\": 155.2, \"detectionTime\": 1709961900000, \"level\": 1, \"nearbyPipeline\": \"朝阳路DN300\" } ] }, \"timestamp\": 1709961600000}"
   },
   {
     "path": "/api/v1/unga/statistics",
@@ -464,7 +502,8 @@
       "minLat",
       "maxLat"
     ],
-    "module": "走航甲烷检测模块（UNGA）"
+    "module": "走航甲烷检测模块（UNGA）",
+    "response_example": "{ \"code\": 200, \"msg\": \"操作成功\", \"data\": { \"packId\": \"PACK001\", \"statistics\": { \"leakRatio\": 5.2, \"concentrationPeak\": 155.2, \"concentrationAvg\": 25.5, \"yearOnYear\": 12.5, \"monthOnMonth\": -5.3, \"totalMileage\": 235.5, \"coverageArea\": 45.5, \"warningRatio\": 8.5 }, \"levelDistribution\": [ {\"level\": 1, \"count\": 3, \"percentage\": 20.0}, {\"level\": 2, \"count\": 5, \"percentage\": 33.3}, {\"level\": 3, \"count\": 7, \"percentage\": 46.7} ] }, \"timestamp\": 1709961600000}"
   },
   {
     "path": "/api/v1/gnss-device/overview",
@@ -472,7 +511,8 @@
     "title": "模块概览",
     "description": "获取北斗设备状态统计概览",
     "parameter": [],
-    "module": "北斗设备状态模块（GNSSDevice）"
+    "module": "北斗设备状态模块（GNSSDevice）",
+    "response_example": "{ \"code\": 200, \"msg\": \"操作成功\", \"data\": { \"snapshotTime\": 1709961600000, \"onlineRate\": 95.8, \"offlineRate\": 4.2, \"totalStations\": 120, \"onlineStations\": 115, \"offlineStations\": 5, \"satelliteCount\": { \"bdCount\": 12 }, \"signalQuality\": { \"qualifiedCount\": 108, \"unqualifiedCount\": 12, \"qualifiedRate\": 90.0 }, \"delayStatus\": { \"today\": { \"avg\": 1.2, \"p95\": 2.5 }, \"yesterday\": { \"avg\": 1.1, \"p95\": 2.3 } }, \"dataUpdateTime\": 1709961600000 }, \"timestamp\": 1709961600000}"
   },
   {
     "path": "/api/v1/gnss-device/stations",
@@ -484,7 +524,8 @@
       "pageSize",
       "status"
     ],
-    "module": "北斗设备状态模块（GNSSDevice）"
+    "module": "北斗设备状态模块（GNSSDevice）",
+    "response_example": "{ \"code\": 200, \"msg\": \"操作成功\", \"data\": { \"total\": 120, \"pageNum\": 1, \"pageSize\": 20, \"stations\": [ { \"stationCode\": \"GNSS001\", \"stationName\": \"朝阳基准站\", \"longitude\": 116.4074, \"latitude\": 39.9042, \"alt\": 50.5, \"status\": \"online\", \"satelliteCount\": { \"bdCount\": 12 }, \"signalQuality\": { \"qualified\": true, \"avgNoiseRatio\": 45.5 }, \"delay\": 1.2, \"lastUpdateTime\": 1709961600000 } ] }, \"timestamp\": 1709961600000}"
   },
   {
     "path": "/api/v1/gnss-device/stations/{code}/realtime",
@@ -492,7 +533,8 @@
     "title": "单站实时数据",
     "description": "获取指定站点的实时GNSS数据",
     "parameter": [],
-    "module": "北斗设备状态模块（GNSSDevice）"
+    "module": "北斗设备状态模块（GNSSDevice）",
+    "response_example": "{ \"code\": 200, \"msg\": \"操作成功\", \"data\": { \"stationCode\": \"GNSS001\", \"stationName\": \"朝阳基准站\", \"longitude\": 116.4074, \"latitude\": 39.9042, \"alt\": 50.5, \"satelliteCount\": { \"bdCount\": 12 }, \"signals\": [ { \"satelliteNumber\": \"B1\", \"azimuth\": 125.5, \"heightAngle\": 45.2, \"l1NoiseRatio\": 48, \"l2NoiseRatio\": 46, \"l3NoiseRatio\": null, \"l4NoiseRatio\": null, \"l5NoiseRatio\": null } ], \"signalQuality\": { \"qualified\": true, \"avgNoiseRatio\": 45.5, \"minNoiseRatio\": 42.0 }, \"dataTime\": 1709961600000 }, \"timestamp\": 1709961600000}"
   },
   {
     "path": "/api/v1/analysis/trend",
@@ -508,7 +550,8 @@
       "compareType",
       "regionCode"
     ],
-    "module": "综合分析接口"
+    "module": "综合分析接口",
+    "response_example": "{ \"code\": 200, \"msg\": \"操作成功\", \"data\": { \"module\": \"upns\", \"metric\": \"avgRain\", \"interval\": \"1d\", \"startTime\": 1709904000000, \"endTime\": 1709990400000, \"currentPeriod\": { \"timestamps\": [1709904000000, 1709990400000], \"values\": [12.5, 15.5], \"statistics\": { \"sum\": 28.0, \"avg\": 14.0, \"max\": 15.5, \"min\": 12.5 } }, \"comparePeriod\": { \"name\": \"去年同期\", \"timestamps\": [1678358400000, 1678444800000], \"values\": [10.2, 12.8], \"statistics\": { \"sum\": 23.0, \"avg\": 11.5, \"max\": 12.8, \"min\": 10.2 } }, \"comparison\": { \"sumChange\": 5.0, \"sumChangeRate\": 21.7, \"avgChange\": 2.5, \"avgChangeRate\": 21.7, \"trend\": \"increase\" } }, \"timestamp\": 1709961600000}"
   },
   {
     "path": "/api/v1/analysis/comparison",
@@ -523,7 +566,8 @@
       "endTime",
       "interval"
     ],
-    "module": "综合分析接口"
+    "module": "综合分析接口",
+    "response_example": "{ \"code\": 200, \"msg\": \"操作成功\", \"data\": { \"module\": \"upns\", \"metric\": \"avgRain\", \"interval\": \"1d\", \"startTime\": 1709904000000, \"endTime\": 1709990400000, \"targets\": [ { \"code\": \"ST001\", \"name\": \"朝阳观测站\", \"timeSeries\": { \"timestamps\": [1709904000000, 1709990400000], \"values\": [15.5, 20.5] }, \"statistics\": { \"sum\": 36.0, \"avg\": 18.0, \"max\": 20.5, \"min\": 15.5 } }, { \"code\": \"ST002\", \"name\": \"海淀观测站\", \"timeSeries\": { \"timestamps\": [1709904000000, 1709990400000], \"values\": [10.2, 12.8] }, \"statistics\": { \"sum\": 23.0, \"avg\": 11.5, \"max\": 12.8, \"min\": 10.2 } } ], \"ranking\": [ {\"code\": \"ST001\", \"name\": \"朝阳观测站\", \"value\": 18.0, \"rank\": 1}, {\"code\": \"ST002\", \"name\": \"海淀观测站\", \"value\": 11.5, \"rank\": 2} ] }, \"timestamp\": 1709961600000}"
   },
   {
     "path": "/api/v1/upns/risk",
@@ -533,7 +577,8 @@
     "parameter": [
       "regionCode"
     ],
-    "module": "综合分析接口"
+    "module": "综合分析接口",
+    "response_example": "{ \"code\": 200, \"msg\": \"操作成功\", \"data\": { \"module\": \"upns\", \"moduleName\": \"短临降水预警\", \"assessmentTime\": 1709961600000, \"regionCode\": \"110105\", \"regionName\": \"朝阳区\", \"riskLevel\": \"high\", \"riskScore\": 75.5, \"riskFactors\": [ { \"factor\": \"activeWarnings\", \"factorName\": \"活跃预警数\", \"value\": 5, \"weight\": 0.3, \"score\": 15.0, \"level\": \"high\" }, { \"factor\": \"maxRain\", \"factorName\": \"最大降雨量\", \"value\": 45.5, \"weight\": 0.25, \"score\": 22.75, \"level\": \"high\" }, { \"factor\": \"maxPWV\", \"factorName\": \"最大可降水量\", \"value\": 55.2, \"weight\": 0.25, \"score\": 22.75, \"level\": \"high\" }, { \"factor\": \"dataCompleteness\", \"factorName\": \"数据完整率\", \"value\": 98.5, \"weight\": 0.2, \"score\": 15.0, \"level\": \"low\" } ], \"recommendation\": \"建议加强监测，注意防范强降水可能引发的城市内涝\" }, \"timestamp\": 1709961600000}"
   },
   {
     "path": "/api/v1/udmds/risk",
@@ -543,7 +588,8 @@
     "parameter": [
       "projectCode"
     ],
-    "module": "综合分析接口"
+    "module": "综合分析接口",
+    "response_example": "{ \"code\": 200, \"msg\": \"操作成功\", \"data\": { \"module\": \"udmds\", \"moduleName\": \"形变安全监测\", \"assessmentTime\": 1709961600000, \"projectCode\": \"PRJ001\", \"projectName\": \"朝阳区地铁监测\", \"riskLevel\": \"medium\", \"riskScore\": 55.0, \"riskFactors\": [ { \"factor\": \"activeAlerts\", \"factorName\": \"活跃告警数\", \"value\": 5, \"weight\": 0.35, \"score\": 17.5, \"level\": \"medium\" }, { \"factor\": \"maxDisplacement\", \"factorName\": \"最大位移量\", \"value\": 15.5, \"weight\": 0.3, \"score\": 15.0, \"level\": \"medium\" }, { \"factor\": \"alertTrend\", \"factorName\": \"告警趋势\", \"value\": \"increasing\", \"weight\": 0.2, \"score\": 12.5, \"level\": \"medium\" }, { \"factor\": \"deviceOnlineRate\", \"factorName\": \"设备在线率\", \"value\": 96.0, \"weight\": 0.15, \"score\": 10.0, \"level\": \"low\" } ], \"recommendation\": \"建议持续关注告警点变化趋势，必要时进行现场核查\" }, \"timestamp\": 1709961600000}"
   },
   {
     "path": "/api/v1/ugss/risk",
@@ -551,7 +597,8 @@
     "title": "GNSS干扰风险评估",
     "description": "获取GNSS干扰监测模块的独立风险评估",
     "parameter": [],
-    "module": "综合分析接口"
+    "module": "综合分析接口",
+    "response_example": "{ \"code\": 200, \"msg\": \"操作成功\", \"data\": { \"module\": \"ugss\", \"moduleName\": \"GNSS干扰监测\", \"assessmentTime\": 1709961600000, \"riskLevel\": \"low\", \"riskScore\": 25.0, \"riskFactors\": [ { \"factor\": \"activeEvents\", \"factorName\": \"活跃事件数\", \"value\": 1, \"weight\": 0.4, \"score\": 8.0, \"level\": \"low\" }, { \"factor\": \"avgCN0\", \"factorName\": \"平均载噪比\", \"value\": 42.5, \"weight\": 0.3, \"score\": 7.5, \"level\": \"low\" }, { \"factor\": \"affectedStations\", \"factorName\": \"受影响站点数\", \"value\": 3, \"weight\": 0.2, \"score\": 6.0, \"level\": \"low\" }, { \"factor\": \"stationOnlineRate\", \"factorName\": \"站点在线率\", \"value\": 97.5, \"weight\": 0.1, \"score\": 3.5, \"level\": \"low\" } ], \"recommendation\": \"当前GNSS信号质量良好，干扰风险较低\" }, \"timestamp\": 1709961600000}"
   },
   {
     "path": "/api/v1/upss/risk",
@@ -561,6 +608,7 @@
     "parameter": [
       "regionCode"
     ],
-    "module": "综合分析接口"
+    "module": "综合分析接口",
+    "response_example": "{ \"code\": 200, \"msg\": \"操作成功\", \"data\": { \"module\": \"upss\", \"moduleName\": \"沉降态势感知\", \"assessmentTime\": 1709961600000, \"issue\": \"20221220\", \"regionCode\": \"110105\", \"regionName\": \"朝阳区\", \"riskLevel\": \"medium\", \"riskScore\": 60.0, \"riskFactors\": [ { \"factor\": \"warningPointRate\", \"factorName\": \"预警点比例\", \"value\": 5.0, \"weight\": 0.35, \"score\": 21.0, \"level\": \"medium\" }, { \"factor\": \"maxSubsidence\", \"factorName\": \"最大沉降量\", \"value\": 125.5, \"weight\": 0.3, \"score\": 18.0, \"level\": \"medium\" }, { \"factor\": \"rapidChangePointRate\", \"factorName\": \"快速变化点比例\", \"value\": 2.5, \"weight\": 0.2, \"score\": 12.0, \"level\": \"medium\" }, { \"factor\": \"dataCompleteness\", \"factorName\": \"数据完整率\", \"value\": 100.0, \"weight\": 0.15, \"score\": 9.0, \"level\": \"low\" } ], \"recommendation\": \"建议重点关注快速变化点，加强后续监测频次\" }, \"timestamp\": 1709961600000}"
   }
 ]
