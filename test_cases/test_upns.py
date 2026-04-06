@@ -99,10 +99,6 @@ def run_all_tests():
     """运行短临降水预警模块的所有测试"""
     client = APIClient(config.host, config.app_key, config.app_secret, config.timeout)
 
-    print("\n" + "#" * 60)
-    print("#" + " " * 16 + "短临降水预警模块测试" + " " * 16 + "#")
-    print("#" * 60 + "\n")
-
     test_get_overview(client)
     test_get_stations(client)
     test_get_station_realtime(client)
@@ -112,8 +108,6 @@ def run_all_tests():
     test_get_rain_statistics(client)
     test_get_pwv_statistics(client)
     test_get_risk(client)
-
-    print("\n短临降水预警模块测试完成!\n")
 
 
 if __name__ == '__main__':

@@ -46,17 +46,11 @@ def run_all_tests():
     """运行系统概览模块的所有测试"""
     client = APIClient(config.host, config.app_key, config.app_secret, config.timeout)
 
-    print("\n" + "#" * 60)
-    print("#" + " " * 18 + "系统概览模块测试" + " " * 18 + "#")
-    print("#" * 60 + "\n")
-
     # 测试1: 获取系统实时概览
     test_get_realtime(client)
 
     # 测试2: 获取系统综合统计
     test_get_summary(client)
-
-    print("\n系统概览模块测试完成!\n")
 
 
 if __name__ == '__main__':

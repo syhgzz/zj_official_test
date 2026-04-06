@@ -88,10 +88,6 @@ def run_all_tests():
     """运行走航甲烷检测模块的所有测试"""
     client = APIClient(config.host, config.app_key, config.app_secret, config.timeout)
 
-    print("\n" + "#" * 60)
-    print("#" + " " * 16 + "走航甲烷检测模块测试" + " " * 16 + "#")
-    print("#" * 60 + "\n")
-
     # 测试1: 获取模块概览
     test_get_overview(client)
 
@@ -106,8 +102,6 @@ def run_all_tests():
 
     # 测试5: 获取走航统计数据
     test_get_statistics(client)
-
-    print("\n走航甲烷检测模块测试完成!\n")
 
 
 if __name__ == '__main__':

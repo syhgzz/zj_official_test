@@ -59,10 +59,6 @@ def run_all_tests():
     """运行北斗设备状态模块的所有测试"""
     client = APIClient(config.host, config.app_key, config.app_secret, config.timeout)
 
-    print("\n" + "#" * 60)
-    print("#" + " " * 16 + "北斗设备状态模块测试" + " " * 16 + "#")
-    print("#" * 60 + "\n")
-
     # 测试1: 获取模块概览
     test_get_overview(client)
 
@@ -71,8 +67,6 @@ def run_all_tests():
 
     # 测试3: 获取站点实时数据
     test_get_station_realtime(client)
-
-    print("\n北斗设备状态模块测试完成!\n")
 
 
 if __name__ == '__main__':

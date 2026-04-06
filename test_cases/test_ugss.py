@@ -82,10 +82,6 @@ def run_all_tests():
     """运行GNSS干扰监测模块的所有测试"""
     client = APIClient(config.host, config.app_key, config.app_secret, config.timeout)
 
-    print("\n" + "#" * 60)
-    print("#" + " " * 16 + "GNSS干扰监测模块测试" + " " * 16 + "#")
-    print("#" * 60 + "\n")
-
     test_get_overview(client)
     test_get_stations(client)
     test_get_station_realtime(client)
@@ -93,8 +89,6 @@ def run_all_tests():
     test_get_frequency_statistics(client)
     test_get_warnings_summary(client)
     test_get_risk(client)
-
-    print("\nGNSS干扰监测模块测试完成!\n")
 
 
 if __name__ == '__main__':
