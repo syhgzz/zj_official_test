@@ -22,6 +22,7 @@ _CAPTURE_STATE: Dict[str, Any] = {
     'current_module_total': 0,
     'current_module_index': 0,
     'records': [],
+    'last_response_meta': {},
 }
 
 
@@ -134,6 +135,42 @@ def _append_api_log_line(line: str):
         f.write(line + '\n')
 
 
+def _sanitize_sequence(value: Any) -> str:
+    """将序号清洗为可用于文件名的文本。"""
+    text = str(value or '').strip()
+    if not text:
+        return ''
+
+    safe_chars = []
+    for ch in text:
+        if ch.isalnum() or ch in ('.', '_', '-'):
+            safe_chars.append(ch)
+        else:
+            safe_chars.append('_')
+
+    return ''.join(safe_chars).strip('_')
+
+
+def _sanitize_path_for_filename(path_value: Any) -> str:
+    """将接口路径转换为文件名安全片段。"""
+    text = str(path_value or '').strip()
+    if not text:
+        return ''
+
+    text = text.split('?', 1)[0].strip().strip('/')
+    if not text:
+        return 'root'
+
+    safe = text
+    for old, new in (('/', '_'), ('-', '_'), ('{', ''), ('}', ''), (' ', '_')):
+        safe = safe.replace(old, new)
+
+    while '__' in safe:
+        safe = safe.replace('__', '_')
+
+    return safe.strip('_')
+
+
 def start_stats_capture(
     response_dir: str = 'responses',
     planned_total: int = 0,
@@ -169,6 +206,7 @@ def start_stats_capture(
         'current_module_total': 0,
         'current_module_index': 0,
         'records': [],
+        'last_response_meta': {},
     })
 
     with open(api_log_path, 'w', encoding='utf-8') as f:
@@ -405,6 +443,14 @@ def print_response(
         'module_total': module_total,
     }
 
+    _CAPTURE_STATE['last_response_meta'] = {
+        'number': number,
+        'path': path,
+        'title': display_title,
+        'api_name': api_name,
+        'global_index': global_index,
+    }
+
     if _CAPTURE_STATE.get('enabled'):
         _CAPTURE_STATE['records'].append(record)
 
@@ -434,10 +480,24 @@ def save_response_to_file(
     # 创建保存目录
     os.makedirs(response_dir, exist_ok=True)
 
-    # 生成文件名
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    safe_name = api_name.replace('/', '_').replace(' ', '_')
-    filename = f"{timestamp}_{safe_name}.json"
+    # 按“序号_path”生成文件名，优先使用最近一次 print_response 的元信息。
+    meta = _CAPTURE_STATE.get('last_response_meta') or {}
+
+    sequence = _sanitize_sequence(meta.get('number'))
+    if not sequence:
+        global_index = meta.get('global_index')
+        if isinstance(global_index, int) and global_index > 0:
+            sequence = str(global_index)
+
+    path_part = _sanitize_path_for_filename(meta.get('path'))
+    if not path_part:
+        path_part = _sanitize_path_for_filename(api_name)
+
+    if sequence:
+        filename = f"{sequence}_{path_part}.json"
+    else:
+        filename = f"{path_part}.json"
+
     filepath = os.path.join(response_dir, filename)
 
     # 保存响应
