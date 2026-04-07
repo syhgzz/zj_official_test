@@ -68,6 +68,7 @@ def test_get_station_realtime(client: APIClient, code: str = "BJ001"):
     """
     number = '3.6.3'
     title = '单站实时数据'
+    code = 'CQQX0038'
     response = client.request('GET', f'/api/v1/gnss-device/stations/{code}/realtime')
     print_response(
         '获取站点实时数据',

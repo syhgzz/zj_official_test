@@ -68,6 +68,7 @@ def test_get_task_trajectory(client: APIClient, task_id: int = 1):
     """
     number = '3.5.3'
     title = '走航轨迹查询'
+    task_id ='430000003510_20250630_2018'
     response = client.request('GET', f'/api/v1/unga/tasks/{task_id}/trajectory')
     print_response(
         '获取任务轨迹数据',
@@ -117,7 +118,8 @@ def test_get_statistics(client: APIClient):
     """
     number = '3.5.5'
     title = '统计分析'
-    response = client.request('GET', '/api/v1/unga/statistics')
+    params = {'packId': '430000003510_20250630_1437'}
+    response = client.request('GET', '/api/v1/unga/statistics', params=params)
     print_response(
         '获取走航统计数据',
         'GET',

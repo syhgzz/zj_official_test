@@ -51,10 +51,11 @@ def test_get_periods(client: APIClient):
     return response
 
 
-def test_get_period_summary(client: APIClient, issue: str = "20220424"):
+def test_get_period_summary(client: APIClient, issue: str = "20221220"):
     """测试获取期次汇总统计"""
     number = '3.4.3'
     title = '期次汇总'
+    issue = "20220424"
     response = client.request('GET', f'/api/v1/upss/periods/{issue}/summary')
     print_response(
         '获取期次汇总统计',
@@ -74,7 +75,12 @@ def test_get_point_history(client: APIClient, code: str = "PS001"):
     """测试获取单点沉降历史"""
     number = '3.4.4'
     title = '单点沉降历史'
-    response = client.request('GET', f'/api/v1/upss/points/{code}/history')
+    code = 'PS001'
+    params = {
+        'startIssue': '20220424',
+        'endIssue': '20220526'
+    }
+    response = client.request('GET', f'/api/v1/upss/points/{code}/history',params=params)
     print_response(
         '获取单点沉降历史',
         'GET',
