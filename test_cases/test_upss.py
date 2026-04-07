@@ -51,11 +51,10 @@ def test_get_periods(client: APIClient):
     return response
 
 
-def test_get_period_summary(client: APIClient, issue: str = "20221220"):
+def test_get_period_summary(client: APIClient, issue: str = "20220424"):
     """测试获取期次汇总统计"""
     number = '3.4.3'
     title = '期次汇总'
-    issue = "20220424"
     response = client.request('GET', f'/api/v1/upss/periods/{issue}/summary')
     print_response(
         '获取期次汇总统计',
@@ -114,7 +113,7 @@ def test_get_grid_rate(client: APIClient):
     """测试获取网格沉降速率"""
     number = '3.4.6'
     title = '沉降速率'
-    params = {'issue': '20221220'}
+    params = {'issue': '20220424'}
     response = client.request('GET', '/api/v1/upss/statistics/gridRate', params=params)
     print_response(
         '获取网格沉降速率',
@@ -134,7 +133,7 @@ def test_get_grid_gradient(client: APIClient):
     """测试获取网格沉降梯度"""
     number = '3.4.7'
     title = '沉降速率梯度'
-    params = {'issue': '20221220'}
+    params = {'issue': '20220424'}
     response = client.request('GET', '/api/v1/upss/statistics/gridGradient', params=params)
     print_response(
         '获取网格沉降梯度',
@@ -154,7 +153,7 @@ def test_get_warning_issue(client: APIClient):
     """测试获取沉降预警信息"""
     number = '3.4.8'
     title = '预警信息'
-    params = {'issue': '20221220'}
+    params = {'issue': '20220424'}
     response = client.request('GET', '/api/v1/upss/visualization/warning/issue', params=params)
     print_response(
         '获取沉降预警信息',
@@ -213,7 +212,7 @@ def test_get_top_gradient(client: APIClient):
     """测试获取Top5沉降梯度"""
     number = '3.4.11'
     title = '前五沉降梯度值位置统计'
-    params = {'startIssue': '20221210', 'endIssue': '20221220'}
+    params = {'startIssue': '20220424', 'endIssue': '20220526'}
     response = client.request('GET', '/api/v1/upss/visualization/top-gradient', params=params)
     print_response(
         '获取Top5沉降梯度',
