@@ -55,6 +55,7 @@ def test_get_period_summary(client: APIClient, issue: str = "20221220"):
     """测试获取期次汇总统计"""
     number = '3.4.3'
     title = '期次汇总'
+    issue = "20220424"
     response = client.request('GET', f'/api/v1/upss/periods/{issue}/summary')
     print_response(
         '获取期次汇总统计',
@@ -93,7 +94,7 @@ def test_get_regional_statistics(client: APIClient):
     """测试获取区域沉降统计"""
     number = '3.4.5'
     title = '沉降地图（热力图）'
-    params = {'issue': '20221220', 'dimension': 'admin', 'pageNum': 1, 'pageSize': 1000}
+    params = {'issue': '20220424', 'dimension': 'admin', 'pageNum': 1, 'pageSize': 1000}
     response = client.request('GET', '/api/v1/upss/statistics/regional', params=params)
     print_response(
         '获取区域沉降统计',
