@@ -75,12 +75,12 @@ def test_get_point_history(client: APIClient, code: str = "PS001"):
     """测试获取单点沉降历史"""
     number = '3.4.4'
     title = '单点沉降历史'
-    code = 'PS001'
-    params = {
-        'startIssue': '20220424',
-        'endIssue': '20220526'
-    }
-    response = client.request('GET', f'/api/v1/upss/points/{code}/history',params=params)
+    code = '6156081'
+    # params = {
+    #     'startIssue': '20220424',
+    #     'endIssue': '20220526'
+    # }
+    response = client.request('GET', f'/api/v1/upss/points/{code}/history')
     print_response(
         '获取单点沉降历史',
         'GET',
@@ -179,7 +179,7 @@ def test_get_statistics_issue(client: APIClient):
     """测试获取沉降态势统计"""
     number = '3.4.9'
     title = '沉降态势统计'
-    params = {'issue': '20221220'}
+    params = {'issue': '20220424'}
     response = client.request('GET', '/api/v1/upss/visualization/statistics/issue', params=params)
     print_response(
         '获取沉降态势统计',

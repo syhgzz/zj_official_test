@@ -74,6 +74,7 @@ def test_get_point_realtime(client: APIClient, code: str = "PD001"):
     """测试获取监测点实时数据"""
     number = '3.2.4'
     title = '单点实时数据'
+    code = 'JCD01'
     response = client.request('GET', f'/api/v1/udmds/points/{code}/realtime')
     print_response(
         '获取监测点实时数据',
@@ -93,6 +94,7 @@ def test_get_point_history(client: APIClient, code: str = "PD001"):
     """测试获取监测点历史数据"""
     number = '3.2.5'
     title = '单点历史趋势'
+    code = 'JCD08'
     params = {'deviceType': 'displacement', 'interval': '1h'}
     response = client.request('GET', f'/api/v1/udmds/points/{code}/history', params=params)
     print_response(
