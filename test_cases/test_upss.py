@@ -53,7 +53,7 @@ def test_get_overview(client: APIClient):
         title=title,
     )
     if config.save_response and response:
-        save_response_to_file('upss_overview', response, config.response_dir)
+        save_response_to_file('upss_overview', response, '/api/v1/upss/overview', params, config.response_dir)
     return response
 
 
@@ -88,7 +88,7 @@ def test_get_periods(client: APIClient):
         title=title,
     )
     if config.save_response and response:
-        save_response_to_file('upss_periods', response, config.response_dir)
+        save_response_to_file('upss_periods', response, '/api/v1/upss/periods', params, config.response_dir)
     return response
 
 
@@ -122,7 +122,7 @@ def test_get_period_summary(client: APIClient, issue: str = "20221220"):
         title=title,
     )
     if config.save_response and response:
-        save_response_to_file('upss_period_summary', response, config.response_dir)
+        save_response_to_file('upss_period_summary', response, f'/api/v1/upss/periods/{issue}/summary', params, config.response_dir)
     return response
 
 
@@ -158,7 +158,7 @@ def test_get_point_history(client: APIClient, code: str = "PS001"):
         title=title,
     )
     if config.save_response and response:
-        save_response_to_file('upss_point_history', response, config.response_dir)
+        save_response_to_file('upss_point_history', response, f'/api/v1/upss/points/{code}/history', params, config.response_dir)
     return response
 
 
@@ -195,7 +195,7 @@ def test_get_regional_statistics(client: APIClient):
         title=title,
     )
     if config.save_response and response:
-        save_response_to_file('upss_regional_statistics', response, config.response_dir)
+        save_response_to_file('upss_regional_statistics', response, '/api/v1/upss/statistics/regional', params, config.response_dir)
     return response
 
 
@@ -229,7 +229,7 @@ def test_get_grid_rate(client: APIClient):
         title=title,
     )
     if config.save_response and response:
-        save_response_to_file('upss_grid_rate', response, config.response_dir)
+        save_response_to_file('upss_grid_rate', response, '/api/v1/upss/statistics/gridRate', params, config.response_dir)
     return response
 
 
@@ -263,7 +263,7 @@ def test_get_grid_gradient(client: APIClient):
         title=title,
     )
     if config.save_response and response:
-        save_response_to_file('upss_grid_gradient', response, config.response_dir)
+        save_response_to_file('upss_grid_gradient', response, '/api/v1/upss/statistics/gridGradient', params, config.response_dir)
     return response
 
 
@@ -297,7 +297,7 @@ def test_get_warning_issue(client: APIClient):
         title=title,
     )
     if config.save_response and response:
-        save_response_to_file('upss_warning_issue', response, config.response_dir)
+        save_response_to_file('upss_warning_issue', response, '/api/v1/upss/visualization/warning/issue', params, config.response_dir)
     return response
 
 
@@ -331,7 +331,7 @@ def test_get_statistics_issue(client: APIClient):
         title=title,
     )
     if config.save_response and response:
-        save_response_to_file('upss_statistics_issue', response, config.response_dir)
+        save_response_to_file('upss_statistics_issue', response, '/api/v1/upss/visualization/statistics/issue', params, config.response_dir)
     return response
 
 
@@ -364,7 +364,7 @@ def test_get_max_subsidence_timeseries(client: APIClient):
         title=title,
     )
     if config.save_response and response:
-        save_response_to_file('upss_max_subsidence_timeseries', response, config.response_dir)
+        save_response_to_file('upss_max_subsidence_timeseries', response, '/api/v1/upss/visualization/max-subsidence/timeseries', params, config.response_dir)
     return response
 
 
@@ -399,7 +399,7 @@ def test_get_top_gradient(client: APIClient):
         title=title,
     )
     if config.save_response and response:
-        save_response_to_file('upss_top_gradient', response, config.response_dir)
+        save_response_to_file('upss_top_gradient', response, '/api/v1/upss/visualization/top-gradient', params, config.response_dir)
     return response
 
 
@@ -422,7 +422,7 @@ def test_get_risk(client: APIClient):
     response = client.request('GET', '/api/v1/upss/risk', params=params)
     print_response('获取风险评估', 'GET', '/api/v1/upss/risk', response, config.verbose)
     if config.save_response and response:
-        save_response_to_file('upss_risk', response, config.response_dir)
+        save_response_to_file('upss_risk', response, '/api/v1/upss/risk', params, config.response_dir)
     return response
 
 

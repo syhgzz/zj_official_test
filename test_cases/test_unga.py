@@ -57,7 +57,7 @@ def test_get_overview(client: APIClient):
     )
 
     if config.save_response and response:
-        save_response_to_file('unga_overview', response, config.response_dir)
+        save_response_to_file('unga_overview', response, '/api/v1/unga/overview', params, config.response_dir)
 
     return response
 
@@ -97,7 +97,7 @@ def test_get_tasks(client: APIClient, page_num: int = 1, page_size: int = 20):
     )
 
     if config.save_response and response:
-        save_response_to_file('unga_tasks', response, config.response_dir)
+        save_response_to_file('unga_tasks', response, '/api/v1/unga/tasks', params, config.response_dir)
 
     return response
 
@@ -136,7 +136,7 @@ def test_get_task_trajectory(client: APIClient, task_id: int = 1):
     )
 
     if config.save_response and response:
-        save_response_to_file('unga_task_trajectory', response, config.response_dir)
+        save_response_to_file('unga_task_trajectory', response, f'/api/v1/unga/tasks/{task_id}/trajectory', params, config.response_dir)
 
     return response
 
@@ -176,7 +176,7 @@ def test_get_leaks(client: APIClient, page_num: int = 1, page_size: int = 20):
     )
 
     if config.save_response and response:
-        save_response_to_file('unga_leaks', response, config.response_dir)
+        save_response_to_file('unga_leaks', response, '/api/v1/unga/leaks', params, config.response_dir)
 
     return response
 
@@ -215,7 +215,7 @@ def test_get_statistics(client: APIClient):
     )
 
     if config.save_response and response:
-        save_response_to_file('unga_statistics', response, config.response_dir)
+        save_response_to_file('unga_statistics', response, '/api/v1/unga/statistics', params, config.response_dir)
 
     return response
 

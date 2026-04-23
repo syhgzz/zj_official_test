@@ -467,6 +467,8 @@ def print_response(
 def save_response_to_file(
     api_name: str,
     response: Any,
+    path: str,
+    request_params: Optional[Dict[str, Any]],
     response_dir: str = 'responses'
 ):
     """
@@ -475,6 +477,8 @@ def save_response_to_file(
     Args:
         api_name: API名称
         response: 响应数据
+        path: 接口请求路径(由调用方传入)
+        request_params: 请求参数(由调用方传入)
         response_dir: 保存目录
     """
     # 创建保存目录
@@ -489,7 +493,9 @@ def save_response_to_file(
         if isinstance(global_index, int) and global_index > 0:
             sequence = str(global_index)
 
-    path_part = _sanitize_path_for_filename(meta.get('path'))
+    path_part = _sanitize_path_for_filename(path)
+    if not path_part:
+        path_part = _sanitize_path_for_filename(meta.get('path'))
     if not path_part:
         path_part = _sanitize_path_for_filename(api_name)
 
@@ -500,6 +506,12 @@ def save_response_to_file(
 
     filepath = os.path.join(response_dir, filename)
 
-    # 保存响应
+    # 按固定顺序写入: path -> request_params -> response
+    payload = {
+        'path': path,
+        'request_params': request_params or {},
+        'response': response,
+    }
+
     with open(filepath, 'w', encoding='utf-8') as f:
-        json.dump(response, f, indent=2, ensure_ascii=False)
+        json.dump(payload, f, indent=2, ensure_ascii=False)

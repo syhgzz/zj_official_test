@@ -36,8 +36,6 @@ def test_get_overview(client: APIClient):
     minLat = minLat_file
     maxLat = maxLat_file
     params = {
-        'startTime': startTime,
-        'endTime': endTime,
         'minLng': minLng,
         'maxLng': maxLng,
         'minLat': minLat,
@@ -54,7 +52,7 @@ def test_get_overview(client: APIClient):
         title=title,
     )
     if config.save_response and response:
-        save_response_to_file('udmds_overview', response, config.response_dir)
+        save_response_to_file('udmds_overview', response, '/api/v1/udmds/overview', params, config.response_dir)
     return response
 
 
@@ -89,7 +87,7 @@ def test_get_projects(client: APIClient):
         title=title,
     )
     if config.save_response and response:
-        save_response_to_file('udmds_projects', response, config.response_dir)
+        save_response_to_file('udmds_projects', response, '/api/v1/udmds/projects', params, config.response_dir)
     return response
 
 
@@ -122,7 +120,7 @@ def test_get_points(client: APIClient):
         title=title,
     )
     if config.save_response and response:
-        save_response_to_file('udmds_points', response, config.response_dir)
+        save_response_to_file('udmds_points', response, '/api/v1/udmds/points', params, config.response_dir)
     return response
 
 
@@ -156,7 +154,7 @@ def test_get_point_realtime(client: APIClient, code: str = "PD001"):
         title=title,
     )
     if config.save_response and response:
-        save_response_to_file('udmds_point_realtime', response, config.response_dir)
+        save_response_to_file('udmds_point_realtime', response, f'/api/v1/udmds/points/{code}/realtime', params, config.response_dir)
     return response
 
 
@@ -192,7 +190,7 @@ def test_get_point_history(client: APIClient, code: str = "PD001"):
         title=title,
     )
     if config.save_response and response:
-        save_response_to_file('udmds_point_history', response, config.response_dir)
+        save_response_to_file('udmds_point_history', response, f'/api/v1/udmds/points/{code}/history', params, config.response_dir)
     return response
 
 
@@ -226,7 +224,7 @@ def test_get_project_statistics(client: APIClient):
         title=title,
     )
     if config.save_response and response:
-        save_response_to_file('udmds_project_statistics', response, config.response_dir)
+        save_response_to_file('udmds_project_statistics', response, '/api/v1/udmds/statistics/project', params, config.response_dir)
     return response
 
 
@@ -260,7 +258,7 @@ def test_get_alerts_summary(client: APIClient):
         title=title,
     )
     if config.save_response and response:
-        save_response_to_file('udmds_alerts_summary', response, config.response_dir)
+        save_response_to_file('udmds_alerts_summary', response, '/api/v1/udmds/alerts/summary', params, config.response_dir)
     return response
 
 
@@ -283,7 +281,7 @@ def test_get_risk(client: APIClient):
     response = client.request('GET', '/api/v1/udmds/risk', params=params)
     print_response('获取风险评估', 'GET', '/api/v1/udmds/risk', response, config.verbose)
     if config.save_response and response:
-        save_response_to_file('udmds_risk', response, config.response_dir)
+        save_response_to_file('udmds_risk', response, '/api/v1/udmds/risk', params, config.response_dir)
     return response
 
 

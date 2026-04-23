@@ -53,7 +53,7 @@ def test_get_overview(client: APIClient):
         title=title,
     )
     if config.save_response and response:
-        save_response_to_file('ugss_overview', response, config.response_dir)
+        save_response_to_file('ugss_overview', response, '/api/v1/ugss/overview', params, config.response_dir)
     return response
 
 
@@ -88,7 +88,7 @@ def test_get_stations(client: APIClient):
         title=title,
     )
     if config.save_response and response:
-        save_response_to_file('ugss_stations', response, config.response_dir)
+        save_response_to_file('ugss_stations', response, '/api/v1/ugss/stations', params, config.response_dir)
     return response
 
 
@@ -121,7 +121,7 @@ def test_get_station_realtime(client: APIClient, code: str = "GS001"):
         title=title,
     )
     if config.save_response and response:
-        save_response_to_file('ugss_station_realtime', response, config.response_dir)
+        save_response_to_file('ugss_station_realtime', response, f'/api/v1/ugss/stations/{code}/realtime', params, config.response_dir)
     return response
 
 
@@ -156,7 +156,7 @@ def test_get_events(client: APIClient):
         title=title,
     )
     if config.save_response and response:
-        save_response_to_file('ugss_events', response, config.response_dir)
+        save_response_to_file('ugss_events', response, '/api/v1/ugss/events', params, config.response_dir)
     return response
 
 
@@ -190,7 +190,7 @@ def test_get_frequency_statistics(client: APIClient):
         title=title,
     )
     if config.save_response and response:
-        save_response_to_file('ugss_frequency_statistics', response, config.response_dir)
+        save_response_to_file('ugss_frequency_statistics', response, '/api/v1/ugss/statistics/frequency', params, config.response_dir)
     return response
 
 
@@ -223,7 +223,7 @@ def test_get_warnings_summary(client: APIClient):
         title=title,
     )
     if config.save_response and response:
-        save_response_to_file('ugss_warnings_summary', response, config.response_dir)
+        save_response_to_file('ugss_warnings_summary', response, '/api/v1/ugss/warnings/summary', params, config.response_dir)
     return response
 
 
@@ -246,7 +246,7 @@ def test_get_risk(client: APIClient):
     response = client.request('GET', '/api/v1/ugss/risk', params=params)
     print_response('获取风险评估', 'GET', '/api/v1/ugss/risk', response, config.verbose)
     if config.save_response and response:
-        save_response_to_file('ugss_risk', response, config.response_dir)
+        save_response_to_file('ugss_risk', response, '/api/v1/ugss/risk', params, config.response_dir)
     return response
 
 

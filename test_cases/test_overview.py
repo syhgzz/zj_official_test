@@ -58,7 +58,7 @@ def test_get_realtime(client: APIClient):
     )
 
     if config.save_response and response:
-        save_response_to_file('overview_realtime', response, config.response_dir)
+        save_response_to_file('overview_realtime', response, '/api/v1/overview/realtime', params, config.response_dir)
 
     return response
 
@@ -96,7 +96,7 @@ def test_get_summary(client: APIClient):
     )
 
     if config.save_response and response:
-        save_response_to_file('overview_summary', response, config.response_dir)
+        save_response_to_file('overview_summary', response, '/api/v1/overview/summary', params, config.response_dir)
 
     return response
 
