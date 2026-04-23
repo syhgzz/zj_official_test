@@ -10,6 +10,15 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from lib.api_client import APIClient
 from lib.response_printer import print_response, save_response_to_file
 from config.config import config
+from common import *
+
+
+startTime_file = startTime_global
+endTime_file = endTime_global
+minLng_file = minLng_global
+maxLng_file = maxLng_global
+minLat_file = minLat_global
+maxLat_file = maxLat_global
 
 
 def test_get_overview(client: APIClient):
@@ -19,7 +28,21 @@ def test_get_overview(client: APIClient):
     """
     number = '3.6.1'
     title = '模块概览'
-    response = client.request('GET', '/api/v1/gnss-device/overview')
+    startTime = startTime_file
+    endTime = endTime_file
+    minLng = minLng_file
+    maxLng = maxLng_file
+    minLat = minLat_file
+    maxLat = maxLat_file
+    params = {
+        'startTime': startTime,
+        'endTime': endTime,
+        'minLng': minLng,
+        'maxLng': maxLng,
+        'minLat': minLat,
+        'maxLat': maxLat,
+    }
+    response = client.request('GET', '/api/v1/gnss-device/overview', params=params)
     print_response(
         '获取北斗设备模块概览',
         'GET',
@@ -43,7 +66,22 @@ def test_get_stations(client: APIClient, page_num: int = 1, page_size: int = 20)
     """
     number = '3.6.2'
     title = '站点列表及状态'
-    params = {'pageNum': page_num, 'pageSize': page_size}
+    startTime = startTime_file
+    endTime = endTime_file
+    minLng = minLng_file
+    maxLng = maxLng_file
+    minLat = minLat_file
+    maxLat = maxLat_file
+    params = {
+        'pageNum': page_num,
+        'pageSize': page_size,
+        'startTime': startTime,
+        'endTime': endTime,
+        'minLng': minLng,
+        'maxLng': maxLng,
+        'minLat': minLat,
+        'maxLat': maxLat,
+    }
     response = client.request('GET', '/api/v1/gnss-device/stations', params=params)
     print_response(
         '获取站点列表',
@@ -69,7 +107,21 @@ def test_get_station_realtime(client: APIClient, code: str = "BJ001"):
     number = '3.6.3'
     title = '单站实时数据'
     code = 'CQQX0038'
-    response = client.request('GET', f'/api/v1/gnss-device/stations/{code}/realtime')
+    startTime = startTime_file
+    endTime = endTime_file
+    minLng = minLng_file
+    maxLng = maxLng_file
+    minLat = minLat_file
+    maxLat = maxLat_file
+    params = {
+        'startTime': startTime,
+        'endTime': endTime,
+        'minLng': minLng,
+        'maxLng': maxLng,
+        'minLat': minLat,
+        'maxLat': maxLat,
+    }
+    response = client.request('GET', f'/api/v1/gnss-device/stations/{code}/realtime', params=params)
     print_response(
         '获取站点实时数据',
         'GET',

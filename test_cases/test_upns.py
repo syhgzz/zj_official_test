@@ -10,13 +10,36 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from lib.api_client import APIClient
 from lib.response_printer import print_response, save_response_to_file
 from config.config import config
+from common import *
+
+
+startTime_file = startTime_global
+endTime_file = endTime_global
+minLng_file = minLng_global
+maxLng_file = maxLng_global
+minLat_file = minLat_global
+maxLat_file = maxLat_global
 
 
 def test_get_overview(client: APIClient):
     """测试获取模块概览"""
     number = '3.1.1'
     title = '模块概览'
-    response = client.request('GET', '/api/v1/upns/overview')
+    startTime = startTime_file
+    endTime = endTime_file
+    minLng = minLng_file
+    maxLng = maxLng_file
+    minLat = minLat_file
+    maxLat = maxLat_file
+    params = {
+        'startTime': startTime,
+        'endTime': endTime,
+        'minLng': minLng,
+        'maxLng': maxLng,
+        'minLat': minLat,
+        'maxLat': maxLat,
+    }
+    response = client.request('GET', '/api/v1/upns/overview', params=params)
     print_response(
         '获取短临降水模块概览',
         'GET',
@@ -35,7 +58,22 @@ def test_get_stations(client: APIClient):
     """测试获取监测站点列表"""
     number = '3.1.2'
     title = '站点列表及状态'
-    params = {'pageNum': 1, 'pageSize': 20}
+    startTime = startTime_file
+    endTime = endTime_file
+    minLng = minLng_file
+    maxLng = maxLng_file
+    minLat = minLat_file
+    maxLat = maxLat_file
+    params = {
+        'pageNum': 1,
+        'pageSize': 20,
+        'startTime': startTime,
+        'endTime': endTime,
+        'minLng': minLng,
+        'maxLng': maxLng,
+        'minLat': minLat,
+        'maxLat': maxLat,
+    }
     response = client.request('GET', '/api/v1/upns/stations', params=params)
     print_response(
         '获取监测站点列表',
@@ -55,7 +93,21 @@ def test_get_station_realtime(client: APIClient, code: str = "ST001"):
     """测试获取站点实时数据"""
     number = '3.1.3'
     title = '单站实时数据'
-    response = client.request('GET', f'/api/v1/upns/stations/{code}/realtime')
+    startTime = startTime_file
+    endTime = endTime_file
+    minLng = minLng_file
+    maxLng = maxLng_file
+    minLat = minLat_file
+    maxLat = maxLat_file
+    params = {
+        'startTime': startTime,
+        'endTime': endTime,
+        'minLng': minLng,
+        'maxLng': maxLng,
+        'minLat': minLat,
+        'maxLat': maxLat,
+    }
+    response = client.request('GET', f'/api/v1/upns/stations/{code}/realtime', params=params)
     print_response(
         '获取站点实时数据',
         'GET',
@@ -74,7 +126,21 @@ def test_get_station_history(client: APIClient, code: str = "ST001"):
     """测试获取站点历史数据"""
     number = '3.1.4'
     title = '单站历史趋势'
-    params = {'interval': '1h'}
+    startTime = startTime_file
+    endTime = endTime_file
+    minLng = minLng_file
+    maxLng = maxLng_file
+    minLat = minLat_file
+    maxLat = maxLat_file
+    params = {
+        'interval': '1h',
+        'startTime': startTime,
+        'endTime': endTime,
+        'minLng': minLng,
+        'maxLng': maxLng,
+        'minLat': minLat,
+        'maxLat': maxLat,
+    }
     response = client.request('GET', f'/api/v1/upns/stations/{code}/history', params=params)
     print_response(
         '获取站点历史数据',
@@ -94,7 +160,21 @@ def test_get_regional_statistics(client: APIClient):
     """测试获取区域降水统计"""
     number = '3.1.5'
     title = '区域统计'
-    response = client.request('GET', '/api/v1/upns/statistics/regional')
+    startTime = startTime_file
+    endTime = endTime_file
+    minLng = minLng_file
+    maxLng = maxLng_file
+    minLat = minLat_file
+    maxLat = maxLat_file
+    params = {
+        'startTime': startTime,
+        'endTime': endTime,
+        'minLng': minLng,
+        'maxLng': maxLng,
+        'minLat': minLat,
+        'maxLat': maxLat,
+    }
+    response = client.request('GET', '/api/v1/upns/statistics/regional', params=params)
     print_response(
         '获取区域降水统计',
         'GET',
@@ -113,7 +193,21 @@ def test_get_warnings_summary(client: APIClient):
     """测试获取降水预警汇总"""
     number = '3.1.6'
     title = '预警汇总'
-    response = client.request('GET', '/api/v1/upns/warnings/summary')
+    startTime = startTime_file
+    endTime = endTime_file
+    minLng = minLng_file
+    maxLng = maxLng_file
+    minLat = minLat_file
+    maxLat = maxLat_file
+    params = {
+        'startTime': startTime,
+        'endTime': endTime,
+        'minLng': minLng,
+        'maxLng': maxLng,
+        'minLat': minLat,
+        'maxLat': maxLat,
+    }
+    response = client.request('GET', '/api/v1/upns/warnings/summary', params=params)
     print_response(
         '获取降水预警汇总',
         'GET',
@@ -132,7 +226,21 @@ def test_get_rain_statistics(client: APIClient):
     """测试获取降雨量统计"""
     number = '3.1.7'
     title = '降雨量实时统计'
-    response = client.request('GET', '/api/v1/upns/statistics/rain/now')
+    startTime = startTime_file
+    endTime = endTime_file
+    minLng = minLng_file
+    maxLng = maxLng_file
+    minLat = minLat_file
+    maxLat = maxLat_file
+    params = {
+        'startTime': startTime,
+        'endTime': endTime,
+        'minLng': minLng,
+        'maxLng': maxLng,
+        'minLat': minLat,
+        'maxLat': maxLat,
+    }
+    response = client.request('GET', '/api/v1/upns/statistics/rain/now', params=params)
     print_response(
         '获取降雨量统计',
         'GET',
@@ -151,7 +259,21 @@ def test_get_pwv_statistics(client: APIClient):
     """测试获取大气可降水量统计"""
     number = '3.1.8'
     title = '大气可降水量实时统计'
-    response = client.request('GET', '/api/v1/upns/statistics/pwv/now')
+    startTime = startTime_file
+    endTime = endTime_file
+    minLng = minLng_file
+    maxLng = maxLng_file
+    minLat = minLat_file
+    maxLat = maxLat_file
+    params = {
+        'startTime': startTime,
+        'endTime': endTime,
+        'minLng': minLng,
+        'maxLng': maxLng,
+        'minLat': minLat,
+        'maxLat': maxLat,
+    }
+    response = client.request('GET', '/api/v1/upns/statistics/pwv/now', params=params)
     print_response(
         '获取大气可降水量统计',
         'GET',
@@ -168,7 +290,21 @@ def test_get_pwv_statistics(client: APIClient):
 
 def test_get_risk(client: APIClient):
     """测试获取风险评估"""
-    response = client.request('GET', '/api/v1/upns/risk')
+    startTime = startTime_file
+    endTime = endTime_file
+    minLng = minLng_file
+    maxLng = maxLng_file
+    minLat = minLat_file
+    maxLat = maxLat_file
+    params = {
+        'startTime': startTime,
+        'endTime': endTime,
+        'minLng': minLng,
+        'maxLng': maxLng,
+        'minLat': minLat,
+        'maxLat': maxLat,
+    }
+    response = client.request('GET', '/api/v1/upns/risk', params=params)
     print_response('获取风险评估', 'GET', '/api/v1/upns/risk', response, config.verbose)
     if config.save_response and response:
         save_response_to_file('upns_risk', response, config.response_dir)
