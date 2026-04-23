@@ -11,7 +11,10 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from lib.api_client import APIClient
 from lib.response_printer import print_response, save_response_to_file
 from config.config import config
-from common import *
+try:
+    from test_cases.common import *
+except ImportError:
+    from common import *
 
 
 startTime_file = startTime_global
