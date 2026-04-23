@@ -10,7 +10,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from lib.api_client import APIClient
 from lib.response_printer import print_response, save_response_to_file
 from config.config import config
-
+from datetime import datetime, timedelta
 
 def test_get_overview(client: APIClient):
     """
@@ -19,7 +19,20 @@ def test_get_overview(client: APIClient):
     """
     number = '3.6.1'
     title = '模块概览'
-    response = client.request('GET', '/api/v1/gnss-device/overview')
+
+    params = {
+        # 重庆
+        'minLng': 105.782,
+        'maxLng': 108.345,
+        'minLat': 28.999,
+        'maxLat': 30.147
+        # 中国（稍微扩大范围）
+        # 'minLng': 70,
+        # 'maxLng': 140,
+        # 'minLat': 10,
+        # 'maxLat': 60        
+        }
+    response = client.request('GET', '/api/v1/gnss-device/overview', params=params)
     print_response(
         '获取北斗设备模块概览',
         'GET',
@@ -43,7 +56,15 @@ def test_get_stations(client: APIClient, page_num: int = 1, page_size: int = 20)
     """
     number = '3.6.2'
     title = '站点列表及状态'
-    params = {'pageNum': page_num, 'pageSize': page_size}
+    params = {
+        'pageNum': page_num, 
+        'pageSize': page_size,
+        # 重庆
+        'minLng': 105.782,
+        'maxLng': 108.345,  
+        'minLat': 28.999,
+        'maxLat': 30.147
+        }
     response = client.request('GET', '/api/v1/gnss-device/stations', params=params)
     print_response(
         '获取站点列表',

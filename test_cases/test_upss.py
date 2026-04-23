@@ -10,7 +10,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from lib.api_client import APIClient
 from lib.response_printer import print_response, save_response_to_file
 from config.config import config
-
+from datetime import datetime, timedelta
 
 def test_get_overview(client: APIClient):
     """测试获取模块概览"""
@@ -159,7 +159,28 @@ def test_get_warning_issue(client: APIClient):
     """测试获取沉降预警信息"""
     number = '3.4.8'
     title = '预警信息'
-    params = {'issue': '20220424'}
+
+    end_dt = datetime.now()
+    start_dt = end_dt - timedelta(days=30)
+
+    end_time = int(end_dt.timestamp() * 1000)
+    start_time = int(start_dt.timestamp() * 1000)
+
+    params = {
+        'issue': '20220424',
+        'startTime': start_time,
+        'endTime': end_time,
+        # 重庆
+        'minLng': 105.782,
+        'maxLng': 108.345,
+        'minLat': 28.999,
+        'maxLat': 30.147
+        # 中国（稍微扩大范围）
+        # 'minLng': 70,
+        # 'maxLng': 140,
+        # 'minLat': 10,
+        # 'maxLat': 60        
+        }
     response = client.request('GET', '/api/v1/upss/visualization/warning/issue', params=params)
     print_response(
         '获取沉降预警信息',
@@ -179,7 +200,14 @@ def test_get_statistics_issue(client: APIClient):
     """测试获取沉降态势统计"""
     number = '3.4.9'
     title = '沉降态势统计'
-    params = {'issue': '20250203'}
+    params = {
+        'issue': '20250203',
+        # 重庆
+        'minLng': 105.782,
+        'maxLng': 108.345,
+        'minLat': 28.999,
+        'maxLat': 30.147
+        }
     response = client.request('GET', '/api/v1/upss/visualization/statistics/issue', params=params)
     print_response(
         '获取沉降态势统计',
@@ -218,7 +246,35 @@ def test_get_top_gradient(client: APIClient):
     """测试获取Top5沉降梯度"""
     number = '3.4.11'
     title = '前五沉降梯度值位置统计'
-    params = {'startIssue': '20220424', 'endIssue': '20220526'}
+    # params = {
+    #     'startIssue': '20220424', 
+    #     'endIssue': '20220526',
+    #     'minLng': 106.763,
+    #     'maxLng': 107.444,      
+    #     'minLat': 29.232,
+    #     'maxLat': 30.030
+    #     }
+
+    end_dt = datetime.now()
+    start_dt = end_dt - timedelta(days=180)
+
+    end_time = int(end_dt.timestamp() * 1000)
+    start_time = int(start_dt.timestamp() * 1000)
+
+    params = {
+        'startTime': start_time,
+        'endTime': end_time,
+        # 重庆
+        'minLng': 105.782,
+        'maxLng': 108.345,
+        'minLat': 28.999,
+        'maxLat': 30.147
+        # 中国（稍微扩大范围）
+        # 'minLng': 70,
+        # 'maxLng': 140,
+        # 'minLat': 10,
+        # 'maxLat': 60        
+        }
     response = client.request('GET', '/api/v1/upss/visualization/top-gradient', params=params)
     print_response(
         '获取Top5沉降梯度',

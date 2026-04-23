@@ -10,7 +10,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from lib.api_client import APIClient
 from lib.response_printer import print_response, save_response_to_file
 from config.config import config
-
+from datetime import datetime, timedelta
 
 def test_get_overview(client: APIClient):
     """测试获取模块概览"""
@@ -55,7 +55,17 @@ def test_get_points(client: APIClient):
     """测试获取监测点列表"""
     number = '3.2.3'
     title = '监测点列表'
-    response = client.request('GET', '/api/v1/udmds/points')
+    params = {
+        'projectCode': 'GC001',
+        'deviceType': 'displacement',
+        'hasAlert': 'true',
+        # 重庆
+        'minLng': 105.782,
+        'maxLng': 108.345,  
+        'minLat': 28.999,
+        'maxLat': 30.147
+        }       
+    response = client.request('GET', '/api/v1/udmds/points', params=params)
     print_response(
         '获取监测点列表',
         'GET',
@@ -95,7 +105,18 @@ def test_get_point_history(client: APIClient, code: str = "PD001"):
     number = '3.2.5'
     title = '单点历史趋势'
     code = 'JCD03'
-    params = {'deviceType': 'displacement', 'interval': '1h'}
+
+    end_dt = datetime.now()
+    start_dt = end_dt - timedelta(days=30)
+
+    end_time = int(end_dt.timestamp() * 1000)
+    start_time = int(start_dt.timestamp() * 1000)
+
+    params = {'deviceType': 'displacement',
+              'interval': '1h',
+              'startTime': start_time,
+              'endTime': end_time
+              }
     response = client.request('GET', f'/api/v1/udmds/points/{code}/history', params=params)
     print_response(
         '获取监测点历史数据',
@@ -135,7 +156,28 @@ def test_get_alerts_summary(client: APIClient):
     """测试获取形变告警汇总"""
     number = '3.2.7'
     title = '告警汇总'
-    response = client.request('GET', '/api/v1/udmds/alerts/summary')
+    
+    end_dt = datetime.now()
+    start_dt = end_dt - timedelta(days=30)
+
+    end_time = int(end_dt.timestamp() * 1000)
+    start_time = int(start_dt.timestamp() * 1000)
+
+    params = {
+        'startTime': start_time,
+        'endTime': end_time,
+        # 重庆
+        'minLng': 105.782,
+        'maxLng': 108.345,
+        'minLat': 28.999,
+        'maxLat': 30.147
+        # 中国（稍微扩大范围）
+        # 'minLng': 70,
+        # 'maxLng': 140,
+        # 'minLat': 10,
+        # 'maxLat': 60        
+        }
+    response = client.request('GET', '/api/v1/udmds/alerts/summary', params=params)
     print_response(
         '获取形变告警汇总',
         'GET',
