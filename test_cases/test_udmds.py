@@ -4,19 +4,43 @@
 """
 import sys
 import os
+from datetime import datetime
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from lib.api_client import APIClient
 from lib.response_printer import print_response, save_response_to_file
 from config.config import config
+from common import *
+
+
+startTime_file = startTime_global
+endTime_file = endTime_global
+minLng_file = minLng_global
+maxLng_file = maxLng_global
+minLat_file = minLat_global
+maxLat_file = maxLat_global
 
 
 def test_get_overview(client: APIClient):
     """测试获取模块概览"""
     number = '3.2.1'
     title = '模块概览'
-    response = client.request('GET', '/api/v1/udmds/overview')
+    startTime = startTime_file
+    endTime = endTime_file
+    minLng = minLng_file
+    maxLng = maxLng_file
+    minLat = minLat_file
+    maxLat = maxLat_file
+    params = {
+        'startTime': startTime,
+        'endTime': endTime,
+        'minLng': minLng,
+        'maxLng': maxLng,
+        'minLat': minLat,
+        'maxLat': maxLat,
+    }
+    response = client.request('GET', '/api/v1/udmds/overview', params=params)
     print_response(
         '获取形变安全模块概览',
         'GET',
@@ -35,7 +59,22 @@ def test_get_projects(client: APIClient):
     """测试获取监测工程列表"""
     number = '3.2.2'
     title = '工程列表'
-    params = {'pageNum': 1, 'pageSize': 20}
+    startTime = startTime_file
+    endTime = endTime_file
+    minLng = minLng_file
+    maxLng = maxLng_file
+    minLat = minLat_file
+    maxLat = maxLat_file
+    params = {
+        'pageNum': 1,
+        'pageSize': 20,
+        'startTime': startTime,
+        'endTime': endTime,
+        'minLng': minLng,
+        'maxLng': maxLng,
+        'minLat': minLat,
+        'maxLat': maxLat,
+    }
     response = client.request('GET', '/api/v1/udmds/projects', params=params)
     print_response(
         '获取监测工程列表',
@@ -55,7 +94,21 @@ def test_get_points(client: APIClient):
     """测试获取监测点列表"""
     number = '3.2.3'
     title = '监测点列表'
-    response = client.request('GET', '/api/v1/udmds/points')
+    startTime = startTime_file
+    endTime = endTime_file
+    minLng = minLng_file
+    maxLng = maxLng_file
+    minLat = minLat_file
+    maxLat = maxLat_file
+    params = {
+        'startTime': startTime,
+        'endTime': endTime,
+        'minLng': minLng,
+        'maxLng': maxLng,
+        'minLat': minLat,
+        'maxLat': maxLat,
+    }
+    response = client.request('GET', '/api/v1/udmds/points', params=params)
     print_response(
         '获取监测点列表',
         'GET',
@@ -75,7 +128,21 @@ def test_get_point_realtime(client: APIClient, code: str = "PD001"):
     number = '3.2.4'
     title = '单点实时数据'
     code = 'JCD03'
-    response = client.request('GET', f'/api/v1/udmds/points/{code}/realtime')
+    startTime = startTime_file
+    endTime = endTime_file
+    minLng = minLng_file
+    maxLng = maxLng_file
+    minLat = minLat_file
+    maxLat = maxLat_file
+    params = {
+        'startTime': startTime,
+        'endTime': endTime,
+        'minLng': minLng,
+        'maxLng': maxLng,
+        'minLat': minLat,
+        'maxLat': maxLat,
+    }
+    response = client.request('GET', f'/api/v1/udmds/points/{code}/realtime', params=params)
     print_response(
         '获取监测点实时数据',
         'GET',
@@ -95,7 +162,22 @@ def test_get_point_history(client: APIClient, code: str = "PD001"):
     number = '3.2.5'
     title = '单点历史趋势'
     code = 'JCD03'
-    params = {'deviceType': 'displacement', 'interval': '1h'}
+    startTime = startTime_file
+    endTime = endTime_file
+    minLng = minLng_file
+    maxLng = maxLng_file
+    minLat = minLat_file
+    maxLat = maxLat_file
+    params = {
+        'deviceType': 'displacement',
+        'interval': '1h',
+        'startTime': startTime,
+        'endTime': endTime,
+        'minLng': minLng,
+        'maxLng': maxLng,
+        'minLat': minLat,
+        'maxLat': maxLat,
+    }
     response = client.request('GET', f'/api/v1/udmds/points/{code}/history', params=params)
     print_response(
         '获取监测点历史数据',
@@ -115,7 +197,21 @@ def test_get_project_statistics(client: APIClient):
     """测试获取工程统计"""
     number = '3.2.6'
     title = '工程统计'
-    params = {'interval': '1d'}
+    startTime = startTime_file
+    endTime = endTime_file
+    minLng = minLng_file
+    maxLng = maxLng_file
+    minLat = minLat_file
+    maxLat = maxLat_file
+    params = {
+        'interval': '1d',
+        'startTime': startTime,
+        'endTime': endTime,
+        'minLng': minLng,
+        'maxLng': maxLng,
+        'minLat': minLat,
+        'maxLat': maxLat,
+    }
     response = client.request('GET', '/api/v1/udmds/statistics/project', params=params)
     print_response(
         '获取工程统计',
@@ -135,7 +231,22 @@ def test_get_alerts_summary(client: APIClient):
     """测试获取形变告警汇总"""
     number = '3.2.7'
     title = '告警汇总'
-    response = client.request('GET', '/api/v1/udmds/alerts/summary')
+    startTime = startTime_file
+    endTime = endTime_file
+    minLng = minLng_file
+    maxLng = maxLng_file
+    minLat = minLat_file
+    maxLat = maxLat_file
+    params = {
+        'startTime': startTime,
+        'endTime': endTime,
+        'minLng': minLng,
+        'maxLng': maxLng,
+        'minLat': minLat,
+        'maxLat': maxLat,
+    }
+
+    response = client.request('GET', '/api/v1/udmds/alerts/summary', params=params)
     print_response(
         '获取形变告警汇总',
         'GET',
@@ -152,7 +263,21 @@ def test_get_alerts_summary(client: APIClient):
 
 def test_get_risk(client: APIClient):
     """测试获取风险评估"""
-    response = client.request('GET', '/api/v1/udmds/risk')
+    startTime = startTime_file
+    endTime = endTime_file
+    minLng = minLng_file
+    maxLng = maxLng_file
+    minLat = minLat_file
+    maxLat = maxLat_file
+    params = {
+        'startTime': startTime,
+        'endTime': endTime,
+        'minLng': minLng,
+        'maxLng': maxLng,
+        'minLat': minLat,
+        'maxLat': maxLat,
+    }
+    response = client.request('GET', '/api/v1/udmds/risk', params=params)
     print_response('获取风险评估', 'GET', '/api/v1/udmds/risk', response, config.verbose)
     if config.save_response and response:
         save_response_to_file('udmds_risk', response, config.response_dir)

@@ -10,6 +10,15 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from lib.api_client import APIClient
 from lib.response_printer import print_response, save_response_to_file
 from config.config import config
+from common import *
+
+
+startTime_file = startTime_global
+endTime_file = endTime_global
+minLng_file = minLng_global
+maxLng_file = maxLng_global
+minLat_file = minLat_global
+maxLat_file = maxLat_global
 
 
 def test_get_overview(client: APIClient):
@@ -19,7 +28,21 @@ def test_get_overview(client: APIClient):
     """
     number = '3.5.1'
     title = '模块概览'
-    response = client.request('GET', '/api/v1/unga/overview')
+    startTime = startTime_file
+    endTime = endTime_file
+    minLng = minLng_file
+    maxLng = maxLng_file
+    minLat = minLat_file
+    maxLat = maxLat_file
+    params = {
+        'startTime': startTime,
+        'endTime': endTime,
+        'minLng': minLng,
+        'maxLng': maxLng,
+        'minLat': minLat,
+        'maxLat': maxLat,
+    }
+    response = client.request('GET', '/api/v1/unga/overview', params=params)
     print_response(
         '获取走航甲烷模块概览',
         'GET',
@@ -43,7 +66,22 @@ def test_get_tasks(client: APIClient, page_num: int = 1, page_size: int = 20):
     """
     number = '3.5.2'
     title = '检测任务列表'
-    params = {'pageNum': page_num, 'pageSize': page_size}
+    startTime = startTime_file
+    endTime = endTime_file
+    minLng = minLng_file
+    maxLng = maxLng_file
+    minLat = minLat_file
+    maxLat = maxLat_file
+    params = {
+        'pageNum': page_num,
+        'pageSize': page_size,
+        'startTime': startTime,
+        'endTime': endTime,
+        'minLng': minLng,
+        'maxLng': maxLng,
+        'minLat': minLat,
+        'maxLat': maxLat,
+    }
     response = client.request('GET', '/api/v1/unga/tasks', params=params)
     print_response(
         '获取检测任务列表',
@@ -69,7 +107,21 @@ def test_get_task_trajectory(client: APIClient, task_id: int = 1):
     number = '3.5.3'
     title = '走航轨迹查询'
     task_id ='430000003510_20250630_2018'
-    response = client.request('GET', f'/api/v1/unga/tasks/{task_id}/trajectory')
+    startTime = startTime_file
+    endTime = endTime_file
+    minLng = minLng_file
+    maxLng = maxLng_file
+    minLat = minLat_file
+    maxLat = maxLat_file
+    params = {
+        'startTime': startTime,
+        'endTime': endTime,
+        'minLng': minLng,
+        'maxLng': maxLng,
+        'minLat': minLat,
+        'maxLat': maxLat,
+    }
+    response = client.request('GET', f'/api/v1/unga/tasks/{task_id}/trajectory', params=params)
     print_response(
         '获取任务轨迹数据',
         'GET',
@@ -93,7 +145,22 @@ def test_get_leaks(client: APIClient, page_num: int = 1, page_size: int = 20):
     """
     number = '3.5.4'
     title = '泄露点管理'
-    params = {'pageNum': page_num, 'pageSize': page_size}
+    startTime = startTime_file
+    endTime = endTime_file
+    minLng = minLng_file
+    maxLng = maxLng_file
+    minLat = minLat_file
+    maxLat = maxLat_file
+    params = {
+        'pageNum': page_num,
+        'pageSize': page_size,
+        'startTime': startTime,
+        'endTime': endTime,
+        'minLng': minLng,
+        'maxLng': maxLng,
+        'minLat': minLat,
+        'maxLat': maxLat,
+    }
     response = client.request('GET', '/api/v1/unga/leaks', params=params)
     print_response(
         '获取泄露点列表',
@@ -118,7 +185,21 @@ def test_get_statistics(client: APIClient):
     """
     number = '3.5.5'
     title = '统计分析'
-    params = {'packId': '430000003510_20250630_1437'}
+    startTime = startTime_file
+    endTime = endTime_file
+    minLng = minLng_file
+    maxLng = maxLng_file
+    minLat = minLat_file
+    maxLat = maxLat_file
+    params = {
+        'packId': '430000003510_20250630_1437',
+        'startTime': startTime,
+        'endTime': endTime,
+        'minLng': minLng,
+        'maxLng': maxLng,
+        'minLat': minLat,
+        'maxLat': maxLat,
+    }
     response = client.request('GET', '/api/v1/unga/statistics', params=params)
     print_response(
         '获取走航统计数据',
