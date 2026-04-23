@@ -22,7 +22,6 @@ _CAPTURE_STATE: Dict[str, Any] = {
     'current_module_total': 0,
     'current_module_index': 0,
     'records': [],
-    'last_response_meta': {},
 }
 
 
@@ -206,7 +205,6 @@ def start_stats_capture(
         'current_module_total': 0,
         'current_module_index': 0,
         'records': [],
-        'last_response_meta': {},
     })
 
     with open(api_log_path, 'w', encoding='utf-8') as f:
@@ -443,14 +441,6 @@ def print_response(
         'module_total': module_total,
     }
 
-    _CAPTURE_STATE['last_response_meta'] = {
-        'number': number,
-        'path': path,
-        'title': display_title,
-        'api_name': api_name,
-        'global_index': global_index,
-    }
-
     if _CAPTURE_STATE.get('enabled'):
         _CAPTURE_STATE['records'].append(record)
 
@@ -467,7 +457,11 @@ def print_response(
 def save_response_to_file(
     api_name: str,
     response: Any,
-    response_dir: str = 'responses'
+    path: str,
+    request_params: Optional[Dict[str, Any]],
+    response_dir: str = 'responses',
+    number: str = '',
+    title: str = '',
 ):
     """
     保存响应到文件
@@ -475,31 +469,35 @@ def save_response_to_file(
     Args:
         api_name: API名称
         response: 响应数据
+        path: 接口请求路径(由调用方传入)
+        request_params: 请求参数(由调用方传入)
         response_dir: 保存目录
+        number: 接口编号(由调用方传入)
+        title: 接口标题(由调用方传入)
     """
     # 创建保存目录
     os.makedirs(response_dir, exist_ok=True)
 
-    # 按“序号_path”生成文件名，优先使用最近一次 print_response 的元信息。
-    meta = _CAPTURE_STATE.get('last_response_meta') or {}
-
-    sequence = _sanitize_sequence(meta.get('number'))
-    if not sequence:
-        global_index = meta.get('global_index')
-        if isinstance(global_index, int) and global_index > 0:
-            sequence = str(global_index)
-
-    path_part = _sanitize_path_for_filename(meta.get('path'))
+    # 按“number_title_path”生成文件名，仅使用调用方显式参数。
+    sequence = _sanitize_sequence(number)
+    title_part = _sanitize_path_for_filename(title)
+    path_part = _sanitize_path_for_filename(path)
     if not path_part:
         path_part = _sanitize_path_for_filename(api_name)
 
-    if sequence:
-        filename = f"{sequence}_{path_part}.json"
-    else:
-        filename = f"{path_part}.json"
+    filename_parts = [part for part in (sequence, title_part, path_part) if part]
+    filename = f"{'_'.join(filename_parts)}.json" if filename_parts else 'response.json'
 
     filepath = os.path.join(response_dir, filename)
 
-    # 保存响应
+    # 按固定顺序写入: number -> title -> path -> request_params -> response
+    payload = {
+        'number': number,
+        'title': title,
+        'path': path,
+        'request_params': request_params or {},
+        'response': response,
+    }
+
     with open(filepath, 'w', encoding='utf-8') as f:
-        json.dump(response, f, indent=2, ensure_ascii=False)
+        json.dump(payload, f, indent=2, ensure_ascii=False)

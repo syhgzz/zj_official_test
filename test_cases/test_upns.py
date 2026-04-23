@@ -53,7 +53,7 @@ def test_get_overview(client: APIClient):
         title=title,
     )
     if config.save_response and response:
-        save_response_to_file('upns_overview', response, config.response_dir)
+        save_response_to_file('upns_overview', response, '/api/v1/upns/overview', params, config.response_dir, number=number, title=title)
     return response
 
 
@@ -88,7 +88,7 @@ def test_get_stations(client: APIClient):
         title=title,
     )
     if config.save_response and response:
-        save_response_to_file('upns_stations', response, config.response_dir)
+        save_response_to_file('upns_stations', response, '/api/v1/upns/stations', params, config.response_dir, number=number, title=title)
     return response
 
 
@@ -121,7 +121,7 @@ def test_get_station_realtime(client: APIClient, code: str = "ST001"):
         title=title,
     )
     if config.save_response and response:
-        save_response_to_file('upns_station_realtime', response, config.response_dir)
+        save_response_to_file('upns_station_realtime', response, f'/api/v1/upns/stations/{code}/realtime', params, config.response_dir, number=number, title=title)
     return response
 
 
@@ -155,7 +155,7 @@ def test_get_station_history(client: APIClient, code: str = "ST001"):
         title=title,
     )
     if config.save_response and response:
-        save_response_to_file('upns_station_history', response, config.response_dir)
+        save_response_to_file('upns_station_history', response, f'/api/v1/upns/stations/{code}/history', params, config.response_dir, number=number, title=title)
     return response
 
 
@@ -188,7 +188,7 @@ def test_get_regional_statistics(client: APIClient):
         title=title,
     )
     if config.save_response and response:
-        save_response_to_file('upns_regional_statistics', response, config.response_dir)
+        save_response_to_file('upns_regional_statistics', response, '/api/v1/upns/statistics/regional', params, config.response_dir, number=number, title=title)
     return response
 
 
@@ -221,7 +221,7 @@ def test_get_warnings_summary(client: APIClient):
         title=title,
     )
     if config.save_response and response:
-        save_response_to_file('upns_warnings_summary', response, config.response_dir)
+        save_response_to_file('upns_warnings_summary', response, '/api/v1/upns/warnings/summary', params, config.response_dir, number=number, title=title)
     return response
 
 
@@ -254,7 +254,7 @@ def test_get_rain_statistics(client: APIClient):
         title=title,
     )
     if config.save_response and response:
-        save_response_to_file('upns_rain_statistics', response, config.response_dir)
+        save_response_to_file('upns_rain_statistics', response, '/api/v1/upns/statistics/rain/now', params, config.response_dir, number=number, title=title)
     return response
 
 
@@ -287,12 +287,14 @@ def test_get_pwv_statistics(client: APIClient):
         title=title,
     )
     if config.save_response and response:
-        save_response_to_file('upns_pwv_statistics', response, config.response_dir)
+        save_response_to_file('upns_pwv_statistics', response, '/api/v1/upns/statistics/pwv/now', params, config.response_dir, number=number, title=title)
     return response
 
 
 def test_get_risk(client: APIClient):
     """测试获取风险评估"""
+    number = '3.1.9'
+    title = '风险评估'
     startTime = startTime_file
     endTime = endTime_file
     minLng = minLng_file
@@ -308,9 +310,9 @@ def test_get_risk(client: APIClient):
         'maxLat': maxLat,
     }
     response = client.request('GET', '/api/v1/upns/risk', params=params)
-    print_response('获取风险评估', 'GET', '/api/v1/upns/risk', response, config.verbose)
+    print_response('获取风险评估', 'GET', '/api/v1/upns/risk', response, config.verbose, number=number, title=title)
     if config.save_response and response:
-        save_response_to_file('upns_risk', response, config.response_dir)
+        save_response_to_file('upns_risk', response, '/api/v1/upns/risk', params, config.response_dir, number=number, title=title)
     return response
 
 
