@@ -160,16 +160,10 @@ def test_get_warning_issue(client: APIClient):
     """测试获取沉降预警信息"""
     number = '3.4.8'
     title = '预警信息'
-    endTime = 1738857421000  
-    # 2025-2-6 21:34  
-    startTime = 1738157653000
-    # 2025-1-29 21:34 hello
-
     #测试节点时间戳是在1738512000000  2025-2-3 0:0:0，lng106.5,lat29.7
     
-    # endTime = int(time.time() * 1000)
-    # startTime = endTime - 1000 * 24 * 60 * 60 * 1000
-    # params = {}
+    endTime = int(time.time() * 1000)
+    startTime = endTime - 1000 * 24 * 60 * 60 * 1000
     params = {'minLng': 106.263, 
               'maxLng':107.444, 
               'minLat': 29.232, 
