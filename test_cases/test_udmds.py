@@ -287,14 +287,14 @@ def run_all_tests():
     """运行形变安全监测模块的所有测试"""
     client = APIClient(config.host, config.app_key, config.app_secret, config.timeout)
 
-    # test_get_overview(client)
-    # test_get_projects(client)
-    # test_get_points(client)
+    test_get_overview(client)
+    test_get_projects(client)
+    test_get_points(client)
     test_get_point_realtime(client)
     test_get_point_history(client)
-    # test_get_project_statistics(client)
-    # test_get_alerts_summary(client)
-    # test_get_risk(client)
+    test_get_project_statistics(client)
+    test_get_alerts_summary(client)
+    test_get_risk(client)
 
 
 if __name__ == '__main__':
