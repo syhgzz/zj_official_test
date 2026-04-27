@@ -70,12 +70,12 @@ def test_get_periods(client: APIClient):
     params = {
         'pageNum': 1,
         'pageSize': 20,
-        'startTime': startTime,
-        'endTime': endTime,
-        'minLng': minLng,
-        'maxLng': maxLng,
-        'minLat': minLat,
-        'maxLat': maxLat,
+        # 'startTime': startTime,
+        # 'endTime': endTime,
+        # 'minLng': minLng,
+        # 'maxLng': maxLng,
+        # 'minLat': minLat,
+        # 'maxLat': maxLat,
     }
     response = client.request('GET', '/api/v1/upss/periods', params=params)
     print_response(
@@ -138,8 +138,8 @@ def test_get_point_history(client: APIClient, code: str = "PS001"):
     minLat = minLat_file
     maxLat = maxLat_file
     params = {
-        'startIssue': '20180120',
-        'endIssue': '20240101',
+        # 'startIssue': '20180120',
+        # 'endIssue': '20240101',
         'startTime': startTime,
         'endTime': endTime,
         'minLng': minLng,
@@ -177,8 +177,6 @@ def test_get_regional_statistics(client: APIClient):
         'dimension': 'admin',
         'pageNum': 1,
         'pageSize': 1000,
-        'startTime': startTime,
-        'endTime': endTime,
         'minLng': minLng,
         'maxLng': maxLng,
         'minLat': minLat,
@@ -211,8 +209,6 @@ def test_get_grid_rate(client: APIClient):
     maxLat = maxLat_file
     params = {
         'issue': '20220424',
-        'startTime': startTime,
-        'endTime': endTime,
         'minLng': minLng,
         'maxLng': maxLng,
         'minLat': minLat,
@@ -245,8 +241,6 @@ def test_get_grid_gradient(client: APIClient):
     maxLat = maxLat_file
     params = {
         'issue': '20220424',
-        'startTime': startTime,
-        'endTime': endTime,
         'minLng': minLng,
         'maxLng': maxLng,
         'minLat': minLat,
@@ -278,7 +272,7 @@ def test_get_warning_issue(client: APIClient):
     minLat = minLat_file
     maxLat = maxLat_file
     params = {
-        'issue': '20220424',
+        # 'issue': '20220424',
         'startTime': startTime,
         'endTime': endTime,
         'minLng': minLng,
@@ -312,7 +306,7 @@ def test_get_statistics_issue(client: APIClient):
     minLat = minLat_file
     maxLat = maxLat_file
     params = {
-        'issue': '20250203',
+        # 'issue': '20250203',
         'startTime': startTime,
         'endTime': endTime,
         'minLng': minLng,
@@ -379,10 +373,10 @@ def test_get_top_gradient(client: APIClient):
     minLat = minLat_file
     maxLat = maxLat_file
     params = {
-        'startIssue': '20220424',
-        'endIssue': '20220526',
-        'startTime': startTime,
-        'endTime': endTime,
+        'startIssue': '20230723',
+        'endIssue': '20250203',
+        # 'startTime': startTime,
+        # 'endTime': endTime,
         'minLng': minLng,
         'maxLng': maxLng,
         'minLat': minLat,
