@@ -373,10 +373,10 @@ def test_get_top_gradient(client: APIClient):
     minLat = minLat_file
     maxLat = maxLat_file
     params = {
-        'startIssue': '20230723',
-        'endIssue': '20250203',
-        # 'startTime': startTime,
-        # 'endTime': endTime,
+        # 'startIssue': '20230723',
+        # 'endIssue': '20250203',
+        'startTime': startTime,
+        'endTime': endTime,
         'minLng': minLng,
         'maxLng': maxLng,
         'minLat': minLat,

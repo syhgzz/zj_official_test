@@ -102,6 +102,8 @@ def test_get_points(client: APIClient):
     minLat = minLat_file
     maxLat = maxLat_file
     params = {
+        'startTime': startTime,
+        'endTime': endTime,
         'minLng': minLng,
         'maxLng': maxLng,
         'minLat': minLat,
@@ -284,7 +286,7 @@ def test_get_risk(client: APIClient):
 
 
 def run_all_tests():
-    """运行形变安全监测模块的所有测试"""
+    """运行形变安全监测模块的所有测试, 用到的接口 1 2 3 4 5 7"""
     client = APIClient(config.host, config.app_key, config.app_secret, config.timeout)
 
     test_get_overview(client)
@@ -292,9 +294,9 @@ def run_all_tests():
     test_get_points(client)
     test_get_point_realtime(client)
     test_get_point_history(client)
-    test_get_project_statistics(client)
+    # test_get_project_statistics(client)
     test_get_alerts_summary(client)
-    test_get_risk(client)
+    # test_get_risk(client)
 
 
 if __name__ == '__main__':
