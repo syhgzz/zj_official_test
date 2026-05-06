@@ -121,14 +121,16 @@ def test_get_points(client: APIClient):
     )
     if config.save_response and response:
         save_response_to_file('udmds_points', response, '/api/v1/udmds/points', params, config.response_dir, number=number, title=title)
-    return response
+    pointcode_list = []
+    if response and response.get('data', {}).get('points'):
+        pointcode_list = [p['pointCode'] for p in response['data']['points']]
+    return response, pointcode_list
 
 
 def test_get_point_realtime(client: APIClient, code: str = "PD001"):
     """测试获取监测点实时数据"""
     number = '3.2.4'
     title = '单点实时数据'
-    code = 'JCD03'
     startTime = startTime_file
     endTime = endTime_file
     minLng = minLng_file
@@ -160,7 +162,6 @@ def test_get_point_history(client: APIClient, code: str = "PD001"):
     """测试获取监测点历史数据"""
     number = '3.2.5'
     title = '单点历史趋势'
-    code = 'JCD03'
     startTime = startTime_file
     endTime = endTime_file
     minLng = minLng_file
@@ -291,9 +292,13 @@ def run_all_tests():
 
     test_get_overview(client) # 3.2.1
     test_get_projects(client) # 3.2.2
-    test_get_points(client) # 3.2.3
-    test_get_point_realtime(client) # 3.2.4
-    test_get_point_history(client) # 3.2.5
+    _, pointcode_list = test_get_points(client) # 3.2.3
+
+    print(f"\n共获取到 {len(pointcode_list)} 个监测点, 开始循环测试实时数据和历史趋势...\n")
+    for code in pointcode_list:
+        print(f"正在测试监测点: {code}")
+        test_get_point_realtime(client, code) # 3.2.4
+        test_get_point_history(client, code) # 3.2.5
     # test_get_project_statistics(client)
     test_get_alerts_summary(client) # 3.2.7
     # test_get_risk(client)
