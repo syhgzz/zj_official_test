@@ -18,6 +18,8 @@ except ImportError:
 
 startTime_file = startTime_global
 endTime_file = endTime_global
+# startTime_file = int(datetime(2019,9,1,0,0,0).timestamp()) * 1000    
+# endTime_file = int(datetime(2019,9,30,23,59,59).timestamp()) * 1000
 minLng_file = minLng_global
 maxLng_file = maxLng_global
 minLat_file = minLat_global
@@ -195,7 +197,7 @@ def test_get_statistics(client: APIClient):
     minLat = minLat_file
     maxLat = maxLat_file
     params = {
-        'packId': '430000003510_20250630_1437',
+        # 'packId': '430000003510_20250630_1437',
         'startTime': startTime,
         'endTime': endTime,
         'minLng': minLng,
@@ -221,7 +223,7 @@ def test_get_statistics(client: APIClient):
 
 
 def run_all_tests():
-    """运行走航甲烷检测模块的所有测试"""
+    """运行走航甲烷检测模块的所有测试 1 2 3 4 5"""
     client = APIClient(config.host, config.app_key, config.app_secret, config.timeout)
 
     # 测试1: 获取模块概览

@@ -168,7 +168,7 @@ def test_get_point_history(client: APIClient, code: str = "PD001"):
     minLat = minLat_file
     maxLat = maxLat_file
     params = {
-        'deviceType': 'accelerometer',
+        # 'deviceType': 'accelerometer',
         'interval': '1h',
         'startTime': startTime,
         'endTime': endTime,
@@ -289,13 +289,13 @@ def run_all_tests():
     """运行形变安全监测模块的所有测试, 用到的接口 1 2 3 4 5 7"""
     client = APIClient(config.host, config.app_key, config.app_secret, config.timeout)
 
-    test_get_overview(client)
-    test_get_projects(client)
-    test_get_points(client)
-    test_get_point_realtime(client)
-    test_get_point_history(client)
+    test_get_overview(client) # 3.2.1
+    test_get_projects(client) # 3.2.2
+    test_get_points(client) # 3.2.3
+    test_get_point_realtime(client) # 3.2.4
+    test_get_point_history(client) # 3.2.5
     # test_get_project_statistics(client)
-    test_get_alerts_summary(client)
+    test_get_alerts_summary(client) # 3.2.7
     # test_get_risk(client)
 
 
