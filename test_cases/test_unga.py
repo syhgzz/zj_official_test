@@ -227,19 +227,19 @@ def run_all_tests():
     client = APIClient(config.host, config.app_key, config.app_secret, config.timeout)
 
     # 测试1: 获取模块概览
-    test_get_overview(client)
+    test_get_overview(client) # 3.5.1
 
     # 测试2: 获取检测任务列表
-    test_get_tasks(client)
+    test_get_tasks(client) # 3.5.2
 
     # 测试3: 获取任务轨迹数据
-    test_get_task_trajectory(client)
+    test_get_task_trajectory(client) # 3.5.3
 
     # 测试4: 获取泄露点列表
-    test_get_leaks(client)
+    test_get_leaks(client) # 3.5.4
 
     # 测试5: 获取走航统计数据
-    test_get_statistics(client)
+    test_get_statistics(client) # 3.5.5
 
 
 if __name__ == '__main__':

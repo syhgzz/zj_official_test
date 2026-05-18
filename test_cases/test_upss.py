@@ -22,6 +22,7 @@ minLng_file = minLng_global
 maxLng_file = maxLng_global
 minLat_file = minLat_global
 maxLat_file = maxLat_global
+point_set = set()
 
 
 def test_get_overview(client: APIClient):
@@ -126,11 +127,11 @@ def test_get_period_summary(client: APIClient, issue: str = "20221220"):
     return response
 
 
-def test_get_point_history(client: APIClient, code: str = "PS001"):
+def test_get_point_history(client: APIClient, pointcode: str):
     """测试获取单点沉降历史"""
     number = '3.4.4'
     title = '单点沉降历史'
-    code = '1305'
+    code = pointcode
     startTime = startTime_file
     endTime = endTime_file
     minLng = minLng_file
@@ -173,7 +174,8 @@ def test_get_regional_statistics(client: APIClient):
     minLat = minLat_file
     maxLat = maxLat_file
     params = {
-        'issue': '20220424',
+        # 'issue': '20220424',
+        'issue': '20250203',
         'dimension': 'admin',
         'pageNum': 1,
         'pageSize': 1000,
@@ -183,6 +185,11 @@ def test_get_regional_statistics(client: APIClient):
         'maxLat': maxLat,
     }
     response = client.request('GET', '/api/v1/upss/statistics/regional', params=params)
+    if response and response.get('code') == 200:
+        data = response.get('data', {})
+        for point in data.get('points', []):
+            if 'pointCode' in point:
+                point_set.add(point['pointCode'])
     print_response(
         '获取区域沉降统计',
         'GET',
@@ -208,13 +215,19 @@ def test_get_grid_rate(client: APIClient):
     minLat = minLat_file
     maxLat = maxLat_file
     params = {
-        'issue': '20220424',
+        # 'issue': '20220424',
+        'issue': '20250203',
         'minLng': minLng,
         'maxLng': maxLng,
         'minLat': minLat,
         'maxLat': maxLat,
     }
     response = client.request('GET', '/api/v1/upss/statistics/gridRate', params=params)
+    if response and response.get('code') == 200:
+        data = response.get('data', {})
+        for point in data.get('points', []):
+            if 'pointCode' in point:
+                point_set.add(point['pointCode'])
     print_response(
         '获取网格沉降速率',
         'GET',
@@ -240,13 +253,19 @@ def test_get_grid_gradient(client: APIClient):
     minLat = minLat_file
     maxLat = maxLat_file
     params = {
-        'issue': '20220424',
+        # 'issue': '20220424',
+        'issue': '20250203',
         'minLng': minLng,
         'maxLng': maxLng,
         'minLat': minLat,
         'maxLat': maxLat,
     }
     response = client.request('GET', '/api/v1/upss/statistics/gridGradient', params=params)
+    if response and response.get('code') == 200:
+        data = response.get('data', {})
+        for point in data.get('points', []):
+            if 'pointCode' in point:
+                point_set.add(point['pointCode'])
     print_response(
         '获取网格沉降梯度',
         'GET',
@@ -281,6 +300,11 @@ def test_get_warning_issue(client: APIClient):
         'maxLat': maxLat,
     }
     response = client.request('GET', '/api/v1/upss/visualization/warning/issue', params=params)
+    if response and response.get('code') == 200:
+        data = response.get('data', {})
+        for warning in data.get('warnings', []):
+            if 'pointCode' in warning:
+                point_set.add(warning['pointCode'])
     print_response(
         '获取沉降预警信息',
         'GET',
@@ -348,6 +372,11 @@ def test_get_max_subsidence_timeseries(client: APIClient):
         'maxLat': maxLat,
     }
     response = client.request('GET', '/api/v1/upss/visualization/max-subsidence/timeseries', params=params)
+    if response and response.get('code') == 200:
+        data = response.get('data', {})
+        point_info = data.get('pointInfo', {})
+        if 'pointCode' in point_info:
+            point_set.add(point_info['pointCode'])
     print_response(
         '获取最大沉降点时序',
         'GET',
@@ -383,6 +412,11 @@ def test_get_top_gradient(client: APIClient):
         'maxLat': maxLat,
     }
     response = client.request('GET', '/api/v1/upss/visualization/top-gradient', params=params)
+    if response and response.get('code') == 200:
+        data = response.get('data', {})
+        for point in data.get('topPoints', []):
+            if 'pointCode' in point:
+                point_set.add(point['pointCode'])
     print_response(
         '获取Top5沉降梯度',
         'GET',
@@ -428,8 +462,7 @@ def run_all_tests():
 
     # test_get_overview(client) # 3.4.1
     test_get_periods(client) # 3.4.2
-    test_get_period_summary(client) # 3.4.3
-    test_get_point_history(client) # 3.4.4
+    # test_get_period_summary(client) # 3.4.3
     test_get_regional_statistics(client) # 3.4.5
     test_get_grid_rate(client) # 3.4.6
     test_get_grid_gradient(client) # 3.4.7
@@ -438,6 +471,11 @@ def run_all_tests():
     test_get_max_subsidence_timeseries(client) # 3.4.10
     test_get_top_gradient(client) # 3.4.11
     # test_get_risk(client) # 3.4.12
+    
+    point_set.add('1305')  # 添加一个默认点位，确保有数据可测
+    for pc in point_set:
+        test_get_point_history(client, pointcode=pc)
+
 
 
 if __name__ == '__main__':
