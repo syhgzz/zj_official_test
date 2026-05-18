@@ -16,14 +16,16 @@ except ImportError:
     from common import *
 
 
-startTime_file = startTime_global
-endTime_file = endTime_global
-# startTime_file = int(datetime(2019,9,1,0,0,0).timestamp()) * 1000    
-# endTime_file = int(datetime(2019,9,30,23,59,59).timestamp()) * 1000
+# startTime_file = startTime_global
+# endTime_file = endTime_global
+startTime_file = int(datetime(2019,1,1,0,0,0).timestamp()) * 1000    
+endTime_file = int(datetime(2019,12,31,23,59,59).timestamp()) * 1000
 minLng_file = minLng_global
 maxLng_file = maxLng_global
 minLat_file = minLat_global
 maxLat_file = maxLat_global
+
+task_set = []
 
 
 def test_get_overview(client: APIClient):
@@ -101,6 +103,12 @@ def test_get_tasks(client: APIClient, page_num: int = 1, page_size: int = 20):
     if config.save_response and response:
         save_response_to_file('unga_tasks', response, '/api/v1/unga/tasks', params, config.response_dir, number=number, title=title)
 
+    global task_set
+    if response :
+
+        tasks = response.get("data", {}).get("tasks", [])
+        task_set = [t["taskId"] for t in tasks if "taskId" in t]
+
     return response
 
 
@@ -111,7 +119,6 @@ def test_get_task_trajectory(client: APIClient, task_id: int = 1):
     """
     number = '3.5.3'
     title = '走航轨迹查询'
-    task_id ='430000003510_20250630_2018'
     startTime = startTime_file
     endTime = endTime_file
     minLng = minLng_file
@@ -119,8 +126,8 @@ def test_get_task_trajectory(client: APIClient, task_id: int = 1):
     minLat = minLat_file
     maxLat = maxLat_file
     params = {
-        'startTime': startTime,
-        'endTime': endTime,
+        # 'startTime': startTime,
+        # 'endTime': endTime,
         'minLng': minLng,
         'maxLng': maxLng,
         'minLat': minLat,
@@ -230,13 +237,14 @@ def run_all_tests():
     test_get_overview(client) # 3.5.1
 
     # 测试2: 获取检测任务列表
-    test_get_tasks(client) # 3.5.2
+    test_get_tasks(client, page_num=1, page_size=2000) # 3.5.2
 
     # 测试3: 获取任务轨迹数据
-    test_get_task_trajectory(client) # 3.5.3
+    for task_id in task_set:
+        test_get_task_trajectory(client, task_id=task_id) # 3.5.3
 
     # 测试4: 获取泄露点列表
-    test_get_leaks(client) # 3.5.4
+    test_get_leaks(client, page_num=1, page_size=2000) # 3.5.4
 
     # 测试5: 获取走航统计数据
     test_get_statistics(client) # 3.5.5
