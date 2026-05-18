@@ -68,14 +68,14 @@ def test_get_periods(client: APIClient):
     minLat = minLat_file
     maxLat = maxLat_file
     params = {
-        'pageNum': 1,
-        'pageSize': 20,
-        # 'startTime': startTime,
-        # 'endTime': endTime,
-        # 'minLng': minLng,
-        # 'maxLng': maxLng,
-        # 'minLat': minLat,
-        # 'maxLat': maxLat,
+        # 'pageNum': 1,
+        # 'pageSize': 20,
+        'startTime': startTime,
+        'endTime': endTime,
+        'minLng': minLng,
+        'maxLng': maxLng,
+        'minLat': minLat,
+        'maxLat': maxLat,
     }
     response = client.request('GET', '/api/v1/upss/periods', params=params)
     print_response(
@@ -426,18 +426,18 @@ def run_all_tests():
     """运行沉降态势感知模块的所有测试"""
     client = APIClient(config.host, config.app_key, config.app_secret, config.timeout)
 
-    test_get_overview(client)
-    test_get_periods(client)
-    test_get_period_summary(client)
-    test_get_point_history(client)
-    test_get_regional_statistics(client)
-    test_get_grid_rate(client)
-    test_get_grid_gradient(client)
-    test_get_warning_issue(client)
-    test_get_statistics_issue(client)
-    test_get_max_subsidence_timeseries(client)
-    test_get_top_gradient(client)
-    test_get_risk(client)
+    # test_get_overview(client) # 3.4.1
+    test_get_periods(client) # 3.4.2
+    test_get_period_summary(client) # 3.4.3
+    test_get_point_history(client) # 3.4.4
+    test_get_regional_statistics(client) # 3.4.5
+    test_get_grid_rate(client) # 3.4.6
+    test_get_grid_gradient(client) # 3.4.7
+    test_get_warning_issue(client) # 3.4.8
+    test_get_statistics_issue(client) # 3.4.9
+    test_get_max_subsidence_timeseries(client) # 3.4.10
+    test_get_top_gradient(client) # 3.4.11
+    # test_get_risk(client) # 3.4.12
 
 
 if __name__ == '__main__':
