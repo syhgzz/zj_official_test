@@ -23,6 +23,7 @@ maxLng_file = maxLng_global
 minLat_file = minLat_global
 maxLat_file = maxLat_global
 point_set = set()
+issue_list = []
 
 
 def test_get_overview(client: APIClient):
@@ -90,6 +91,11 @@ def test_get_periods(client: APIClient):
     )
     if config.save_response and response:
         save_response_to_file('upss_periods', response, '/api/v1/upss/periods', params, config.response_dir, number=number, title=title)
+    if response and response.get('code') == 200:
+        data = response.get('data', [])
+        for item in data:
+            if 'issue' in item:
+                issue_list.append(item['issue'])
     return response
 
 
@@ -163,7 +169,7 @@ def test_get_point_history(client: APIClient, pointcode: str):
     return response
 
 
-def test_get_regional_statistics(client: APIClient):
+def test_get_regional_statistics(client: APIClient, issue: str = None):
     """测试获取区域沉降统计"""
     number = '3.4.5'
     title = '沉降地图（热力图）'
@@ -174,8 +180,7 @@ def test_get_regional_statistics(client: APIClient):
     minLat = minLat_file
     maxLat = maxLat_file
     params = {
-        # 'issue': '20220424',
-        'issue': '20250203',
+        'issue': issue if issue else '20250203',
         'dimension': 'admin',
         'pageNum': 1,
         'pageSize': 1000,
@@ -200,11 +205,11 @@ def test_get_regional_statistics(client: APIClient):
         title=title,
     )
     if config.save_response and response:
-        save_response_to_file('upss_regional_statistics', response, '/api/v1/upss/statistics/regional', params, config.response_dir, number=number, title=title)
+        save_response_to_file('upss_regional_statistics', response, '/api/v1/upss/statistics/regional' + f'_{issue}', params, config.response_dir, number=number, title=title)
     return response
 
 
-def test_get_grid_rate(client: APIClient):
+def test_get_grid_rate(client: APIClient, issue: str = None):
     """测试获取网格沉降速率"""
     number = '3.4.6'
     title = '沉降速率'
@@ -215,8 +220,7 @@ def test_get_grid_rate(client: APIClient):
     minLat = minLat_file
     maxLat = maxLat_file
     params = {
-        # 'issue': '20220424',
-        'issue': '20250203',
+        'issue': issue if issue else '20250203',
         'minLng': minLng,
         'maxLng': maxLng,
         'minLat': minLat,
@@ -238,11 +242,11 @@ def test_get_grid_rate(client: APIClient):
         title=title,
     )
     if config.save_response and response:
-        save_response_to_file('upss_grid_rate', response, '/api/v1/upss/statistics/gridRate', params, config.response_dir, number=number, title=title)
+        save_response_to_file('upss_grid_rate', response, '/api/v1/upss/statistics/gridRate' + f'_{issue}', params, config.response_dir, number=number, title=title)
     return response
 
 
-def test_get_grid_gradient(client: APIClient):
+def test_get_grid_gradient(client: APIClient, issue: str = None):
     """测试获取网格沉降梯度"""
     number = '3.4.7'
     title = '沉降速率梯度'
@@ -253,8 +257,7 @@ def test_get_grid_gradient(client: APIClient):
     minLat = minLat_file
     maxLat = maxLat_file
     params = {
-        # 'issue': '20220424',
-        'issue': '20250203',
+        'issue': issue if issue else '20250203',
         'minLng': minLng,
         'maxLng': maxLng,
         'minLat': minLat,
@@ -276,7 +279,7 @@ def test_get_grid_gradient(client: APIClient):
         title=title,
     )
     if config.save_response and response:
-        save_response_to_file('upss_grid_gradient', response, '/api/v1/upss/statistics/gridGradient', params, config.response_dir, number=number, title=title)
+        save_response_to_file('upss_grid_gradient', response, '/api/v1/upss/statistics/gridGradient' + f'_{issue}', params, config.response_dir, number=number, title=title)
     return response
 
 
@@ -463,9 +466,10 @@ def run_all_tests():
     # test_get_overview(client) # 3.4.1
     test_get_periods(client) # 3.4.2
     # test_get_period_summary(client) # 3.4.3
-    test_get_regional_statistics(client) # 3.4.5
-    test_get_grid_rate(client) # 3.4.6
-    test_get_grid_gradient(client) # 3.4.7
+    for issue in issue_list:
+        test_get_regional_statistics(client, issue=issue) # 3.4.5
+        test_get_grid_rate(client, issue=issue) # 3.4.6
+        test_get_grid_gradient(client, issue=issue) # 3.4.7
     test_get_warning_issue(client) # 3.4.8
     test_get_statistics_issue(client) # 3.4.9
     test_get_max_subsidence_timeseries(client) # 3.4.10
