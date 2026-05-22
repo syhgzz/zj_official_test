@@ -228,9 +228,84 @@ def test_get_statistics(client: APIClient):
 
     return response
 
+def test_get_tasks_trajectory(client: APIClient, task_id: int = 1):
+    """
+    测试获取地理区域内轨迹数据
+    GET /api/v1/unga/tasks/trajectory
+    """
+    number = '3.5.6'
+    title = '走航轨迹查询'
+    startTime = startTime_file
+    endTime = endTime_file
+    minLng = minLng_file
+    maxLng = maxLng_file
+    minLat = minLat_file
+    maxLat = maxLat_file
+    params = {
+        'startTime': startTime,
+        'endTime': endTime,
+        'minLng': minLng,
+        'maxLng': maxLng,
+        'minLat': minLat,
+        'maxLat': maxLat,
+    }
+    response = client.request('GET', f'/api/v1/unga/tasks/trajectory', params=params)
+    print_response(
+        '获取地理区域内轨迹数据',
+        'GET',
+        f'/api/v1/unga/tasks/trajectory',
+        response,
+        config.verbose,
+        number=number,
+        title=title,
+    )
+
+    if config.save_response and response:
+        save_response_to_file('unga_tasks_trajectory', response, f'/api/v1/unga/tasks/trajectory', params, config.response_dir, number=number, title=title)
+
+    return response
+
+def test_get_statistics_ext(client: APIClient):
+    """
+    测试获取区域内走航统计数据
+    GET /api/v1/unga/statistics/ext
+    """
+    number = '3.5.7'
+    title = '统计分析'
+    startTime = startTime_file
+    endTime = endTime_file
+    minLng = minLng_file
+    maxLng = maxLng_file
+    minLat = minLat_file
+    maxLat = maxLat_file
+    params = {
+        # 'packId': '430000003510_20250630_1437',
+        'startTime': startTime,
+        'endTime': endTime,
+        'minLng': minLng,
+        'maxLng': maxLng,
+        'minLat': minLat,
+        'maxLat': maxLat,
+    }
+    response = client.request('GET', '/api/v1/unga/statistics/ext', params=params)
+    print_response(
+        '获取走航统计数据',
+        'GET',
+        '/api/v1/unga/statistics/ext',
+        response,
+        config.verbose,
+        number=number,
+        title=title,
+    )
+
+    if config.save_response and response:
+        save_response_to_file('unga_statistics_ext', response, '/api/v1/unga/statistics/ext', params, config.response_dir, number=number, title=title)
+
+    return response
+
 
 def run_all_tests():
-    """运行走航甲烷检测模块的所有测试 1 2 3 4 5"""
+    """运行走航甲烷检测模块的所有测试 1 2 3 4 5 6"""
     client = APIClient(config.host, config.app_key, config.app_secret, config.timeout)
 
     # 测试1: 获取模块概览
@@ -248,7 +323,12 @@ def run_all_tests():
 
     # 测试5: 获取走航统计数据
     test_get_statistics(client) # 3.5.5
+    
+    # 测试6: 获取地理区域内轨迹数据
+    test_get_tasks_trajectory(client) # 3.5.6
 
+    # 测试7: 获取区域内走航统计数据
+    test_get_statistics_ext(client) # 3.5.7
 
 if __name__ == '__main__':
     run_all_tests()
