@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>走航轨迹地图</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; }
+  #map { width: 100%; height: 100%; }
+  .legend { background: white; padding: 8px 12px; border-radius: 4px; box-shadow: 0 1px 4px rgba(0,0,0,0.3); line-height: 1.8; font-size: 13px; }
+  .legend i { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+  .info-panel {
+    position: absolute; top: 10px; right: 10px; z-index: 1000;
+    background: white; padding: 10px 16px; border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2); font-size: 14px;
+  }
+  .info-panel h3 { margin: 0 0 6px 0; font-size: 15px; }
+  .info-panel p { margin: 2px 0; }
+</style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<div class="info-panel">
+  <h3>任务-180500001587_20190902_1251</h3>
+  <p>采样点: 9 个 | 轨迹长度: 8 段</p>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const taskData = {
+  "taskId": "180500001587_20190902_1251",
+  "taskName": "任务-180500001587_20190902_1251",
+  "trajectory": {
+    "geoJSON": "{\"type\":\"LineString\",\"coordinates\":[[106.52003033333305,29.570994],[106.519101333333,29.569895666666696],[106.51664816666701,29.57623116666671],[106.51813458333348,29.57709725],[106.51857649999998,29.57721183333329],[106.51924266666701,29.5772245],[106.520781,29.57726416666669],[106.52296183333297,29.5772551666667],[106.52275633333296,29.5759]]}",
+    "samplingPoints": [
+      {"sequence":1,"longitude":106.52003033333305,"latitude":29.570994,"gasConcentration":3.38,"timestamp":1567428660000},
+      {"sequence":2,"longitude":106.519101333333,"latitude":29.569895666666696,"gasConcentration":2.96,"timestamp":1567428660000},
+      {"sequence":3,"longitude":106.51664816666701,"latitude":29.57623116666671,"gasConcentration":8.88,"timestamp":1567428660000},
+      {"sequence":4,"longitude":106.51813458333348,"latitude":29.57709725,"gasConcentration":4.13,"timestamp":1567428660000},
+      {"sequence":5,"longitude":106.51857649999998,"latitude":29.57721183333329,"gasConcentration":5.88,"timestamp":1567428660000},
+      {"sequence":6,"longitude":106.51924266666701,"latitude":29.5772245,"gasConcentration":5.88,"timestamp":1567428660000},
+      {"sequence":7,"longitude":106.520781,"latitude":29.57726416666669,"gasConcentration":3.48,"timestamp":1567428660000},
+      {"sequence":8,"longitude":106.52296183333297,"latitude":29.5772551666667,"gasConcentration":6.26,"timestamp":1567428660000},
+      {"sequence":9,"longitude":106.52275633333296,"latitude":29.5759,"gasConcentration":5.89,"timestamp":1567428660000}
+    ]
+  }
+};
+
+const map = L.map('map').setView([29.574, 106.52], 14);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '&copy; OpenStreetMap',
+  maxZoom: 19
+}).addTo(map);
+
+// Parse geoJSON
+const geo = JSON.parse(taskData.trajectory.geoJSON);
+const coords = geo.coordinates.map(c => [c[1], c[0]]);
+
+// Draw trajectory line with direction arrows
+const polyline = L.polyline(coords, {
+  color: '#3388ff',
+  weight: 5,
+  opacity: 0.7
+}).addTo(map);
+
+// Add direction arrow decorators
+coords.forEach((coord, i) => {
+  if (i < coords.length - 1) {
+    const mid = [(coord[0] + coords[i+1][0]) / 2, (coord[1] + coords[i+1][1]) / 2];
+    const angle = Math.atan2(coords[i+1][1] - coord[1], coords[i+1][0] - coord[0]) * 180 / Math.PI;
+    L.marker(mid, {
+      icon: L.divIcon({
+        html: '▶',
+        className: '',
+        iconSize: [10, 10],
+        iconAnchor: [5, 5]
+      })
+    }).addTo(map);
+  }
+});
+
+// Find min/max gas concentration for color scale
+const points = taskData.trajectory.samplingPoints;
+const minGas = Math.min(...points.map(p => p.gasConcentration));
+const maxGas = Math.max(...points.map(p => p.gasConcentration));
+
+function getColor(concentration) {
+  const ratio = (concentration - minGas) / (maxGas - minGas || 1);
+  if (ratio < 0.33) return '#2ecc71';
+  if (ratio < 0.66) return '#f1c40f';
+  return '#e74c3c';
+}
+
+// Add sampling point markers
+points.forEach(p => {
+  const color = getColor(p.gasConcentration);
+  const timeStr = new Date(p.timestamp).toLocaleString('zh-CN');
+
+  const marker = L.circleMarker([p.latitude, p.longitude], {
+    radius: 8,
+    fillColor: color,
+    color: '#fff',
+    weight: 2,
+    opacity: 1,
+    fillOpacity: 0.85
+  }).addTo(map);
+
+  marker.bindPopup(`
+    <b>采样点 ${p.sequence}</b><br>
+    经度: ${p.longitude.toFixed(6)}<br>
+    纬度: ${p.latitude.toFixed(6)}<br>
+    气体浓度: ${p.gasConcentration} <br>
+    时间: ${timeStr}
+  `);
+
+  // Add sequence number label
+  L.marker([p.latitude, p.longitude], {
+    icon: L.divIcon({
+      html: `<span style="font-size:10px;font-weight:bold;color:#fff;text-shadow:0 0 2px #000">${p.sequence}</span>`,
+      className: '',
+      iconSize: [16, 16],
+      iconAnchor: [8, 8]
+    })
+  }).addTo(map);
+});
+
+// Fit map to bounds
+map.fitBounds(polyline.getBounds().pad(0.05));
+
+// Legend
+const legend = L.control({ position: 'bottomleft' });
+legend.onAdd = function() {
+  const div = L.DomUtil.create('div', 'legend');
+  div.innerHTML = `
+    <b>气体浓度</b><br>
+    <i style="background:#2ecc71"></i> ≤ ${(minGas + (maxGas-minGas)/3).toFixed(2)}<br>
+    <i style="background:#f1c40f"></i> ${(minGas + (maxGas-minGas)/3).toFixed(2)} ~ ${(minGas + (maxGas-minGas)*2/3).toFixed(2)}<br>
+    <i style="background:#e74c3c"></i> ≥ ${(minGas + (maxGas-minGas)*2/3).toFixed(2)}
+  `;
+  return div;
+};
+legend.addTo(map);
+</script>
+</body>
+</html>
