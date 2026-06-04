@@ -49,7 +49,11 @@ def test_get_overview(client: APIClient):
         'minLat': minLat,
         'maxLat': maxLat,
     }
+    start_dt = datetime.now()
     response = client.request('GET', '/api/v1/unga/overview', params=params)
+    end_dt = datetime.now()
+    elapsed = (end_dt - start_dt).total_seconds()
+    
     print_response(
         '获取走航甲烷模块概览',
         'GET',
@@ -58,10 +62,11 @@ def test_get_overview(client: APIClient):
         config.verbose,
         number=number,
         title=title,
+        elapsed_seconds=elapsed,
     )
 
     if config.save_response and response:
-        save_response_to_file('unga_overview', response, '/api/v1/unga/overview', params, config.response_dir, number=number, title=title)
+        save_response_to_file('unga_overview', response, '/api/v1/unga/overview', params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
 
     return response
 
@@ -89,7 +94,11 @@ def test_get_tasks(client: APIClient, page_num: int = 1, page_size: int = 20):
         'minLat': minLat,
         'maxLat': maxLat,
     }
+    start_dt = datetime.now()
     response = client.request('GET', '/api/v1/unga/tasks', params=params)
+    end_dt = datetime.now()
+    elapsed = (end_dt - start_dt).total_seconds()
+    
     print_response(
         '获取检测任务列表',
         'GET',
@@ -98,10 +107,11 @@ def test_get_tasks(client: APIClient, page_num: int = 1, page_size: int = 20):
         config.verbose,
         number=number,
         title=title,
+        elapsed_seconds=elapsed,
     )
 
     if config.save_response and response:
-        save_response_to_file('unga_tasks', response, '/api/v1/unga/tasks', params, config.response_dir, number=number, title=title)
+        save_response_to_file('unga_tasks', response, '/api/v1/unga/tasks', params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
 
     global task_set
     if response :
@@ -133,7 +143,11 @@ def test_get_task_trajectory(client: APIClient, task_id: int = 1):
         'minLat': minLat,
         'maxLat': maxLat,
     }
+    start_dt = datetime.now()
     response = client.request('GET', f'/api/v1/unga/tasks/{task_id}/trajectory', params=params)
+    end_dt = datetime.now()
+    elapsed = (end_dt - start_dt).total_seconds()
+    
     print_response(
         '获取任务轨迹数据',
         'GET',
@@ -142,10 +156,11 @@ def test_get_task_trajectory(client: APIClient, task_id: int = 1):
         config.verbose,
         number=number,
         title=title,
+        elapsed_seconds=elapsed,
     )
 
     if config.save_response and response:
-        save_response_to_file('unga_task_trajectory', response, f'/api/v1/unga/tasks/{task_id}/trajectory', params, config.response_dir, number=number, title=title)
+        save_response_to_file('unga_task_trajectory', response, f'/api/v1/unga/tasks/{task_id}/trajectory', params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
 
     return response
 
@@ -173,7 +188,11 @@ def test_get_leaks(client: APIClient, page_num: int = 1, page_size: int = 20):
         'minLat': minLat,
         'maxLat': maxLat,
     }
+    start_dt = datetime.now()
     response = client.request('GET', '/api/v1/unga/leaks', params=params)
+    end_dt = datetime.now()
+    elapsed = (end_dt - start_dt).total_seconds()
+    
     print_response(
         '获取泄露点列表',
         'GET',
@@ -182,10 +201,11 @@ def test_get_leaks(client: APIClient, page_num: int = 1, page_size: int = 20):
         config.verbose,
         number=number,
         title=title,
+        elapsed_seconds=elapsed,
     )
 
     if config.save_response and response:
-        save_response_to_file('unga_leaks', response, '/api/v1/unga/leaks', params, config.response_dir, number=number, title=title)
+        save_response_to_file('unga_leaks', response, '/api/v1/unga/leaks', params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
 
     return response
 
@@ -212,7 +232,11 @@ def test_get_statistics(client: APIClient):
         'minLat': minLat,
         'maxLat': maxLat,
     }
+    start_dt = datetime.now()
     response = client.request('GET', '/api/v1/unga/statistics', params=params)
+    end_dt = datetime.now()
+    elapsed = (end_dt - start_dt).total_seconds()
+    
     print_response(
         '获取走航统计数据',
         'GET',
@@ -221,10 +245,11 @@ def test_get_statistics(client: APIClient):
         config.verbose,
         number=number,
         title=title,
+        elapsed_seconds=elapsed,
     )
 
     if config.save_response and response:
-        save_response_to_file('unga_statistics', response, '/api/v1/unga/statistics', params, config.response_dir, number=number, title=title)
+        save_response_to_file('unga_statistics', response, '/api/v1/unga/statistics', params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
 
     return response
 
@@ -249,7 +274,11 @@ def test_get_tasks_trajectory(client: APIClient, task_id: int = 1):
         'minLat': minLat,
         'maxLat': maxLat,
     }
+    start_dt = datetime.now()
     response = client.request('GET', f'/api/v1/unga/tasks/trajectory', params=params)
+    end_dt = datetime.now()
+    elapsed = (end_dt - start_dt).total_seconds()
+    
     print_response(
         '获取地理区域内轨迹数据',
         'GET',
@@ -258,10 +287,11 @@ def test_get_tasks_trajectory(client: APIClient, task_id: int = 1):
         config.verbose,
         number=number,
         title=title,
+        elapsed_seconds=elapsed,
     )
 
     if config.save_response and response:
-        save_response_to_file('unga_tasks_trajectory', response, f'/api/v1/unga/tasks/trajectory', params, config.response_dir, number=number, title=title)
+        save_response_to_file('unga_tasks_trajectory', response, f'/api/v1/unga/tasks/trajectory', params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
 
     return response
 
@@ -287,7 +317,11 @@ def test_get_statistics_ext(client: APIClient):
         'minLat': minLat,
         'maxLat': maxLat,
     }
+    start_dt = datetime.now()
     response = client.request('GET', '/api/v1/unga/statistics/ext', params=params)
+    end_dt = datetime.now()
+    elapsed = (end_dt - start_dt).total_seconds()
+    
     print_response(
         '获取走航统计数据',
         'GET',
@@ -296,10 +330,11 @@ def test_get_statistics_ext(client: APIClient):
         config.verbose,
         number=number,
         title=title,
+        elapsed_seconds=elapsed,
     )
 
     if config.save_response and response:
-        save_response_to_file('unga_statistics_ext', response, '/api/v1/unga/statistics/ext', params, config.response_dir, number=number, title=title)
+        save_response_to_file('unga_statistics_ext', response, '/api/v1/unga/statistics/ext', params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
 
     return response
 

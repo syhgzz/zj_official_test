@@ -371,7 +371,8 @@ def print_response(
     response: Any,
     verbose: bool = True,
     number: str = '',
-    title: str = ''
+    title: str = '',
+    elapsed_seconds: Optional[float] = None
 ):
     """
     输出单接口测试结果（标准流简洁行 + 文件日志）
@@ -384,6 +385,7 @@ def print_response(
         verbose: 保留参数,兼容旧调用
         number: 接口编号(如 3.1.1)
         title: 接口标题(如 模块概览)
+        elapsed_seconds: 接口调用耗时(秒)
     """
     _ = verbose
     success, reason, code = _evaluate_response(response)
@@ -418,6 +420,8 @@ def print_response(
     display_title = title or (api_name or '-').strip() or '-'
     number_prefix = f"[{number}] " if number else ''
     line = f"{progress_prefix}[{status_text}] {number_prefix}{display_title} | {method} {path}"
+    if elapsed_seconds is not None:
+        line += f" | 耗时: {elapsed_seconds:.3f}s"
     if not success and reason:
         line += f" | 原因: {reason}"
 
@@ -462,6 +466,8 @@ def save_response_to_file(
     response_dir: str = 'responses',
     number: str = '',
     title: str = '',
+    start_time: Optional[datetime] = None,
+    end_time: Optional[datetime] = None,
 ):
     """
     保存响应到文件
@@ -474,6 +480,8 @@ def save_response_to_file(
         response_dir: 保存目录
         number: 接口编号(由调用方传入)
         title: 接口标题(由调用方传入)
+        start_time: 接口调用开始时间
+        end_time: 接口调用结束时间
     """
     # 创建保存目录
     os.makedirs(response_dir, exist_ok=True)
@@ -490,14 +498,21 @@ def save_response_to_file(
 
     filepath = os.path.join(response_dir, filename)
 
-    # 按固定顺序写入: number -> title -> path -> request_params -> response
+    # 按固定顺序写入: number -> title -> path -> request_params -> (timing) -> response
     payload = {
         'number': number,
         'title': title,
         'path': path,
         'request_params': request_params or {},
-        'response': response,
     }
+
+    if start_time is not None and end_time is not None:
+        elapsed = (end_time - start_time).total_seconds()
+        payload['start_time'] = start_time.isoformat()
+        payload['end_time'] = end_time.isoformat()
+        payload['elapsed_seconds'] = round(elapsed, 3)
+
+    payload['response'] = response
 
     with open(filepath, 'w', encoding='utf-8') as f:
         json.dump(payload, f, indent=2, ensure_ascii=False)

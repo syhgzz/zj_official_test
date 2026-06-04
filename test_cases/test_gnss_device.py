@@ -43,7 +43,11 @@ def test_get_overview(client: APIClient):
         'minLat': minLat,
         'maxLat': maxLat,
     }
+    start_dt = datetime.now()
     response = client.request('GET', '/api/v1/gnss-device/overview', params=params)
+    end_dt = datetime.now()
+    elapsed = (end_dt - start_dt).total_seconds()
+    
     print_response(
         '获取北斗设备模块概览',
         'GET',
@@ -52,10 +56,11 @@ def test_get_overview(client: APIClient):
         config.verbose,
         number=number,
         title=title,
+        elapsed_seconds=elapsed,
     )
 
     if config.save_response and response:
-        save_response_to_file('gnss_device_overview', response, '/api/v1/gnss-device/overview', params, config.response_dir, number=number, title=title)
+        save_response_to_file('gnss_device_overview', response, '/api/v1/gnss-device/overview', params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
 
     return response
 
@@ -83,7 +88,11 @@ def test_get_stations(client: APIClient, page_num: int = 1, page_size: int = 20)
         'minLat': minLat,
         'maxLat': maxLat,
     }
+    start_dt = datetime.now()
     response = client.request('GET', '/api/v1/gnss-device/stations', params=params)
+    end_dt = datetime.now()
+    elapsed = (end_dt - start_dt).total_seconds()
+    
     print_response(
         '获取站点列表',
         'GET',
@@ -92,12 +101,13 @@ def test_get_stations(client: APIClient, page_num: int = 1, page_size: int = 20)
         config.verbose,
         number=number,
         title=title,
+        elapsed_seconds=elapsed,
     )
 
 
 
     if config.save_response and response:
-        save_response_to_file('gnss_device_stations', response, '/api/v1/gnss-device/stations', params, config.response_dir, number=number, title=title)
+        save_response_to_file('gnss_device_stations', response, '/api/v1/gnss-device/stations', params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
 
     # station_codes = []  # 定义一个空列表来存储站点编码
     global station_codes  # 声明使用全局变量
@@ -131,7 +141,11 @@ def test_get_station_realtime(client: APIClient, code: str = "BJ001"):
 
     for code in station_codes:
     # code = 'CQQX0038'
+        start_dt = datetime.now()
         response = client.request('GET', f'/api/v1/gnss-device/stations/{code}/realtime', params=params)
+        end_dt = datetime.now()
+        elapsed = (end_dt - start_dt).total_seconds()
+        
         print_response(
             '获取站点实时数据',
             'GET',
@@ -140,6 +154,7 @@ def test_get_station_realtime(client: APIClient, code: str = "BJ001"):
             config.verbose,
             number=number,
             title=title,
+            elapsed_seconds=elapsed,
         )
         if config.save_response and response:
             save_response_to_file(
@@ -150,6 +165,8 @@ def test_get_station_realtime(client: APIClient, code: str = "BJ001"):
                 config.response_dir,
                 number=number,
                 title=title,
+                start_time=start_dt,
+                end_time=end_dt,
             )
 
     return response

@@ -41,7 +41,11 @@ def test_get_overview(client: APIClient):
         'minLat': minLat,
         'maxLat': maxLat,
     }
+    start_dt = datetime.now()
     response = client.request('GET', '/api/v1/udmds/overview', params=params)
+    end_dt = datetime.now()
+    elapsed = (end_dt - start_dt).total_seconds()
+    
     print_response(
         '获取形变安全模块概览',
         'GET',
@@ -50,9 +54,10 @@ def test_get_overview(client: APIClient):
         config.verbose,
         number=number,
         title=title,
+        elapsed_seconds=elapsed,
     )
     if config.save_response and response:
-        save_response_to_file('udmds_overview', response, '/api/v1/udmds/overview', params, config.response_dir, number=number, title=title)
+        save_response_to_file('udmds_overview', response, '/api/v1/udmds/overview', params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
     return response
 
 
@@ -76,7 +81,11 @@ def test_get_projects(client: APIClient):
         'minLat': minLat,
         'maxLat': maxLat,
     }
+    start_dt = datetime.now()
     response = client.request('GET', '/api/v1/udmds/projects', params=params)
+    end_dt = datetime.now()
+    elapsed = (end_dt - start_dt).total_seconds()
+    
     print_response(
         '获取监测工程列表',
         'GET',
@@ -85,9 +94,10 @@ def test_get_projects(client: APIClient):
         config.verbose,
         number=number,
         title=title,
+        elapsed_seconds=elapsed,
     )
     if config.save_response and response:
-        save_response_to_file('udmds_projects', response, '/api/v1/udmds/projects', params, config.response_dir, number=number, title=title)
+        save_response_to_file('udmds_projects', response, '/api/v1/udmds/projects', params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
     return response
 
 
@@ -109,7 +119,11 @@ def test_get_points(client: APIClient):
         'minLat': minLat,
         'maxLat': maxLat,
     }
+    start_dt = datetime.now()
     response = client.request('GET', '/api/v1/udmds/points', params=params)
+    end_dt = datetime.now()
+    elapsed = (end_dt - start_dt).total_seconds()
+    
     print_response(
         '获取监测点列表',
         'GET',
@@ -118,9 +132,10 @@ def test_get_points(client: APIClient):
         config.verbose,
         number=number,
         title=title,
+        elapsed_seconds=elapsed,
     )
     if config.save_response and response:
-        save_response_to_file('udmds_points', response, '/api/v1/udmds/points', params, config.response_dir, number=number, title=title)
+        save_response_to_file('udmds_points', response, '/api/v1/udmds/points', params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
     pointcode_list = []
     if response and response.get('data', {}).get('points'):
         pointcode_list = [p['pointCode'] for p in response['data']['points']]
@@ -140,7 +155,11 @@ def test_get_point_realtime(client: APIClient, code: str = "PD001"):
     params = {
 
     }
+    start_dt = datetime.now()
     response = client.request('GET', f'/api/v1/udmds/points/{code}/realtime', params=params)
+    end_dt = datetime.now()
+    elapsed = (end_dt - start_dt).total_seconds()
+    
     print_response(
         '获取监测点实时数据',
         'GET',
@@ -149,9 +168,10 @@ def test_get_point_realtime(client: APIClient, code: str = "PD001"):
         config.verbose,
         number=number,
         title=title,
+        elapsed_seconds=elapsed,
     )
     if config.save_response and response:
-        save_response_to_file('udmds_point_realtime', response, f'/api/v1/udmds/points/{code}/realtime', params, config.response_dir, number=number, title=title)
+        save_response_to_file('udmds_point_realtime', response, f'/api/v1/udmds/points/{code}/realtime', params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
     return response
 
 # displacement: 位移计
@@ -178,7 +198,11 @@ def test_get_point_history(client: APIClient, code: str = "PD001"):
         'minLat': minLat,
         'maxLat': maxLat,
     }
+    start_dt = datetime.now()
     response = client.request('GET', f'/api/v1/udmds/points/{code}/history', params=params)
+    end_dt = datetime.now()
+    elapsed = (end_dt - start_dt).total_seconds()
+    
     print_response(
         '获取监测点历史数据',
         'GET',
@@ -187,9 +211,10 @@ def test_get_point_history(client: APIClient, code: str = "PD001"):
         config.verbose,
         number=number,
         title=title,
+        elapsed_seconds=elapsed,
     )
     if config.save_response and response:
-        save_response_to_file('udmds_point_history', response, f'/api/v1/udmds/points/{code}/history', params, config.response_dir, number=number, title=title)
+        save_response_to_file('udmds_point_history', response, f'/api/v1/udmds/points/{code}/history', params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
     return response
 
 
@@ -212,7 +237,11 @@ def test_get_project_statistics(client: APIClient):
         'minLat': minLat,
         'maxLat': maxLat,
     }
+    start_dt = datetime.now()
     response = client.request('GET', '/api/v1/udmds/statistics/project', params=params)
+    end_dt = datetime.now()
+    elapsed = (end_dt - start_dt).total_seconds()
+    
     print_response(
         '获取工程统计',
         'GET',
@@ -221,9 +250,10 @@ def test_get_project_statistics(client: APIClient):
         config.verbose,
         number=number,
         title=title,
+        elapsed_seconds=elapsed,
     )
     if config.save_response and response:
-        save_response_to_file('udmds_project_statistics', response, '/api/v1/udmds/statistics/project', params, config.response_dir, number=number, title=title)
+        save_response_to_file('udmds_project_statistics', response, '/api/v1/udmds/statistics/project', params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
     return response
 
 
@@ -246,7 +276,11 @@ def test_get_alerts_summary(client: APIClient):
         'maxLat': maxLat,
     }
 
+    start_dt = datetime.now()
     response = client.request('GET', '/api/v1/udmds/alerts/summary', params=params)
+    end_dt = datetime.now()
+    elapsed = (end_dt - start_dt).total_seconds()
+    
     print_response(
         '获取形变告警汇总',
         'GET',
@@ -255,9 +289,10 @@ def test_get_alerts_summary(client: APIClient):
         config.verbose,
         number=number,
         title=title,
+        elapsed_seconds=elapsed,
     )
     if config.save_response and response:
-        save_response_to_file('udmds_alerts_summary', response, '/api/v1/udmds/alerts/summary', params, config.response_dir, number=number, title=title)
+        save_response_to_file('udmds_alerts_summary', response, '/api/v1/udmds/alerts/summary', params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
     return response
 
 
@@ -279,10 +314,14 @@ def test_get_risk(client: APIClient):
         'minLat': minLat,
         'maxLat': maxLat,
     }
+    start_dt = datetime.now()
     response = client.request('GET', '/api/v1/udmds/risk', params=params)
-    print_response('获取风险评估', 'GET', '/api/v1/udmds/risk', response, config.verbose, number=number, title=title)
+    end_dt = datetime.now()
+    elapsed = (end_dt - start_dt).total_seconds()
+    
+    print_response('获取风险评估', 'GET', '/api/v1/udmds/risk', response, config.verbose, number=number, title=title, elapsed_seconds=elapsed)
     if config.save_response and response:
-        save_response_to_file('udmds_risk', response, '/api/v1/udmds/risk', params, config.response_dir, number=number, title=title)
+        save_response_to_file('udmds_risk', response, '/api/v1/udmds/risk', params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
     return response
 
 
