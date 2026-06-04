@@ -17,8 +17,10 @@ except ImportError:
     from common import *
 
 
-startTime_file = startTime_global
-endTime_file = endTime_global
+# startTime_file = startTime_global
+# endTime_file = endTime_global
+startTime_file = int(datetime(2025,1,1,0,0,0).timestamp()) * 1000    
+endTime_file = int(datetime(2025,2,28,23,59,59).timestamp()) * 1000
 minLng_file = minLng_global
 maxLng_file = maxLng_global
 minLat_file = minLat_global
