@@ -8,7 +8,7 @@ loc_list = {
 }
 
 minLng_global, maxLng_global, minLat_global, maxLat_global = loc_list['重庆']
-startTime_global = int(datetime(2025,1,1,0,0,0).timestamp()) * 1000    
-endTime_global = int(datetime(2025,12,31,23,59,59).timestamp()) * 1000
+startTime_global = int(datetime(2026,5,5,0,0,0).timestamp()) * 1000    
+endTime_global = int(datetime(2026,6,5,23,59,59).timestamp()) * 1000
 
 # 
