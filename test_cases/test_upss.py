@@ -192,7 +192,7 @@ def test_get_point_history(client: APIClient, pointcode: str):
     return response
 
 
-def test_get_regional_statistics(client: APIClient, issue: str = None):
+def test_get_regional_statistics(client: APIClient, issue: str = None, pageNum: int = 1):
     """测试获取区域沉降统计"""
     number = '3.4.5'
     title = '沉降地图（热力图）'
@@ -205,7 +205,7 @@ def test_get_regional_statistics(client: APIClient, issue: str = None):
     params = {
         'issue': issue if issue else '20250203',
         'dimension': 'admin',
-        'pageNum': 1,
+        'pageNum': pageNum,
         'pageSize': 1000,
         'minLng': minLng,
         'maxLng': maxLng,
@@ -233,7 +233,7 @@ def test_get_regional_statistics(client: APIClient, issue: str = None):
         elapsed_seconds=elapsed,
     )
     if config.save_response and response:
-        save_response_to_file('upss_regional_statistics', response, '/api/v1/upss/statistics/regional' + f'_{issue}', params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
+        save_response_to_file('upss_regional_statistics', response, '/api/v1/upss/statistics/regional' + f'_{issue}' + f'_page{pageNum}', params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
     return response
 
 
@@ -529,7 +529,8 @@ def run_all_tests():
     test_get_periods(client) # 3.4.2
     # test_get_period_summary(client) # 3.4.3
     for issue in issue_list:
-        test_get_regional_statistics(client, issue=issue) # 3.4.5
+        for pg in range(1, 11):
+            test_get_regional_statistics(client, issue=issue, pageNum=pg) # 3.4.5
         test_get_grid_rate(client, issue=issue) # 3.4.6
         test_get_grid_gradient(client, issue=issue) # 3.4.7
     test_get_warning_issue(client) # 3.4.8

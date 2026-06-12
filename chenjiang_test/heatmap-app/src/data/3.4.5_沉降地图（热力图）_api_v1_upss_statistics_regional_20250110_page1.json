@@ -1,7 +1,7 @@
 {
   "number": "3.4.5",
   "title": "沉降地图（热力图）",
-  "path": "/api/v1/upss/statistics/regional_20250110",
+  "path": "/api/v1/upss/statistics/regional_20250110_page1",
   "request_params": {
     "issue": "20250110",
     "dimension": "admin",
@@ -12,9 +12,9 @@
     "minLat": 28.999,
     "maxLat": 30.147
   },
-  "start_time": "2026-06-12T14:29:39.219562",
-  "end_time": "2026-06-12T14:29:48.635318",
-  "elapsed_seconds": 9.416,
+  "start_time": "2026-06-12T17:13:47.551403",
+  "end_time": "2026-06-12T17:13:58.608556",
+  "elapsed_seconds": 11.057,
   "response": {
     "code": 200,
     "msg": "操作成功",
@@ -8029,8 +8029,8 @@
           "timestamp": 1736438400000
         }
       ],
-      "timestamp": 1781245788291
+      "timestamp": 1781255638269
     },
-    "timestamp": 1781245788291
+    "timestamp": 1781255638269
   }
 }
