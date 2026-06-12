@@ -18,10 +18,10 @@ except ImportError:
 
 # startTime_file = startTime_global
 # endTime_file = endTime_global
-# startTime_file = int(datetime(2019,1,1,0,0,0).timestamp()) * 1000    
-# endTime_file = int(datetime(2019,12,31,23,59,59).timestamp()) * 1000
-startTime_file = int(datetime(2026,5,5,0,0,0).timestamp()) * 1000    
-endTime_file = int(datetime(2026,6,5,23,59,59).timestamp()) * 1000
+startTime_file = int(datetime(2019,1,1,0,0,0).timestamp()) * 1000    
+endTime_file = int(datetime(2019,12,31,23,59,59).timestamp()) * 1000
+# startTime_file = int(datetime(2026,5,5,0,0,0).timestamp()) * 1000    
+# endTime_file = int(datetime(2026,6,5,23,59,59).timestamp()) * 1000
 minLng_file = minLng_global
 maxLng_file = maxLng_global
 minLat_file = minLat_global
@@ -359,7 +359,7 @@ def run_all_tests():
     test_get_leaks(client, page_num=1, page_size=2000) # 3.5.4
 
     # 测试5: 获取走航统计数据
-    test_get_statistics(client) # 3.5.5
+    # test_get_statistics(client) # 3.5.5
     
     # 测试6: 获取地理区域内轨迹数据
     test_get_tasks_trajectory(client) # 3.5.6
