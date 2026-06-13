@@ -24,11 +24,12 @@ const interpKrModel = ref('exponential')
 const interpKrNugget = ref(0)
 const interpKrRange = ref(200)
 const interpKrSill = ref(1)
-const interpRadiusJitter = ref(true)
+const interpRadiusJitter = ref(false)
 const interpMCSamples = ref(2)
 const interpMCJitterFactor = ref(0.2)
 const interpBlurEnabled = ref(false)
 const interpBlurRadius = ref(3)
+const gpuEnabled = ref(true)
 const renderTime = ref(0)
 const maxDataPoints = ref(10000)
 const currentZoom = ref(0)
@@ -44,6 +45,7 @@ let interpOverlay = null
 let pointsData = []
 let realPointsData = []
 let debugMarkers = []
+let scatterCanvas = null, scatterCtx = null, scatterLayer = null, scatterTimer = null
 
 const dataUrlMap = import.meta.glob('./data/*.json', { query: '?url', eager: true, import: 'default' })
 const DATA_FILES = Object.values(dataUrlMap)
@@ -160,7 +162,9 @@ onMounted(async () => {
     map.on('zoomchange', () => {
       if (heatmap) heatmap.setOptions({ radius: zoomRadius(map.getZoom()) })
       currentZoom.value = map.getZoom()
+      scheduleScatterRender()
     })
+    map.on('moveend', scheduleScatterRender)
     currentZoom.value = map.getZoom()
 
     // 9. 初始化数据并构建全部图层
@@ -221,6 +225,8 @@ function toggleScatter() {
   showScatter.value = !showScatter.value
   if (showDebug.value) {
     debugMarkers.forEach(m => showScatter.value ? m.show() : m.hide())
+  } else if (scatterLayer) {
+    showScatter.value ? scatterLayer.setMap(map) : scatterLayer.setMap(null)
   } else {
     massMarks.forEach(m => showScatter.value ? m.show() : m.hide())
   }
@@ -229,6 +235,42 @@ function toggleScatter() {
 function toggleInterp() {
   showInterp.value = !showInterp.value
   if (interpOverlay) showInterp.value ? interpOverlay.show() : interpOverlay.hide()
+}
+
+function renderScatter() {
+  if (!map || showDebug.value) return
+  const container = mapContainer.value
+  if (!container) return
+  const w = container.clientWidth, h = container.clientHeight
+  if (!w || !h) return
+  if (!scatterCanvas) {
+    scatterCanvas = document.createElement('canvas')
+    scatterCtx = scatterCanvas.getContext('2d')
+  }
+  scatterCanvas.width = w; scatterCanvas.height = h
+  scatterCtx.clearRect(0, 0, w, h)
+  const activeData = pointsData.slice(0, maxDataPoints.value)
+  for (const p of activeData) {
+    const pixel = map.lngLatToContainer([p.longitude, p.latitude])
+    if (pixel.x < 0 || pixel.x > w || pixel.y < 0 || pixel.y > h) continue
+    scatterCtx.fillStyle = getSubsidenceColor(p.subsidence)
+    scatterCtx.beginPath()
+    scatterCtx.arc(pixel.x, pixel.y, 2, 0, Math.PI * 2)
+    scatterCtx.fill()
+  }
+  const bounds = map.getBounds()
+  scatterCanvas.toBlob(blob => {
+    const url = URL.createObjectURL(blob)
+    if (scatterLayer) { scatterLayer.setMap(null); URL.revokeObjectURL(scatterLayer._url) }
+    scatterLayer = new AMap.ImageLayer({ url, bounds, opacity: 1, zooms: [2, 20] })
+    scatterLayer._url = url
+    if (showScatter.value && !showDebug.value) scatterLayer.setMap(map)
+  }, 'image/png')
+}
+
+function scheduleScatterRender() {
+  clearTimeout(scatterTimer)
+  scatterTimer = setTimeout(renderScatter, 200)
 }
 
 function rebuildInterp() {
@@ -293,16 +335,7 @@ function rebuildAll() {
       return m
     })
   } else {
-    massMarks = activeData.map(p => {
-      const m = new AMap.CircleMarker({
-        center: [p.longitude, p.latitude], radius: 2,
-        fillColor: getSubsidenceColor(p.subsidence), fillOpacity: 0.8,
-        strokeColor: 'rgba(255,255,255,0.3)', strokeWeight: 1, zIndex: 20
-      })
-      m.setMap(map)
-      if (!showScatter.value) m.hide()
-      return m
-    })
+    renderScatter()
   }
 
   interpOverlay = createInterpolationOverlay({
@@ -321,6 +354,7 @@ function rebuildAll() {
     mcJitterFactor: interpMCJitterFactor.value,
     blurEnabled: interpBlurEnabled.value,
     blurRadius: interpBlurRadius.value,
+    gpuEnabled: gpuEnabled.value,
     onRender: (ms) => { renderTime.value = ms }
   })
   if (showInterp.value) interpOverlay.show()
@@ -423,6 +457,12 @@ function rebuildAll() {
           GPU高斯模糊
         </label>
       </div>
+      <div class="ctrl-row">
+        <label>
+          <input type="checkbox" v-model="gpuEnabled" @change="rebuildAll" style="accent-color:#1677ff">
+          GPU加速 (IDW)
+        </label>
+      </div>
       <div v-if="interpBlurEnabled" class="ctrl-row">
         <label>模糊半径: <span>{{ interpBlurRadius }}</span>px</label>
         <input type="range" v-model.number="interpBlurRadius" min="1" max="20" step="0.5" @change="rebuildAll">
@@ -466,19 +506,6 @@ function rebuildAll() {
       <div v-if="interpAlgorithm === 'kriging'" class="ctrl-row">
         <label>基台: <span>{{ interpKrSill }}</span></label>
         <input type="range" v-model.number="interpKrSill" min="1" max="50" step="1" @change="rebuildInterp">
-      </div>
-    </div>
-
-    <!-- 图例面板 -->
-    <div v-if="!loading && !errorMsg" class="legend">
-      <div class="legend-title">沉降强度 (mm)</div>
-      <div class="legend-gradient"></div>
-      <div class="legend-labels">
-        <span>≤-20</span>
-        <span>-10</span>
-        <span>0</span>
-        <span>5</span>
-        <span>≥12</span>
       </div>
     </div>
 
@@ -564,42 +591,6 @@ function rebuildAll() {
   margin-bottom: 8px;
 }
 
-/* ---- 图例 ---- */
-.legend {
-  position: absolute;
-  bottom: 30px;
-  left: 20px;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(6px);
-  padding: 12px 16px;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
-  z-index: 500;
-  user-select: none;
-}
-
-.legend-title {
-  font-weight: 600;
-  font-size: 13px;
-  color: #333;
-  margin-bottom: 8px;
-}
-
-.legend-gradient {
-  width: 210px;
-  height: 14px;
-  border-radius: 4px;
-  background: linear-gradient(to right, rgb(75,0,130), rgb(0,0,220), rgb(0,200,0), rgb(255,200,0), rgb(200,0,0));
-}
-
-.legend-labels {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 4px;
-  font-size: 11px;
-  color: #888;
-}
-
 /* ---- 模式切换 ---- */
 .mode-panel {
   position: absolute;
@@ -642,7 +633,7 @@ function rebuildAll() {
 
 /* ---- 插值参数控制 ---- */
 .control-panel {
-  position: absolute; top: 320px; left: 20px;
+  position: absolute; top: 190px; left: 20px;
   background: rgba(255,255,255,0.95); backdrop-filter: blur(6px);
   padding: 8px 12px; border-radius: 8px;
   box-shadow: 0 2px 12px rgba(0,0,0,0.15); z-index: 500;

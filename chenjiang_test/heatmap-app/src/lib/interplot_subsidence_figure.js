@@ -8,6 +8,7 @@ export function createInterpolationOverlay(options) {
     krigingModel = 'exponential', krigingNugget = 0, krigingRange = 200, krigingSill = 1,
     radiusJitter = false, mcSamples = 2, mcJitterFactor = 0.2,
     blurEnabled = false, blurRadius = 3,
+    gpuEnabled = true,
     onRender = null
   } = options
 
@@ -20,9 +21,45 @@ export function createInterpolationOverlay(options) {
   const container = map.getContainer()
   const canvas = document.createElement('canvas')
   const ctx = canvas.getContext('2d', { willReadFrequently: true })
-  let imageLayer = null, visible = true, dirty = true, renderTimer = null
+  let imageLayer = null, visible = true, dirty = true, renderTimer = null, renderSeq = 0
   const blurCanvas = document.createElement('canvas')
   const blurCtx = blurCanvas.getContext('2d')
+
+  // --- Worker setup ---
+  let worker = null, workerReady = false, workerPending = false, useWorker = true
+  let lastBounds = null, lastT0 = 0
+  try {
+    worker = new Worker(new URL('./interp-worker.js', import.meta.url), { type: 'module' })
+    worker.onmessage = handleWorkerMessage
+    worker.onerror = () => { useWorker = false; worker = null }
+  } catch (e) { useWorker = false }
+
+  function buildColorLUT() {
+    const lut = new Uint8Array(256 * 3)
+    let vMin = Infinity, vMax = -Infinity
+    for (const d of data) { if (d.value < vMin) vMin = d.value; if (d.value > vMax) vMax = d.value }
+    if (!isFinite(vMin)) { vMin = -35; vMax = 25 }
+    const range = vMax - vMin || 1
+    for (let i = 0; i < 256; i++) {
+      const v = vMin + range * i / 255
+      const [r, g, b] = colorFn(v)
+      lut[i * 3] = r; lut[i * 3 + 1] = g; lut[i * 3 + 2] = b
+    }
+    return { lut, vMin, vMax }
+  }
+
+  function handleWorkerMessage(e) {
+    workerPending = false
+    if (e.data.type === 'done') {
+      const url = URL.createObjectURL(e.data.blob)
+      if (imageLayer) { imageLayer.setMap(null); URL.revokeObjectURL(imageLayer._blobUrl) }
+      imageLayer = new AMap.ImageLayer({ url, bounds: lastBounds, opacity, zooms: [2, 20] })
+      imageLayer._blobUrl = url
+      if (visible) imageLayer.setMap(map)
+      if (onRender) onRender(performance.now() - lastT0)
+      if (dirty) render()
+    }
+  }
 
   function getSigma(zoom) { return baseSigma * Math.pow(2, zoom - baseZoom) }
   function getRadius(sigma) { return Math.min(sigmaMultiplier * sigma, maxRadius) }
@@ -175,20 +212,39 @@ export function createInterpolationOverlay(options) {
 
   function render() {
     if (!visible || !dirty || !data.length) return
+    if (workerPending) return
     dirty = false
-    const t0 = performance.now()
+    lastT0 = performance.now()
     const zoom = map.getZoom(), sigma = getSigma(zoom)
     const baseR = getRadius(sigma)
     const maxJitterR = radiusJitter && mcSamples >= 1 ? baseR * 1.5 : baseR
-    const binSize = Math.ceil(maxJitterR)
     const w = container.clientWidth, h = container.clientHeight
     if (!w || !h) return
-    canvas.width = w; canvas.height = h
-    ctx.clearRect(0, 0, w, h)
+    lastBounds = map.getBounds()
 
     const pixelPoints = collectPixelPoints(maxJitterR, w, h)
     if (!pixelPoints.length) return
 
+    if (worker) {
+      workerPending = true
+      const { lut, vMin, vMax } = buildColorLUT()
+      worker.postMessage({
+        type: 'render',
+        pixelPoints, w, h, sigma, baseR, maxJitterR,
+        gridStep, opacity, algorithm, idwPower, idwEpsilon,
+        rbfType, rbfSmooth, krigingModel, krigingNugget,
+        krigingRange, krigingSill, radiusJitter, mcSamples,
+        mcJitterFactor, blurEnabled, blurRadius,
+        gpuEnabled,
+        colorLut: lut, valueMin: vMin, valueMax: vMax
+      })
+      return
+    }
+
+    // CPU fallback
+    canvas.width = w; canvas.height = h
+    ctx.clearRect(0, 0, w, h)
+    const binSize = Math.ceil(maxJitterR)
     const { bins, bCols, bRows } = buildBins(pixelPoints, w, h, binSize)
     const bRange = Math.ceil(maxJitterR / binSize)
 
@@ -196,7 +252,6 @@ export function createInterpolationOverlay(options) {
       for (let x = 0; x < w; x += gridStep) {
         const bc = Math.floor(x / binSize), br = Math.floor(y / binSize)
         let sumMC = 0, countMC = 0
-
         if (radiusJitter && mcSamples >= 1) {
           for (let s = 0; s < mcSamples; s++) {
             const r = s === 0 ? baseR : baseR * (1 + hashLngLat(x, y, s) * mcJitterFactor)
@@ -207,7 +262,6 @@ export function createInterpolationOverlay(options) {
           const val = computeCellValue(x, y, sigma, baseR, bc, br, bins, bCols, bRows, bRange)
           if (val !== null) { sumMC = val; countMC = 1 }
         }
-
         if (countMC > 0) {
           const [cr, cg, cb] = colorFn(sumMC / countMC)
           ctx.fillStyle = `rgba(${cr},${cg},${cb},${opacity})`
@@ -222,11 +276,18 @@ export function createInterpolationOverlay(options) {
       blurCtx.drawImage(canvas, 0, 0)
       blurCtx.filter = 'none'
     }
-    const bounds = map.getBounds()
-    if (imageLayer) imageLayer.setMap(null)
-    imageLayer = new AMap.ImageLayer({ url: outputCanvas.toDataURL('image/png'), bounds, opacity, zooms: [2, 20] })
-    if (visible) imageLayer.setMap(map)
-    if (onRender) onRender(performance.now() - t0)
+    const bounds = lastBounds
+    const seq = ++renderSeq
+    const prevLayer = imageLayer
+    outputCanvas.toBlob(blob => {
+      if (seq !== renderSeq) return
+      const url = URL.createObjectURL(blob)
+      if (prevLayer) { prevLayer.setMap(null); URL.revokeObjectURL(prevLayer._blobUrl) }
+      imageLayer = new AMap.ImageLayer({ url, bounds, opacity, zooms: [2, 20] })
+      imageLayer._blobUrl = url
+      if (visible) imageLayer.setMap(map)
+      if (onRender) onRender(performance.now() - lastT0)
+    }, 'image/png')
   }
 
   function scheduleRender() { dirty = true; clearTimeout(renderTimer); renderTimer = setTimeout(render, debounceMs) }
@@ -235,6 +296,6 @@ export function createInterpolationOverlay(options) {
   return {
     show() { visible = true; if (imageLayer) imageLayer.setMap(map); dirty = true; render() },
     hide() { visible = false; if (imageLayer) imageLayer.setMap(null) },
-    destroy() { visible = false; if (imageLayer) { imageLayer.setMap(null); imageLayer = null } map.off('zoomend', scheduleRender); map.off('moveend', scheduleRender); clearTimeout(renderTimer) }
+    destroy() { visible = false; if (imageLayer) { imageLayer.setMap(null); imageLayer = null } if (worker) { worker.terminate(); worker = null } map.off('zoomend', scheduleRender); map.off('moveend', scheduleRender); clearTimeout(renderTimer) }
   }
 }
