@@ -1,159 +1,119 @@
-# interplot_subsidence_figure
+# lib/ — 插值渲染库
 
-散点插值图层库，支持 4 种算法叠加在高德地图上。
+散点插值图层，Worker + GPU 非阻塞渲染，4 种算法叠加高德地图。
 
-## 通用参数
+## ⚠️ 外部调用须知
 
-| 参数 | 类型 | 推荐值 | 说明 |
-|---|---|---|---|
-| `map` | AMap.Map | 必填 | 高德地图实例 |
+- `import { createInterpolationOverlay } from '...'` → 直接使用，**调用即非阻塞**
+- 插值计算在 **Web Worker** 后台执行，主线程仅做像素坐标转换（需 AMap API），不卡 UI
+- PNG 编码异步（`toBlob` / `convertToBlob`），不阻塞
+- Worker 不可用时自动降级主线程；GPU 不可用自动降级 CPU Worker 路径
+- 销毁：调用 `overlay.destroy()` 终止 Worker、移除图层
+- 渲染耗时通过 `onRender: (ms) => {}` 回调获取
+
+## 快速开始
+
+```js
+import { createInterpolationOverlay } from './lib/interplot_subsidence_figure.js'
+
+const overlay = createInterpolationOverlay({
+  map,                     // AMap.Map 实例
+  data: [{ lng, lat, value }],  // 数据点
+  colorFn: (v) => [r, g, b],    // 沉降值 → RGB (0-255)
+  algorithm: 'idw',             // gaussian | idw | rbf | kriging
+  onRender: (ms) => {},         // 渲染耗时回调（可选）
+})
+```
+
+## 全部参数
+
+| 参数 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `map` | AMap.Map | 必填 | |
 | `data` | Array | 必填 | `[{lng, lat, value}]` |
-| `colorFn` | Function | 必填 | `(value) => [r, g, b]` |
+| `colorFn` | Function | 必填 | `(v) => [r, g, b]` |
 | `algorithm` | string | `idw` | `gaussian` \| `idw` \| `rbf` \| `kriging` |
-| `sigmaMultiplier` | number | 3 | 搜索半径 = σ × 此值，影响插值平滑度 |
-| `maxRadius` | number | 20000 | 搜索半径上限 px，设大防高倍缩放时覆盖缩水 |
-| `opacity` | number | 0.7 | 图层透明度 0~1 |
-| `gridStep` | number | 4 | 采样步长 px，1~8，越小越精细越慢 |
-| `baseZoom` | number | 11 | 基准缩放级别，σ 等比缩放中心 |
-| `debounceMs` | number | 200 | 平移/缩放后延迟渲染毫秒 |
-| `initDelayMs` | number | 600 | 首次加载延迟毫秒 |
-| `radiusJitter` | boolean | true | 蒙特卡洛半径采样开关 |
-| `mcSamples` | number | 2 | 蒙特卡洛样本数，0~16（0=关闭） |
+| `opacity` | number | 0.7 | 图层透明度 |
+| `gridStep` | number | 4 | 采样步长 px，越小越精细 |
+| `baseSigma` | number | 25 | 基础 σ |
+| `sigmaMultiplier` | number | 3 | 搜索半径 = σ × 此值 |
+| `maxRadius` | number | 20000 | 搜索半径上限 px |
+| `baseZoom` | number | 11 | σ 等比缩放基准级别 |
+| `debounceMs` | number | 200 | 防抖延迟 ms |
+| `onRender` | Function | null | `(ms) => void` |
+
+### IDW 专属
+
+| 参数 | 默认值 | 说明 |
+|------|--------|------|
+| `idwPower` | 3.5 | 距离衰减幂 |
+| `idwEpsilon` | 0.1 | 平滑项 |
+
+### RBF 专属
+
+| 参数 | 默认值 | 说明 |
+|------|--------|------|
+| `rbfType` | `thinPlate` | `thinPlate` \| `multiquadric` \| `gaussian` |
+| `rbfSmooth` | 0 | 正则化系数 |
+
+### Kriging 专属
+
+| 参数 | 默认值 | 说明 |
+|------|--------|------|
+| `krigingModel` | `exponential` | `exponential` \| `spherical` \| `gaussian` |
+| `krigingNugget` | 0 | 块金值 |
+| `krigingRange` | 200 | 变程 |
+| `krigingSill` | 1 | 基台 |
+
+### GPU 加速
+
+| 参数 | 默认值 | 说明 |
+|------|--------|------|
+| `gpuEnabled` | true | GPU IDW 开关（仅 IDW 生效） |
+| `radiusJitter` | false | MC 抖动（开启后 GPU 不生效） |
+| `mcSamples` | 2 | MC 采样数 |
+| `mcJitterFactor` | 0.2 | MC 抖动幅度 |
+| `blurEnabled` | false | GPU 高斯模糊 |
+| `blurRadius` | 3 | 模糊半径 px |
 
 **返回** `{ show(), hide(), destroy() }`
 
----
+## 架构
 
-## 1. IDW 反距离加权
-
-### 算法原理
-
-$$\hat{v}(x) = \frac{\sum w_i v_i}{\sum w_i}, \quad w_i = \frac{1}{(d_i^2 + \varepsilon)^{p/2}}$$
-
-$d_i$ 为像素距离，$p$ 控制衰减速度，$\varepsilon$ 防除零。
-
-### 用法
-
-```js
-const overlay = createInterpolationOverlay({
-  map, data, colorFn,
-  algorithm: 'idw',
-  idwPower: 3.5,
-  idwEpsilon: 0.1,
-  sigmaMultiplier: 10,
-  maxRadius: 20000,
-})
+```
+createInterpolationOverlay()
+  ├─ 主线程: lngLatToContainer → LUT → postMessage
+  └─ Worker: GPU(IDW) | CPU(全部算法) → putImageData → toBlob → postMessage
 ```
 
-### 专属参数
+- 主线程不阻塞，渲染在 Worker 中完成
+- GPU 仅支持 IDW 且 jitter 关闭时生效，不满足自动降级 CPU
 
-| 参数 | 类型 | 推荐值 | 说明 |
-|---|---|---|---|
-| `idwPower` | number | 3.5 | 幂 p，越大远点影响越小 |
-| `idwEpsilon` | number | 0.1 | 平滑项，防除零 |
+## 文件说明
 
----
+| 文件 | 作用 |
+|------|------|
+| `interplot_subsidence_figure.js` | 主入口，`createInterpolationOverlay()`。管理 Worker 创建/通信、像素坐标转换、LUT 预计算、ImageLayer 更新 |
+| `interp-worker.js` | Web Worker。接收像素坐标数据 → CPU 分箱/插值 或 GPU splatting → Canvas 绘制 → toBlob 返回主线程 |
+| `webgl-splat.js` | GPU IDW 加速。WebGL2 instanced quad + float 纹理 + composite pass |
 
-## 2. Gaussian 高斯核
+## 非阻塞原理
 
-### 算法原理
-
-$$\hat{v}(x) = \frac{\sum w_i v_i}{\sum w_i}, \quad w_i = \exp\!\left(-\frac{d_i^2}{2\sigma^2}\right)$$
-
-截断半径 $R = k \cdot \sigma$，$\sigma = \sigma_0 \cdot 2^{zoom - zoom_0}$。
-
-### 用法
-
-```js
-const overlay = createInterpolationOverlay({
-  map, data, colorFn,
-  algorithm: 'gaussian',
-  baseSigma: 25,
-  sigmaMultiplier: 3,
-  maxRadius: 20000,
-})
+```
+主线程                              Worker 线程
+  │                                    │
+  ├─ map.lngLatToContainer(points)     │
+  ├─ buildColorLUT()                   │
+  ├─ postMessage(pixelPoints...) ─────→│
+  │                                    ├─ GPU: splatRender()
+  │                                    ├─ CPU: 分箱循环插值
+  │                                    ├─ ctx.putImageData → toBlob()
+  │                                    └─ postMessage(blob) ──→
+  │  toBlob(onRender) ←────────────────│
+  │  blob → URL → AMap.ImageLayer      │
 ```
 
-### 专属参数
-
-| 参数 | 类型 | 推荐值 | 说明 |
-|---|---|---|---|
-| `baseSigma` | number | 25 | 基础 σ，越大越平滑 |
-
----
-
-## 3. RBF 径向基函数
-
-### 算法原理
-
-解局部线性系统 $A\alpha = v$，$A_{ij} = \phi(\|x_i-x_j\|) + \lambda\delta_{ij}$，插值：
-
-$$\hat{v}(x) = \sum_{k=1}^N \alpha_k \cdot \phi(\|x - x_k\|)$$
-
-| 核 `rbfType` | $\phi(r)$ |
-|---|---|
-| `thinPlate` | $r^2\ln r$ |
-| `multiquadric` | $\sqrt{r^2 + 1}$ |
-| `gaussian` | $e^{-r^2}$ |
-
-### 用法
-
-```js
-const overlay = createInterpolationOverlay({
-  map, data, colorFn,
-  algorithm: 'rbf',
-  rbfType: 'thinPlate',
-  rbfSmooth: 0,
-  sigmaMultiplier: 10,
-  maxRadius: 20000,
-})
-```
-
-### 专属参数
-
-| 参数 | 类型 | 推荐值 | 说明 |
-|---|---|---|---|
-| `rbfType` | string | `thinPlate` | 核函数类型 |
-| `rbfSmooth` | number | 0 | 正则化 λ，增大防过拟合 |
-
----
-
-## 4. Kriging 克里金
-
-### 算法原理
-
-解 Ordinary Kriging 系统：
-
-$$\begin{bmatrix}\Gamma & 1 \\ 1^T & 0\end{bmatrix} \begin{bmatrix}w \\ \mu\end{bmatrix} = \begin{bmatrix}\gamma_0 \\ 1\end{bmatrix}$$
-
-变异函数 $\gamma(h)$：
-
-| 模型 `krigingModel` | $\gamma(h)$ |
-|---|---|
-| `exponential` | $c_0 + c_s(1 - e^{-3h/a})$ |
-| `spherical` | $c_0 + c_s(1.5r - 0.5r^3),\; r = \min(h/a,1)$ |
-| `gaussian` | $c_0 + c_s(1 - e^{-3h^2/a^2})$ |
-
-### 用法
-
-```js
-const overlay = createInterpolationOverlay({
-  map, data, colorFn,
-  algorithm: 'kriging',
-  krigingModel: 'exponential',
-  krigingNugget: 0,
-  krigingRange: 200,
-  krigingSill: 1,
-  sigmaMultiplier: 10,
-  maxRadius: 20000,
-})
-```
-
-### 专属参数
-
-| 参数 | 类型 | 推荐值 | 说明 |
-|---|---|---|---|
-| `krigingModel` | string | `exponential` | 变异函数模型 |
-| `krigingNugget` | number | 0 | 块金值 $c_0$ |
-| `krigingRange` | number | 200 | 变程 $a$（像素） |
-| `krigingSill` | number | 1 | 基台 $c_0 + c_s$ |
+- `lngLatToContainer` 是唯一需 AMap API 的步骤 → 在主线程执行
+- 其余全部（插值计算、Canvas 填充、PNG 编码）在 Worker 内完成
+- **不阻塞**：主线程发起后立即返回，Worker 完成后通过 `postMessage` 回传 Blob
+- 异步 PNG 编码使用 `toBlob` / `OffscreenCanvas.convertToBlob`
