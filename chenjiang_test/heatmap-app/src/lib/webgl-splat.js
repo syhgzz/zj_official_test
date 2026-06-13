@@ -1,8 +1,9 @@
-// webgl-splat.js — GPU-accelerated IDW interpolation via splatting
+// webgl-splat.js — GPU-accelerated IDW / Gaussian interpolation via splatting
 
 export function splatRender(data, options) {
-  const { w, h, radius, idwPower = 2, idwEpsilon = 0.1, opacity = 0.7, colorLut, valueMin, valueMax, gridStep = 4 } = options
+  const { w, h, radius, idwPower = 2, idwEpsilon = 0.1, sigma = 25, algorithm = 'idw', opacity = 0.7, colorLut, valueMin, valueMax, gridStep = 4 } = options
   const safeR = isFinite(radius) ? radius : Math.hypot(w, h)
+  const isGaussian = algorithm === 'gaussian'
 
   // Create offscreen canvas with WebGL2
   const offscreen = new OffscreenCanvas(w, h)
@@ -48,14 +49,16 @@ export function splatRender(data, options) {
     precision highp float;
     in vec2 v_center; in float v_value;
     uniform float u_radius2; uniform float u_power; uniform float u_eps;
-    uniform float u_h;
+    uniform float u_sigma; uniform float u_h;
     layout(location = 0) out vec4 outWVal;
     layout(location = 1) out vec4 outW;
     void main() {
       float dy = gl_FragCoord.y - (u_h - v_center.y);
       float d2 = (gl_FragCoord.x - v_center.x) * (gl_FragCoord.x - v_center.x) + dy * dy;
       if (d2 > u_radius2) discard;
-      float w = 1.0 / pow(d2 + u_eps, u_power * 0.5);
+      float w = u_sigma > 0.0
+        ? exp(d2 * (-0.5 / (u_sigma * u_sigma)))
+        : 1.0 / pow(d2 + u_eps, u_power * 0.5);
       outWVal = vec4(w * v_value, 0.0, 0.0, 1.0);
       outW = vec4(w, 0.0, 0.0, 1.0);
     }`
@@ -202,6 +205,7 @@ export function splatRender(data, options) {
   gl.uniform1f(gl.getUniformLocation(prog1, 'u_power'), idwPower)
   gl.uniform1f(gl.getUniformLocation(prog1, 'u_eps'), idwEpsilon)
   gl.uniform1f(gl.getUniformLocation(prog1, 'u_h'), h)
+  gl.uniform1f(gl.getUniformLocation(prog1, 'u_sigma'), isGaussian ? sigma : 0.0)
 
   // Quad corner (per-vertex, divisor 0)
   const aCorner = gl.getAttribLocation(prog1, 'a_corner')

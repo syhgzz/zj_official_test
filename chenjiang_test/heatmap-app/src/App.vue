@@ -477,7 +477,7 @@ function rebuildAll() {
       <div class="ctrl-row">
         <label>
           <input type="checkbox" v-model="gpuEnabled" @change="rebuildAll" style="accent-color:#1677ff">
-          GPU加速 (IDW)
+          GPU加速 (IDW/Gaussian)
         </label>
       </div>
       <div v-if="interpBlurEnabled" class="ctrl-row">

@@ -69,7 +69,7 @@ const overlay = createInterpolationOverlay({
 
 | 参数 | 默认值 | 说明 |
 |------|--------|------|
-| `gpuEnabled` | true | GPU IDW 开关（仅 IDW 生效） |
+| `gpuEnabled` | true | GPU IDW / Gaussian 加速（jitter 开启时 GPU 不生效） |
 | `radiusJitter` | false | MC 抖动（开启后 GPU 不生效） |
 | `mcSamples` | 2 | MC 采样数 |
 | `mcJitterFactor` | 0.2 | MC 抖动幅度 |
@@ -83,11 +83,56 @@ const overlay = createInterpolationOverlay({
 ```
 createInterpolationOverlay()
   ├─ 主线程: lngLatToContainer → LUT → postMessage
-  └─ Worker: GPU(IDW) | CPU(全部算法) → putImageData → toBlob → postMessage
+  └─ Worker: GPU(IDW/Gaussian) | CPU(全部算法) → putImageData → toBlob → postMessage
 ```
 
 - 主线程不阻塞，渲染在 Worker 中完成
-- GPU 仅支持 IDW 且 jitter 关闭时生效，不满足自动降级 CPU
+- GPU 支持 IDW 和 Gaussian，jitter 关闭时生效，不满足自动降级 CPU
+
+## 算法公式
+
+对每个像素点 $(x,y)$，在其搜索半径 $R$ 内的 $n$ 个数据点 $\{P_i\}$ 进行加权插值。
+
+### Gaussian 高斯核
+
+$$w_i = \exp\left(-\frac{d_i^2}{2\sigma^2}\right), \quad v(x,y) = \frac{\sum w_i \cdot v_i}{\sum w_i}$$
+
+- $d_i$：像素到数据点 $P_i$ 的欧氏距离（像素）
+- $\sigma = \text{baseSigma} \times 2^{\,zoom - baseZoom}$，随缩放等比变化
+- 权重平滑衰减，无硬截止；$\sigma$ 控制影响范围，越小越局部
+- GPU 加速：`w = exp(d2 * (-0.5 / sigma²))`
+
+### IDW 反距离加权
+
+$$w_i = \frac{1}{(d_i^2 + \varepsilon)^{p/2}}, \quad v(x,y) = \frac{\sum w_i \cdot v_i}{\sum w_i}$$
+
+- $p$：幂指数（idwPower），越大近点权重越集中，默认 3.5
+- $\varepsilon$：平滑项（idwEpsilon），防止除零，默认 0.1
+- GPU 加速：`w = 1.0 / pow(d2 + eps, power * 0.5)`
+
+### RBF 径向基函数
+
+$$\begin{bmatrix} \phi(d_{ij}) + \lambda\delta_{ij} & \mathbf{1} \\ \mathbf{1}^T & 0 \end{bmatrix} \begin{bmatrix} \mathbf{w} \\ \mu \end{bmatrix} = \begin{bmatrix} \mathbf{v} \\ 0 \end{bmatrix}$$
+
+$$v(x,y) = \sum_{i=1}^{n} w_i \cdot \phi(d_i)$$
+
+- 求解 $n \times n$ 线性方程组得到权重 $w_i$
+- $\phi(r)$ 核函数：`thinPlate` $(r^2 \log r)$、`multiquadric` $(\sqrt{r^2+1})$、`gaussian` $(e^{-r^2})$
+- $\lambda$（rbfSmooth）：正则化系数，默认 0
+
+### Kriging 克里金
+
+$$w_i = \text{solve}\left( \gamma(d_{ij}) \right), \quad v(x,y) = \sum w_i \cdot v_i + \mu$$
+
+- $\gamma(h)$ 变异函数模型：`exponential`、`spherical`、`gaussian`
+- 参数：块金值（nugget）、变程（range）、基台（sill）
+
+### 搜索半径
+
+$$R = \min(\text{sigmaMultiplier} \times \sigma,\; \text{maxRadius})$$
+
+- sigmaMultiplier = ∞ 时搜索所有数据点（半径由 maxRadius 限制）
+- maxRadius = ∞ 时无上限
 
 ## 文件说明
 
@@ -95,7 +140,7 @@ createInterpolationOverlay()
 |------|------|
 | `interplot_figure.js` | 主入口，`createInterpolationOverlay()`。管理 Worker 创建/通信、像素坐标转换、LUT 预计算、ImageLayer 更新 |
 | `interp-worker.js` | Web Worker。接收像素坐标数据 → CPU 分箱/插值 或 GPU splatting → Canvas 绘制 → toBlob 返回主线程 |
-| `webgl-splat.js` | GPU IDW 加速。WebGL2 instanced quad + float 纹理 + composite pass |
+| `webgl-splat.js` | GPU IDW / Gaussian 加速。WebGL2 instanced quad + float 纹理 + composite pass |
 
 ## 非阻塞原理
 

@@ -181,10 +181,10 @@ self.onmessage = function (e) {
       return
     }
 
-    // GPU IDW splatting (no jitter, gpu enabled)
-    if (gpuEnabled && algorithm === 'idw' && !radiusJitter && splatRender) {
+    // GPU splatting (no jitter, gpu enabled, idw / gaussian)
+    if (gpuEnabled && (algorithm === 'idw' || algorithm === 'gaussian') && !radiusJitter && splatRender) {
       try {
-        const pixels = splatRender(pixelPoints, { w, h, radius: baseR, idwPower, idwEpsilon, opacity, colorLut, valueMin, valueMax, gridStep })
+        const pixels = splatRender(pixelPoints, { w, h, radius: baseR, idwPower, idwEpsilon, sigma, algorithm, opacity, colorLut, valueMin, valueMax, gridStep })
         if (pixels) {
           const imgData = ctx.createImageData(w, h)
           imgData.data.set(pixels)
