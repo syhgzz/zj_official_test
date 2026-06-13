@@ -26,6 +26,11 @@ const interpKrRange = ref(200)
 const interpKrSill = ref(1)
 const interpRadiusJitter = ref(true)
 const interpMCSamples = ref(2)
+const interpMCJitterFactor = ref(0.2)
+const interpBlurEnabled = ref(false)
+const interpBlurRadius = ref(3)
+const renderTime = ref(0)
+const maxDataPoints = ref(10000)
 const currentZoom = ref(0)
 const showDebug = ref(false)
 const debugCount = ref(30)
@@ -267,11 +272,12 @@ function rebuildAll() {
   massMarks = []
   if (interpOverlay) { interpOverlay.destroy(); interpOverlay = null }
   clearDebugMarkers()
-  pointCount.value = pointsData.length
+  const activeData = pointsData.slice(0, maxDataPoints.value)
+  pointCount.value = activeData.length
 
   if (showDebug.value) {
     const color = (v) => getSubsidenceColor(v)
-    debugMarkers = pointsData.map(p => {
+    debugMarkers = activeData.map(p => {
       const el = document.createElement('div')
       el.style.cssText = `width:12px;height:12px;border-radius:50%;background:${color(p.subsidence)};border:2px solid #fff;cursor:grab`
       const m = new AMap.Marker({
@@ -287,7 +293,7 @@ function rebuildAll() {
       return m
     })
   } else {
-    massMarks = pointsData.map(p => {
+    massMarks = activeData.map(p => {
       const m = new AMap.CircleMarker({
         center: [p.longitude, p.latitude], radius: 2,
         fillColor: getSubsidenceColor(p.subsidence), fillOpacity: 0.8,
@@ -301,7 +307,7 @@ function rebuildAll() {
 
   interpOverlay = createInterpolationOverlay({
     map,
-    data: pointsData.map(p => ({ lng: p.longitude, lat: p.latitude, value: p.subsidence })),
+    data: activeData.map(p => ({ lng: p.longitude, lat: p.latitude, value: p.subsidence })),
     colorFn: (v) => { const m = getSubsidenceColor(v).match(/\d+/g); return m ? m.map(Number) : [0,0,255] },
     algorithm: interpAlgorithm.value, baseSigma: interpSigma.value,
     sigmaMultiplier: interpSigmaMult.value, maxRadius: interpMaxRadius.value,
@@ -311,7 +317,11 @@ function rebuildAll() {
     krigingModel: interpKrModel.value, krigingNugget: interpKrNugget.value,
     krigingRange: interpKrRange.value, krigingSill: interpKrSill.value,
     radiusJitter: interpRadiusJitter.value,
-    mcSamples: interpMCSamples.value
+    mcSamples: interpMCSamples.value,
+    mcJitterFactor: interpMCJitterFactor.value,
+    blurEnabled: interpBlurEnabled.value,
+    blurRadius: interpBlurRadius.value,
+    onRender: (ms) => { renderTime.value = ms }
   })
   if (showInterp.value) interpOverlay.show()
 }
@@ -391,7 +401,7 @@ function rebuildAll() {
       </div>
       <div class="ctrl-row">
         <label>采样步长: <span>{{ interpGridStep }}</span>px</label>
-        <input type="range" v-model.number="interpGridStep" min="2" max="8" step="1" @change="rebuildAll">
+        <input type="range" v-model.number="interpGridStep" min="1" max="8" step="1" @change="rebuildAll">
       </div>
       <div class="ctrl-row">
         <label>
@@ -402,6 +412,20 @@ function rebuildAll() {
       <div v-if="interpRadiusJitter" class="ctrl-row">
         <label>MC样本: <span>{{ interpMCSamples }}</span></label>
         <input type="range" v-model.number="interpMCSamples" min="0" max="16" step="1" @change="rebuildAll">
+      </div>
+      <div v-if="interpRadiusJitter" class="ctrl-row">
+        <label>抖动幅度: <span>{{ interpMCJitterFactor }}</span></label>
+        <input type="range" v-model.number="interpMCJitterFactor" min="0" max="1" step="0.05" @change="rebuildAll">
+      </div>
+      <div class="ctrl-row">
+        <label>
+          <input type="checkbox" v-model="interpBlurEnabled" @change="rebuildAll" style="accent-color:#1677ff">
+          GPU高斯模糊
+        </label>
+      </div>
+      <div v-if="interpBlurEnabled" class="ctrl-row">
+        <label>模糊半径: <span>{{ interpBlurRadius }}</span>px</label>
+        <input type="range" v-model.number="interpBlurRadius" min="1" max="20" step="0.5" @change="rebuildAll">
       </div>
       <div v-if="interpAlgorithm === 'idw'" class="ctrl-row">
         <label>幂: <span>{{ interpIdwPower }}</span></label>
@@ -462,8 +486,15 @@ function rebuildAll() {
     <div v-if="!loading && !errorMsg" class="info-panel">
       <h3>沉降热力图</h3>
       <p>数据点：{{ pointCount.toLocaleString() }} 个</p>
+      <p>
+        显示前
+        <input type="range" v-model.number="maxDataPoints" min="1" max="10000" step="100" @change="rebuildAll"
+          style="width:120px;vertical-align:middle;margin:0 4px">
+        {{ maxDataPoints }} 个
+      </p>
       <p>底图：高德交通图</p>
       <p>放大倍率：{{ currentZoom.toFixed(1) }}x</p>
+      <p>渲染耗时：{{ renderTime.toFixed(0) }} ms</p>
     </div>
 
     <!-- 分布直方图 -->

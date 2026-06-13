@@ -6,7 +6,9 @@ export function createInterpolationOverlay(options) {
     idwPower = 2, idwEpsilon = 0.1,
     rbfType = 'thinPlate', rbfSmooth = 0,
     krigingModel = 'exponential', krigingNugget = 0, krigingRange = 200, krigingSill = 1,
-    radiusJitter = false, mcSamples = 2
+    radiusJitter = false, mcSamples = 2, mcJitterFactor = 0.2,
+    blurEnabled = false, blurRadius = 3,
+    onRender = null
   } = options
 
   function hashLngLat(lng, lat, seed = 0) {
@@ -19,6 +21,8 @@ export function createInterpolationOverlay(options) {
   const canvas = document.createElement('canvas')
   const ctx = canvas.getContext('2d', { willReadFrequently: true })
   let imageLayer = null, visible = true, dirty = true, renderTimer = null
+  const blurCanvas = document.createElement('canvas')
+  const blurCtx = blurCanvas.getContext('2d')
 
   function getSigma(zoom) { return baseSigma * Math.pow(2, zoom - baseZoom) }
   function getRadius(sigma) { return Math.min(sigmaMultiplier * sigma, maxRadius) }
@@ -172,58 +176,57 @@ export function createInterpolationOverlay(options) {
   function render() {
     if (!visible || !dirty || !data.length) return
     dirty = false
+    const t0 = performance.now()
     const zoom = map.getZoom(), sigma = getSigma(zoom)
-    let radius = getRadius(sigma)
-    const binSize = Math.ceil(radius)
+    const baseR = getRadius(sigma)
+    const maxJitterR = radiusJitter && mcSamples >= 1 ? baseR * 1.5 : baseR
+    const binSize = Math.ceil(maxJitterR)
     const w = container.clientWidth, h = container.clientHeight
     if (!w || !h) return
     canvas.width = w; canvas.height = h
+    ctx.clearRect(0, 0, w, h)
 
-    const pixelPoints = collectPixelPoints(radius, w, h)
+    const pixelPoints = collectPixelPoints(maxJitterR, w, h)
     if (!pixelPoints.length) return
 
     const { bins, bCols, bRows } = buildBins(pixelPoints, w, h, binSize)
-    const imageData = ctx.createImageData(w, h), d = imageData.data
-    const bRange = Math.ceil(radius / binSize)
-    const RBF_MAX = 80, KRIGING_MAX = 60
+    const bRange = Math.ceil(maxJitterR / binSize)
 
     for (let y = 0; y < h; y += gridStep) {
       for (let x = 0; x < w; x += gridStep) {
         const bc = Math.floor(x / binSize), br = Math.floor(y / binSize)
-        let result = null
+        let sumMC = 0, countMC = 0
 
         if (radiusJitter && mcSamples >= 1) {
-          const pt = map.containerToLngLat([x, y])
-          const baseR = getRadius(sigma)
-          let sumMC = 0, countMC = 0
           for (let s = 0; s < mcSamples; s++) {
-            const r = baseR * (1 + hashLngLat(pt.lng, pt.lat, s) * 0.5)
+            const r = s === 0 ? baseR : baseR * (1 + hashLngLat(x, y, s) * mcJitterFactor)
             const val = computeCellValue(x, y, sigma, r, bc, br, bins, bCols, bRows, bRange)
             if (val !== null) { sumMC += val; countMC++ }
           }
-          if (countMC > 0) result = sumMC / countMC
-        }
-        if (result === null) {
-          result = computeCellValue(x, y, sigma, getRadius(sigma), bc, br, bins, bCols, bRows, bRange)
+        } else {
+          const val = computeCellValue(x, y, sigma, baseR, bc, br, bins, bCols, bRows, bRange)
+          if (val !== null) { sumMC = val; countMC = 1 }
         }
 
-        if (result !== null) {
-          const [cr, cg, cb] = colorFn(result)
-          const alpha = Math.floor(opacity * 255)
-          const maxY = Math.min(y + gridStep, h), maxX = Math.min(x + gridStep, w)
-          for (let dy = y; dy < maxY; dy++)
-            for (let dx = x; dx < maxX; dx++) {
-              const idx = (dy * w + dx) * 4
-              d[idx] = cr; d[idx + 1] = cg; d[idx + 2] = cb; d[idx + 3] = alpha
-            }
+        if (countMC > 0) {
+          const [cr, cg, cb] = colorFn(sumMC / countMC)
+          ctx.fillStyle = `rgba(${cr},${cg},${cb},${opacity})`
+          ctx.fillRect(x, y, gridStep, gridStep)
         }
       }
     }
-    ctx.putImageData(imageData, 0, 0)
+    const outputCanvas = blurEnabled && blurRadius > 0 ? blurCanvas : canvas
+    if (blurEnabled && blurRadius > 0) {
+      blurCanvas.width = w; blurCanvas.height = h
+      blurCtx.filter = `blur(${blurRadius}px)`
+      blurCtx.drawImage(canvas, 0, 0)
+      blurCtx.filter = 'none'
+    }
     const bounds = map.getBounds()
     if (imageLayer) imageLayer.setMap(null)
-    imageLayer = new AMap.ImageLayer({ url: canvas.toDataURL('image/png'), bounds, opacity, zooms: [2, 20] })
+    imageLayer = new AMap.ImageLayer({ url: outputCanvas.toDataURL('image/png'), bounds, opacity, zooms: [2, 20] })
     if (visible) imageLayer.setMap(map)
+    if (onRender) onRender(performance.now() - t0)
   }
 
   function scheduleRender() { dirty = true; clearTimeout(renderTimer); renderTimer = setTimeout(render, debounceMs) }
