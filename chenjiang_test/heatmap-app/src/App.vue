@@ -11,12 +11,12 @@ const showHeatmap = ref(false)
 const showScatter = ref(true)
 const showInterp = ref(true)
 const interpSigma = ref(25)
-const interpSigmaMult = ref(10)
+const interpSigmaMult = ref(3)
 const interpMaxRadius = ref(20000)
 const interpOpacity = ref(0.6)
 const interpGridStep = ref(4)
 const interpAlgorithm = ref('idw')
-const interpIdwPower = ref(2)
+const interpIdwPower = ref(3.5)
 const interpIdwEps = ref(0.1)
 const interpRbfType = ref('thinPlate')
 const interpRbfSmooth = ref(0)
@@ -24,6 +24,8 @@ const interpKrModel = ref('exponential')
 const interpKrNugget = ref(0)
 const interpKrRange = ref(200)
 const interpKrSill = ref(1)
+const interpRadiusJitter = ref(true)
+const interpMCSamples = ref(2)
 const currentZoom = ref(0)
 const showDebug = ref(false)
 const debugCount = ref(30)
@@ -49,17 +51,39 @@ function zoomRadius(zoom) {
   return Math.max(10, Math.min(600, r))
 }
 
+function lerpColor(a, b, t) {
+  return [
+    Math.round(a[0] + (b[0] - a[0]) * t),
+    Math.round(a[1] + (b[1] - a[1]) * t),
+    Math.round(a[2] + (b[2] - a[2]) * t)
+  ]
+}
+
+const COLOR_STOPS = [
+  [-30, [75, 0, 130]],
+  [-20, [0, 0, 180]],
+  [-10, [30, 80, 220]],
+  [-5,  [80, 160, 240]],
+  [-2,  [150, 210, 250]],
+  [0,   [0, 200, 0]],
+  [3,   [150, 220, 0]],
+  [6,   [255, 200, 0]],
+  [10,  [255, 140, 0]],
+  [15,  [255, 60, 0]],
+  [23,  [200, 0, 0]]
+]
+
 function getSubsidenceColor(subsidence) {
-  if (subsidence <= -20) return 'rgb(75,0,130)'
-  if (subsidence <= -15) return 'rgb(0,0,180)'
-  if (subsidence <= -10) return 'rgb(30,80,220)'
-  if (subsidence <= -5)  return 'rgb(80,160,240)'
-  if (subsidence <= -2)  return 'rgb(150,210,250)'
-  if (subsidence <= 0)   return 'rgb(0,180,0)'
-  if (subsidence <= 3)   return 'rgb(150,220,0)'
-  if (subsidence <= 6)   return 'rgb(255,200,0)'
-  if (subsidence <= 10)  return 'rgb(255,140,0)'
-  if (subsidence <= 15)  return 'rgb(255,60,0)'
+  const v = Math.max(-30, Math.min(23, subsidence))
+  for (let i = 0; i < COLOR_STOPS.length - 1; i++) {
+    const [v0, c0] = COLOR_STOPS[i]
+    const [v1, c1] = COLOR_STOPS[i + 1]
+    if (v <= v1) {
+      const t = (v - v0) / (v1 - v0)
+      const [r, g, b] = lerpColor(c0, c1, t)
+      return `rgb(${r},${g},${b})`
+    }
+  }
   return 'rgb(200,0,0)'
 }
 
@@ -285,7 +309,9 @@ function rebuildAll() {
     idwPower: interpIdwPower.value, idwEpsilon: interpIdwEps.value,
     rbfType: interpRbfType.value, rbfSmooth: interpRbfSmooth.value,
     krigingModel: interpKrModel.value, krigingNugget: interpKrNugget.value,
-    krigingRange: interpKrRange.value, krigingSill: interpKrSill.value
+    krigingRange: interpKrRange.value, krigingSill: interpKrSill.value,
+    radiusJitter: interpRadiusJitter.value,
+    mcSamples: interpMCSamples.value
   })
   if (showInterp.value) interpOverlay.show()
 }
@@ -365,7 +391,17 @@ function rebuildAll() {
       </div>
       <div class="ctrl-row">
         <label>采样步长: <span>{{ interpGridStep }}</span>px</label>
-        <input type="range" v-model.number="interpGridStep" min="2" max="8" step="1" @change="rebuildInterp">
+        <input type="range" v-model.number="interpGridStep" min="2" max="8" step="1" @change="rebuildAll">
+      </div>
+      <div class="ctrl-row">
+        <label>
+          <input type="checkbox" v-model="interpRadiusJitter" @change="rebuildAll" style="accent-color:#1677ff">
+          半径蒙特卡洛
+        </label>
+      </div>
+      <div v-if="interpRadiusJitter" class="ctrl-row">
+        <label>MC样本: <span>{{ interpMCSamples }}</span></label>
+        <input type="range" v-model.number="interpMCSamples" min="0" max="16" step="1" @change="rebuildAll">
       </div>
       <div v-if="interpAlgorithm === 'idw'" class="ctrl-row">
         <label>幂: <span>{{ interpIdwPower }}</span></label>

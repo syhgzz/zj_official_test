@@ -5,8 +5,15 @@ export function createInterpolationOverlay(options) {
     debounceMs = 200, initDelayMs = 600, opacity = 0.7, gridStep = 4, baseZoom = 11,
     idwPower = 2, idwEpsilon = 0.1,
     rbfType = 'thinPlate', rbfSmooth = 0,
-    krigingModel = 'exponential', krigingNugget = 0, krigingRange = 200, krigingSill = 1
+    krigingModel = 'exponential', krigingNugget = 0, krigingRange = 200, krigingSill = 1,
+    radiusJitter = false, mcSamples = 2
   } = options
+
+  function hashLngLat(lng, lat, seed = 0) {
+    let h = seed * 0x9e3779b9 + Math.floor(lng * 10000) * 73856093 ^ Math.floor(lat * 10000) * 19349663
+    h = ((h >> 16) ^ h) * 0x45d9f3b; h = ((h >> 16) ^ h) * 0x45d9f3b; h = (h >> 16) ^ h
+    return (h & 0x7fffffff) / 0x7fffffff
+  }
 
   const container = map.getContainer()
   const canvas = document.createElement('canvas')
@@ -136,10 +143,37 @@ export function createInterpolationOverlay(options) {
     return v + kr.weights[kr.n]
   }
 
+  function computeCellValue(x, y, sigma, radius, bc, br, bins, bCols, bRows, bRange) {
+    let nearby = queryBins(bins, bCols, bRows, bc, br, bRange, radius, x, y)
+    if (!nearby.length) return null
+    if (algorithm === 'gaussian') {
+      const nh = -0.5 / (sigma * sigma); let sW = 0, sV = 0
+      for (const p of nearby) { const w = Math.exp(p.dist2 * nh); sW += w; sV += w * p.value }
+      return sW > 0 ? sV / sW : null
+    }
+    if (algorithm === 'idw') {
+      let sW = 0, sV = 0
+      for (const p of nearby) { const w = idwWeight(p.dist2, idwEpsilon, idwPower); sW += w; sV += w * p.value }
+      return sW > 0 ? sV / sW : null
+    }
+    if (algorithm === 'rbf') {
+      if (nearby.length < 3) return null
+      const rbfR = computeRBFWeights(nearby.slice(0, 80), rbfType, rbfSmooth)
+      return rbfValue(x, y, rbfR, rbfType)
+    }
+    if (algorithm === 'kriging') {
+      if (nearby.length < 3) return null
+      const kr = computeKrigingWeights(nearby.slice(0, 60), krigingModel, krigingNugget, krigingRange, krigingSill)
+      return krigingValue(x, y, kr, krigingModel, krigingNugget, krigingRange, krigingSill)
+    }
+    return null
+  }
+
   function render() {
     if (!visible || !dirty || !data.length) return
     dirty = false
-    const zoom = map.getZoom(), sigma = getSigma(zoom), radius = getRadius(sigma)
+    const zoom = map.getZoom(), sigma = getSigma(zoom)
+    let radius = getRadius(sigma)
     const binSize = Math.ceil(radius)
     const w = container.clientWidth, h = container.clientHeight
     if (!w || !h) return
@@ -158,29 +192,19 @@ export function createInterpolationOverlay(options) {
         const bc = Math.floor(x / binSize), br = Math.floor(y / binSize)
         let result = null
 
-        if (algorithm === 'gaussian' || algorithm === 'idw') {
-          const nearby = queryBins(bins, bCols, bRows, bc, br, bRange, radius, x, y)
-          if (!nearby.length) continue
-          let sumW = 0, sumV = 0
-          if (algorithm === 'gaussian') {
-            const nh = -0.5 / (sigma * sigma)
-            for (const p of nearby) { const w = Math.exp(p.dist2 * nh); sumW += w; sumV += w * p.value }
-          } else {
-            for (const p of nearby) { const w = idwWeight(p.dist2, idwEpsilon, idwPower); sumW += w; sumV += w * p.value }
+        if (radiusJitter && mcSamples >= 1) {
+          const pt = map.containerToLngLat([x, y])
+          const baseR = getRadius(sigma)
+          let sumMC = 0, countMC = 0
+          for (let s = 0; s < mcSamples; s++) {
+            const r = baseR * (1 + hashLngLat(pt.lng, pt.lat, s) * 0.5)
+            const val = computeCellValue(x, y, sigma, r, bc, br, bins, bCols, bRows, bRange)
+            if (val !== null) { sumMC += val; countMC++ }
           }
-          if (sumW > 0) result = sumV / sumW
-        } else if (algorithm === 'rbf') {
-          const nearby = queryBins(bins, bCols, bRows, bc, br, bRange, radius, x, y)
-          if (nearby.length < 3) continue
-          const local = nearby.slice(0, RBF_MAX)
-          const rbfR = computeRBFWeights(local, rbfType, rbfSmooth)
-          result = rbfValue(x, y, rbfR, rbfType)
-        } else if (algorithm === 'kriging') {
-          const nearby = queryBins(bins, bCols, bRows, bc, br, bRange, radius, x, y)
-          if (nearby.length < 3) continue
-          const local = nearby.slice(0, KRIGING_MAX)
-          const kr = computeKrigingWeights(local, krigingModel, krigingNugget, krigingRange, krigingSill)
-          result = krigingValue(x, y, kr, krigingModel, krigingNugget, krigingRange, krigingSill)
+          if (countMC > 0) result = sumMC / countMC
+        }
+        if (result === null) {
+          result = computeCellValue(x, y, sigma, getRadius(sigma), bc, br, bins, bCols, bRows, bRange)
         }
 
         if (result !== null) {
