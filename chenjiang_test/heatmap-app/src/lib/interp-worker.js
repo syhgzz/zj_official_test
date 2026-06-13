@@ -118,27 +118,33 @@ function krigingValue(sx, sy, kr, model, nugget, range, sill) {
   return v + kr.weights[kr.n]
 }
 
-function computeCellValue(x, y, sigma, radius, bc, br, bins, bCols, bRows, bRange, algo, idwPower, idwEpsilon, rbfType, rbfSmooth, krigingModel, krigingNugget, krigingRange, krigingSill) {
+function computeCellValue(x, y, sigma, radius, bc, br, bins, bCols, bRows, bRange, algo, idwPower, idwEpsilon, rbfType, rbfSmooth, krigingModel, krigingNugget, krigingRange, krigingSill, maxNearbyPoints) {
   const nearby = queryBins(bins, bCols, bRows, bc, br, bRange, radius, x, y)
   if (!nearby.length) return null
   if (algo === 'gaussian') {
     const nh = -0.5 / (sigma * sigma); let sW = 0, sV = 0
-    for (const p of nearby) { const w = Math.exp(p.dist2 * nh); sW += w; sV += w * p.value }
+    const limit = maxNearbyPoints > 0 ? Math.min(maxNearbyPoints, nearby.length) : nearby.length
+    const nby = limit < nearby.length ? nearby.sort((a, b) => a.dist2 - b.dist2).slice(0, limit) : nearby
+    for (const p of nby) { const w = Math.exp(p.dist2 * nh); sW += w; sV += w * p.value }
     return sW > 0 ? sV / sW : null
   }
   if (algo === 'idw') {
     let sW = 0, sV = 0
-    for (const p of nearby) { const w = idwWeight(p.dist2, idwEpsilon, idwPower); sW += w; sV += w * p.value }
+    const limit = maxNearbyPoints > 0 ? Math.min(maxNearbyPoints, nearby.length) : nearby.length
+    const nby = limit < nearby.length ? nearby.sort((a, b) => a.dist2 - b.dist2).slice(0, limit) : nearby
+    for (const p of nby) { const w = idwWeight(p.dist2, idwEpsilon, idwPower); sW += w; sV += w * p.value }
     return sW > 0 ? sV / sW : null
   }
   if (algo === 'rbf') {
     if (nearby.length < 3) return null
-    const rbfR = computeRBFWeights(nearby.slice(0, 80), rbfType, rbfSmooth)
+    const limit = maxNearbyPoints > 0 ? Math.min(maxNearbyPoints, nearby.length) : 80
+    const rbfR = computeRBFWeights(nearby.slice(0, limit), rbfType, rbfSmooth)
     return rbfValue(x, y, rbfR, rbfType)
   }
   if (algo === 'kriging') {
     if (nearby.length < 3) return null
-    const kr = computeKrigingWeights(nearby.slice(0, 60), krigingModel, krigingNugget, krigingRange, krigingSill)
+    const limit = maxNearbyPoints > 0 ? Math.min(maxNearbyPoints, nearby.length) : 60
+    const kr = computeKrigingWeights(nearby.slice(0, limit), krigingModel, krigingNugget, krigingRange, krigingSill)
     return krigingValue(x, y, kr, krigingModel, krigingNugget, krigingRange, krigingSill)
   }
   return null
@@ -161,7 +167,7 @@ self.onmessage = function (e) {
       opacity, algorithm, idwPower, idwEpsilon, rbfType, rbfSmooth,
       krigingModel, krigingNugget, krigingRange, krigingSill,
       radiusJitter, mcSamples, mcJitterFactor,
-      blurEnabled, blurRadius, gpuEnabled,
+      blurEnabled, blurRadius, gpuEnabled, maxNearbyPoints,
       colorLut, valueMin, valueMax
     } = msg
 
@@ -218,13 +224,13 @@ self.onmessage = function (e) {
             const r = s === 0 ? baseR : baseR * (1 + hashLngLat(x, y, s) * mcJitterFactor)
             const val = computeCellValue(x, y, sigma, r, bc, br, bins, bCols, bRows, bRange,
               algorithm, idwPower, idwEpsilon, rbfType, rbfSmooth,
-              krigingModel, krigingNugget, krigingRange, krigingSill)
+              krigingModel, krigingNugget, krigingRange, krigingSill, maxNearbyPoints)
             if (val !== null) { sumMC += val; countMC++ }
           }
         } else {
           const val = computeCellValue(x, y, sigma, baseR, bc, br, bins, bCols, bRows, bRange,
             algorithm, idwPower, idwEpsilon, rbfType, rbfSmooth,
-            krigingModel, krigingNugget, krigingRange, krigingSill)
+            krigingModel, krigingNugget, krigingRange, krigingSill, maxNearbyPoints)
           if (val !== null) { sumMC = val; countMC = 1 }
         }
 

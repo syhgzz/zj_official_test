@@ -10,6 +10,7 @@
 - Worker 不可用时自动降级主线程；GPU 不可用自动降级 CPU Worker 路径
 - 销毁：调用 `overlay.destroy()` 终止 Worker、移除图层
 - 渲染耗时通过 `onRender: (ms) => {}` 回调获取
+- 性能:开启GPU时, 1万个数据点可以比较流畅运行, 但10万个数据点需要3-4秒, 百万数据点会卡死
 
 ## 快速开始
 
@@ -35,6 +36,7 @@ const overlay = createInterpolationOverlay({
 | `algorithm` | string | `idw` | `gaussian` \| `idw` \| `rbf` \| `kriging` |
 | `opacity` | number | 0.7 | 图层透明度 |
 | `gridStep` | number | 2 | 采样步长 px，越小越精细 |
+| `maxNearbyPoints` | number | 0 | 每像素最多处理数据点数，0=不限制, GPU下不生效 |
 | `baseSigma` | number | 25 | 基础 σ |
 | `sigmaMultiplier` | number | ∞ | 搜索半径 = σ × 此值 |
 | `maxRadius` | number | 20000 | 搜索半径上限 px |

@@ -3,6 +3,7 @@ export function createInterpolationOverlay(options) {
     map, data, colorFn,
     algorithm = 'gaussian', baseSigma = 25, sigmaMultiplier = Infinity, maxRadius = 2000,
     debounceMs = 200, initDelayMs = 600, opacity = 0.7, gridStep = 2, baseZoom = 11,
+    maxNearbyPoints = 0,
     idwPower = 2, idwEpsilon = 0.1,
     rbfType = 'thinPlate', rbfSmooth = 0,
     krigingModel = 'exponential', krigingNugget = 0, krigingRange = 200, krigingSill = 1,
@@ -190,22 +191,28 @@ export function createInterpolationOverlay(options) {
     if (!nearby.length) return null
     if (algorithm === 'gaussian') {
       const nh = -0.5 / (sigma * sigma); let sW = 0, sV = 0
-      for (const p of nearby) { const w = Math.exp(p.dist2 * nh); sW += w; sV += w * p.value }
+      const limit = maxNearbyPoints > 0 ? Math.min(maxNearbyPoints, nearby.length) : nearby.length
+      const nby = limit < nearby.length ? nearby.sort((a, b) => a.dist2 - b.dist2).slice(0, limit) : nearby
+      for (const p of nby) { const w = Math.exp(p.dist2 * nh); sW += w; sV += w * p.value }
       return sW > 0 ? sV / sW : null
     }
     if (algorithm === 'idw') {
       let sW = 0, sV = 0
-      for (const p of nearby) { const w = idwWeight(p.dist2, idwEpsilon, idwPower); sW += w; sV += w * p.value }
+      const limit = maxNearbyPoints > 0 ? Math.min(maxNearbyPoints, nearby.length) : nearby.length
+      const nby = limit < nearby.length ? nearby.sort((a, b) => a.dist2 - b.dist2).slice(0, limit) : nearby
+      for (const p of nby) { const w = idwWeight(p.dist2, idwEpsilon, idwPower); sW += w; sV += w * p.value }
       return sW > 0 ? sV / sW : null
     }
     if (algorithm === 'rbf') {
       if (nearby.length < 3) return null
-      const rbfR = computeRBFWeights(nearby.slice(0, 80), rbfType, rbfSmooth)
+      const limit = maxNearbyPoints > 0 ? Math.min(maxNearbyPoints, nearby.length) : 80
+      const rbfR = computeRBFWeights(nearby.slice(0, limit), rbfType, rbfSmooth)
       return rbfValue(x, y, rbfR, rbfType)
     }
     if (algorithm === 'kriging') {
       if (nearby.length < 3) return null
-      const kr = computeKrigingWeights(nearby.slice(0, 60), krigingModel, krigingNugget, krigingRange, krigingSill)
+      const limit = maxNearbyPoints > 0 ? Math.min(maxNearbyPoints, nearby.length) : 60
+      const kr = computeKrigingWeights(nearby.slice(0, limit), krigingModel, krigingNugget, krigingRange, krigingSill)
       return krigingValue(x, y, kr, krigingModel, krigingNugget, krigingRange, krigingSill)
     }
     return null
@@ -236,7 +243,7 @@ export function createInterpolationOverlay(options) {
         rbfType, rbfSmooth, krigingModel, krigingNugget,
         krigingRange, krigingSill, radiusJitter, mcSamples,
         mcJitterFactor, blurEnabled, blurRadius,
-        gpuEnabled,
+        gpuEnabled, maxNearbyPoints,
         colorLut: lut, valueMin: vMin, valueMax: vMax
       })
       return

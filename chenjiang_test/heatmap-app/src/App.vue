@@ -32,11 +32,16 @@ const interpBlurRadius = ref(1.5)
 const interpSigmaMultInf = ref(true)
 const interpMaxRadiusInf = ref(false)
 const gpuEnabled = ref(true)
+const interpMaxNearby = ref(0)
 const renderTime = ref(0)
-const maxDataPoints = ref(10000)
+const maxDataPoints = ref(Infinity)
 const currentZoom = ref(0)
 const showDebug = ref(false)
 const debugCount = ref(30)
+const viewportW = ref(0)
+const viewportH = ref(0)
+const renderW = ref(0)
+const renderH = ref(0)
 
 const histCanvas = ref(null)
 
@@ -175,6 +180,7 @@ onMounted(async () => {
     })
     map.on('moveend', scheduleScatterRender)
     currentZoom.value = map.getZoom()
+    window.addEventListener('resize', updateViewportInfo)
 
     // 9. 初始化数据并构建全部图层
     pointsData = points
@@ -232,9 +238,7 @@ function toggleHeatmap() {
 
 function toggleScatter() {
   showScatter.value = !showScatter.value
-  if (showDebug.value) {
-    debugMarkers.forEach(m => showScatter.value ? m.show() : m.hide())
-  } else if (scatterLayer) {
+  if (scatterLayer) {
     showScatter.value ? scatterLayer.setMap(map) : scatterLayer.setMap(null)
   } else {
     massMarks.forEach(m => showScatter.value ? m.show() : m.hide())
@@ -247,7 +251,12 @@ function toggleInterp() {
 }
 
 function renderScatter() {
-  if (!map || showDebug.value) return
+  if (!map) return
+  // 超过 50000 点跳过散点图（主线程瓶颈且视觉无意义）
+  if (pointsData.length > 50000) {
+    if (scatterLayer) scatterLayer.setMap(null)
+    return
+  }
   const container = mapContainer.value
   if (!container) return
   const w = container.clientWidth, h = container.clientHeight
@@ -273,7 +282,7 @@ function renderScatter() {
     if (scatterLayer) { scatterLayer.setMap(null); URL.revokeObjectURL(scatterLayer._url) }
     scatterLayer = new AMap.ImageLayer({ url, bounds, opacity: 1, zooms: [2, 20] })
     scatterLayer._url = url
-    if (showScatter.value && !showDebug.value) scatterLayer.setMap(map)
+    if (showScatter.value) scatterLayer.setMap(map)
   }, 'image/png')
 }
 
@@ -328,22 +337,7 @@ function rebuildAll() {
   pointCount.value = activeData.length
 
   if (showDebug.value) {
-    const color = (v) => getSubsidenceColor(v)
-    debugMarkers = activeData.map(p => {
-      const el = document.createElement('div')
-      el.style.cssText = `width:12px;height:12px;border-radius:50%;background:${color(p.subsidence)};border:2px solid #fff;cursor:grab`
-      const m = new AMap.Marker({
-        position: [p.longitude, p.latitude], content: el,
-        draggable: true, zIndex: 25, offset: new AMap.Pixel(-6, -6)
-      })
-      m.on('dragend', (e) => {
-        const pos = e.target.getPosition()
-        p.longitude = pos.lng; p.latitude = pos.lat
-        rebuildAll()
-      })
-      if (showScatter.value) m.setMap(map); else { m.setMap(map); m.hide() }
-      return m
-    })
+    renderScatter()
   } else {
     renderScatter()
   }
@@ -366,9 +360,21 @@ function rebuildAll() {
     blurEnabled: interpBlurEnabled.value,
     blurRadius: interpBlurRadius.value,
     gpuEnabled: gpuEnabled.value,
+    maxNearbyPoints: interpMaxNearby.value,
     onRender: (ms) => { renderTime.value = ms }
   })
   if (showInterp.value) interpOverlay.show()
+  updateViewportInfo()
+}
+
+function updateViewportInfo() {
+  const c = mapContainer.value
+  if (c) {
+    viewportW.value = c.clientWidth
+    viewportH.value = c.clientHeight
+    renderW.value = Math.ceil(c.clientWidth / interpGridStep.value)
+    renderH.value = Math.ceil(c.clientHeight / interpGridStep.value)
+  }
 }
 </script>
 
@@ -411,8 +417,9 @@ function rebuildAll() {
         调试模式
       </label>
       <div v-if="showDebug" class="debug-row">
-        <span>点数: {{ debugCount }}</span>
-        <input type="range" v-model.number="debugCount" min="1" max="200" @change="generateDebugData" style="width:80px">
+        <span>点数: </span>
+        <input v-model.number="debugCount" min="1" max="1000000" style="width:70px;text-align:center;border:1px solid #ccc;border-radius:4px;padding:2px 4px">
+        <button @click="generateDebugData" style="font-size:11px;padding:2px 8px;border:1px solid #1677ff;border-radius:4px;background:#1677ff;color:#fff;cursor:pointer">确定</button>
       </div>
     </div>
 
@@ -484,6 +491,10 @@ function rebuildAll() {
         <label>模糊半径: <span>{{ interpBlurRadius }}</span>px</label>
         <input type="range" v-model.number="interpBlurRadius" min="0.5" max="20" step="0.5" @change="rebuildAll">
       </div>
+      <div class="ctrl-row">
+        <label>每像素最多点数: <span>{{ interpMaxNearby || '无限制' }}</span></label>
+        <input type="range" v-model.number="interpMaxNearby" min="0" max="5000" step="50" @change="rebuildInterp">
+      </div>
       <div v-if="interpAlgorithm === 'idw'" class="ctrl-row">
         <label>幂: <span>{{ interpIdwPower }}</span></label>
         <input type="range" v-model.number="interpIdwPower" min="1" max="6" step="0.5" @change="rebuildInterp">
@@ -530,14 +541,10 @@ function rebuildAll() {
     <div v-if="!loading && !errorMsg" class="info-panel">
       <h3>沉降热力图</h3>
       <p>数据点：{{ pointCount.toLocaleString() }} 个</p>
-      <p>
-        显示前
-        <input type="range" v-model.number="maxDataPoints" min="1" max="10000" step="100" @change="rebuildAll"
-          style="width:120px;vertical-align:middle;margin:0 4px">
-        {{ maxDataPoints }} 个
-      </p>
       <p>底图：高德交通图</p>
       <p>放大倍率：{{ currentZoom.toFixed(1) }}x</p>
+      <p>视口：{{ viewportW }} × {{ viewportH }}</p>
+      <p>渲染分辨率：{{ renderW }} × {{ renderH }} (gridStep={{ interpGridStep }})</p>
       <p>渲染耗时：{{ renderTime.toFixed(0) }} ms</p>
     </div>
 
