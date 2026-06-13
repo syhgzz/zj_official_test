@@ -95,7 +95,7 @@ export function splatRender(data, options) {
       float val = wv / w;
       float t = clamp((val - u_vMin) / u_vRange, 0.0, 1.0);
       vec4 c = texture(u_lut, vec2(t, 0.5));
-      outColor = vec4(c.rgb, u_opacity);
+      outColor = vec4(c.rgb, c.a * u_opacity);
     }`
 
   const vs2 = makeShader(gl.VERTEX_SHADER, compVS)
@@ -134,10 +134,10 @@ export function splatRender(data, options) {
   gl.bindTexture(gl.TEXTURE_2D, lutTex)
   const rgbaLut = new Uint8Array(256 * 4)
   for (let i = 0; i < 256; i++) {
-    rgbaLut[i * 4] = colorLut[i * 3]
-    rgbaLut[i * 4 + 1] = colorLut[i * 3 + 1]
-    rgbaLut[i * 4 + 2] = colorLut[i * 3 + 2]
-    rgbaLut[i * 4 + 3] = 255
+    rgbaLut[i * 4] = colorLut[i * 4]
+    rgbaLut[i * 4 + 1] = colorLut[i * 4 + 1]
+    rgbaLut[i * 4 + 2] = colorLut[i * 4 + 2]
+    rgbaLut[i * 4 + 3] = colorLut[i * 4 + 3]
   }
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 256, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, rgbaLut)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)

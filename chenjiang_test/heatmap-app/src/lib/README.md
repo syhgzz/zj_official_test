@@ -19,7 +19,7 @@ import { createInterpolationOverlay } from './lib/interplot_figure.js'
 const overlay = createInterpolationOverlay({
   map,                     // AMap.Map 实例
   data: [{ lng, lat, value }],  // 数据点
-  colorFn: (v) => [r, g, b],    // 沉降值 → RGB (0-255)
+  colorFn: (v) => [r, g, b],    // (v) => [r, g, b] 或 [r, g, b, a]（a: 0-255）
   algorithm: 'idw',             // gaussian | idw | rbf | kriging
   onRender: (ms) => {},         // 渲染耗时回调（可选）
 })
@@ -31,12 +31,12 @@ const overlay = createInterpolationOverlay({
 |------|------|--------|------|
 | `map` | AMap.Map | 必填 | |
 | `data` | Array | 必填 | `[{lng, lat, value}]` |
-| `colorFn` | Function | 必填 | `(v) => [r, g, b]` |
+| `colorFn` | Function | 必填 | `(v) => [r, g, b]` 或 `[r, g, b, a]` (a: 0-255) |
 | `algorithm` | string | `idw` | `gaussian` \| `idw` \| `rbf` \| `kriging` |
 | `opacity` | number | 0.7 | 图层透明度 |
-| `gridStep` | number | 4 | 采样步长 px，越小越精细 |
+| `gridStep` | number | 2 | 采样步长 px，越小越精细 |
 | `baseSigma` | number | 25 | 基础 σ |
-| `sigmaMultiplier` | number | 3 | 搜索半径 = σ × 此值 |
+| `sigmaMultiplier` | number | ∞ | 搜索半径 = σ × 此值 |
 | `maxRadius` | number | 20000 | 搜索半径上限 px |
 | `baseZoom` | number | 11 | σ 等比缩放基准级别 |
 | `debounceMs` | number | 200 | 防抖延迟 ms |
@@ -74,7 +74,7 @@ const overlay = createInterpolationOverlay({
 | `mcSamples` | 2 | MC 采样数 |
 | `mcJitterFactor` | 0.2 | MC 抖动幅度 |
 | `blurEnabled` | false | GPU 高斯模糊 |
-| `blurRadius` | 3 | 模糊半径 px |
+| `blurRadius` | 1.5 | 模糊半径 px |
 
 **返回** `{ show(), hide(), destroy() }`
 
@@ -117,3 +117,57 @@ createInterpolationOverlay()
 - 其余全部（插值计算、Canvas 填充、PNG 编码）在 Worker 内完成
 - **不阻塞**：主线程发起后立即返回，Worker 完成后通过 `postMessage` 回传 Blob
 - 异步 PNG 编码使用 `toBlob` / `OffscreenCanvas.convertToBlob`
+
+## 示例：发散色阶 colorFn
+
+当前 `App.vue` 中使用的 colorFn 方案，支持 RGBA：
+
+```js
+// 4 通道线性插值，自动处理 alpha
+function lerpColor(c0, c1, t) {
+  const r = Math.round(c0[0] + (c1[0] - c0[0]) * t)
+  const g = Math.round(c0[1] + (c1[1] - c0[1]) * t)
+  const b = Math.round(c0[2] + (c1[2] - c0[2]) * t)
+  const aa = c0.length > 3 ? c0[3] : 255
+  const ba = c1.length > 3 ? c1[3] : 255
+  const a = Math.round(aa + (ba - aa) * t)
+  return a < 255 ? [r, g, b, a] : [r, g, b]
+}
+
+// 发散色阶：负值蓝紫、0 绿（中心）、正值红橙
+const COLOR_STOPS = [
+  [-30, [75, 0, 130, 255]],   // 紫
+  [-20, [0, 0, 180, 255]],    // 深蓝
+  [-10, [30, 80, 220, 255]],  // 中蓝
+  [-5,  [80, 160, 240, 255]], // 浅蓝
+  [-2,  [150, 210, 250, 255]],// 淡蓝
+  [0,   [0, 200, 0, 255]],    // 绿（中性点）
+  [3,   [150, 220, 0, 255]],
+  [6,   [255, 200, 0, 255]],  // 黄
+  [10,  [255, 140, 0, 255]],  // 橙
+  [15,  [255, 60, 0, 255]],   // 橙红
+  [23,  [200, 0, 0, 255]],    // 红
+]
+
+function colorFn(v) {
+  const clamped = Math.max(-30, Math.min(23, v))
+  for (let i = 0; i < COLOR_STOPS.length - 1; i++) {
+    const [v0, c0] = COLOR_STOPS[i]
+    const [v1, c1] = COLOR_STOPS[i + 1]
+    if (clamped <= v1) {
+      return lerpColor(c0, c1, (clamped - v0) / (v1 - v0))
+    }
+  }
+  return [200, 0, 0, 255]
+}
+
+// 直接使用
+const overlay = createInterpolationOverlay({ map, data, colorFn, algorithm: 'idw' })
+
+// 或简写为行内函数
+const overlay = createInterpolationOverlay({
+  map, data,
+  colorFn: (v) => getSubsidenceArray(v),  // 返回 [r,g,b] 或 [r,g,b,a]
+  algorithm: 'idw',
+})
+```

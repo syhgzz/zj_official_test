@@ -60,40 +60,47 @@ function zoomRadius(zoom) {
   return Math.max(10, Math.min(600, r))
 }
 
-function lerpColor(a, b, t) {
-  return [
-    Math.round(a[0] + (b[0] - a[0]) * t),
-    Math.round(a[1] + (b[1] - a[1]) * t),
-    Math.round(a[2] + (b[2] - a[2]) * t)
-  ]
+function lerpColor(c0, c1, t) {
+  const r = Math.round(c0[0] + (c1[0] - c0[0]) * t)
+  const g = Math.round(c0[1] + (c1[1] - c0[1]) * t)
+  const b = Math.round(c0[2] + (c1[2] - c0[2]) * t)
+  const aa = c0.length > 3 ? c0[3] : 255
+  const ba = c1.length > 3 ? c1[3] : 255
+  const aChan = Math.round(aa + (ba - aa) * t)
+  return aChan < 255 ? [r, g, b, aChan] : [r, g, b]
 }
 
 const COLOR_STOPS = [
-  [-30, [75, 0, 130]],
-  [-20, [0, 0, 180]],
-  [-10, [30, 80, 220]],
-  [-5,  [80, 160, 240]],
-  [-2,  [150, 210, 250]],
-  [0,   [0, 200, 0]],
-  [3,   [150, 220, 0]],
-  [6,   [255, 200, 0]],
-  [10,  [255, 140, 0]],
-  [15,  [255, 60, 0]],
-  [23,  [200, 0, 0]]
+  [-30, [75, 0, 130, 255]],
+  [-20, [0, 0, 180, 255]],
+  [-10, [30, 80, 220, 255]],
+  [-5,  [80, 160, 240, 255]],
+  [-2,  [150, 210, 250, 255]],
+  [0,   [0, 200, 0, 255]],
+  [3,   [150, 220, 0, 255]],
+  [6,   [255, 200, 0, 255]],
+  [10,  [255, 140, 0, 255]],
+  [15,  [255, 60, 0, 255]],
+  [23,  [200, 0, 0, 255]]
 ]
 
-function getSubsidenceColor(subsidence) {
+function getSubsidenceArray(subsidence) {
   const v = Math.max(-30, Math.min(23, subsidence))
   for (let i = 0; i < COLOR_STOPS.length - 1; i++) {
     const [v0, c0] = COLOR_STOPS[i]
     const [v1, c1] = COLOR_STOPS[i + 1]
     if (v <= v1) {
       const t = (v - v0) / (v1 - v0)
-      const [r, g, b] = lerpColor(c0, c1, t)
-      return `rgb(${r},${g},${b})`
+      return lerpColor(c0, c1, t)
     }
   }
-  return 'rgb(200,0,0)'
+  return [200, 0, 0, 255]
+}
+
+function getSubsidenceColor(subsidence) {
+  const c = getSubsidenceArray(subsidence)
+  const [r, g, b, a] = c.length === 4 ? c : [...c, 255]
+  return a < 255 ? `rgba(${r},${g},${b},${(a / 255).toFixed(3)})` : `rgb(${r},${g},${b})`
 }
 
 onMounted(async () => {
@@ -283,6 +290,7 @@ function toggleDebug() {
   showDebug.value = !showDebug.value
   if (showDebug.value) {
     realPointsData = pointsData
+    if (scatterLayer) scatterLayer.setMap(null)
     generateDebugData()
   } else {
     pointsData = realPointsData
@@ -343,7 +351,7 @@ function rebuildAll() {
   interpOverlay = createInterpolationOverlay({
     map,
     data: activeData.map(p => ({ lng: p.longitude, lat: p.latitude, value: p.subsidence })),
-    colorFn: (v) => { const m = getSubsidenceColor(v).match(/\d+/g); return m ? m.map(Number) : [0,0,255] },
+    colorFn: (v) => getSubsidenceArray(v),
     algorithm: interpAlgorithm.value, baseSigma: interpSigma.value,
     sigmaMultiplier: interpSigmaMultInf.value ? Infinity : interpSigmaMult.value,
     maxRadius: interpMaxRadiusInf.value ? Infinity : interpMaxRadius.value,

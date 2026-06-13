@@ -35,15 +35,16 @@ export function createInterpolationOverlay(options) {
   } catch (e) { useWorker = false }
 
   function buildColorLUT() {
-    const lut = new Uint8Array(256 * 3)
+    const lut = new Uint8Array(256 * 4)
     let vMin = Infinity, vMax = -Infinity
     for (const d of data) { if (d.value < vMin) vMin = d.value; if (d.value > vMax) vMax = d.value }
     if (!isFinite(vMin)) { vMin = -35; vMax = 25 }
     const range = vMax - vMin || 1
     for (let i = 0; i < 256; i++) {
       const v = vMin + range * i / 255
-      const [r, g, b] = colorFn(v)
-      lut[i * 3] = r; lut[i * 3 + 1] = g; lut[i * 3 + 2] = b
+      const c = colorFn(v)
+      lut[i * 4] = c[0]; lut[i * 4 + 1] = c[1]; lut[i * 4 + 2] = c[2]
+      lut[i * 4 + 3] = c.length > 3 ? c[3] : 255
     }
     return { lut, vMin, vMax }
   }
@@ -264,8 +265,9 @@ export function createInterpolationOverlay(options) {
           if (val !== null) { sumMC = val; countMC = 1 }
         }
         if (countMC > 0) {
-          const [cr, cg, cb] = colorFn(sumMC / countMC)
-          ctx.fillStyle = `rgba(${cr},${cg},${cb},${opacity})`
+          const c = colorFn(sumMC / countMC)
+          const a = (c.length > 3 ? c[3] : 255) / 255
+          ctx.fillStyle = `rgba(${c[0]},${c[1]},${c[2]},${(a * opacity).toFixed(3)})`
           ctx.fillRect(x, y, gridStep, gridStep)
         }
       }

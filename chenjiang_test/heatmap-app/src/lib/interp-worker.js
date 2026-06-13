@@ -147,8 +147,8 @@ function computeCellValue(x, y, sigma, radius, bc, br, bins, bCols, bRows, bRang
 function lookupColor(v, lut, vMin, vMax) {
   const t = (v - vMin) / (vMax - vMin)
   const idx = Math.max(0, Math.min(255, Math.floor(t * 255)))
-  const off = idx * 3
-  return [lut[off], lut[off + 1], lut[off + 2]]
+  const off = idx * 4
+  return [lut[off], lut[off + 1], lut[off + 2], lut[off + 3]]
 }
 
 let offscreen = null, ctx = null, blurCanvas = null, blurCtx = null
@@ -229,8 +229,8 @@ self.onmessage = function (e) {
         }
 
         if (countMC > 0) {
-          const [cr, cg, cb] = lookupColor(sumMC / countMC, colorLut, valueMin, valueMax)
-          ctx.fillStyle = `rgba(${cr},${cg},${cb},${opacity})`
+          const [cr, cg, cb, ca] = lookupColor(sumMC / countMC, colorLut, valueMin, valueMax)
+          ctx.fillStyle = `rgba(${cr},${cg},${cb},${(ca / 255 * opacity).toFixed(3)})`
           ctx.fillRect(x, y, gridStep, gridStep)
         }
       }
