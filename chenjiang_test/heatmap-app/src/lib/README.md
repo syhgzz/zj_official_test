@@ -14,7 +14,7 @@
 ## 快速开始
 
 ```js
-import { createInterpolationOverlay } from './lib/interplot_subsidence_figure.js'
+import { createInterpolationOverlay } from './lib/interplot_figure.js'
 
 const overlay = createInterpolationOverlay({
   map,                     // AMap.Map 实例
@@ -93,7 +93,7 @@ createInterpolationOverlay()
 
 | 文件 | 作用 |
 |------|------|
-| `interplot_subsidence_figure.js` | 主入口，`createInterpolationOverlay()`。管理 Worker 创建/通信、像素坐标转换、LUT 预计算、ImageLayer 更新 |
+| `interplot_figure.js` | 主入口，`createInterpolationOverlay()`。管理 Worker 创建/通信、像素坐标转换、LUT 预计算、ImageLayer 更新 |
 | `interp-worker.js` | Web Worker。接收像素坐标数据 → CPU 分箱/插值 或 GPU splatting → Canvas 绘制 → toBlob 返回主线程 |
 | `webgl-splat.js` | GPU IDW 加速。WebGL2 instanced quad + float 纹理 + composite pass |
 

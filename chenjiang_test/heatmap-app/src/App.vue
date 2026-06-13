@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import AMapLoader from '@amap/amap-jsapi-loader'
-import { createInterpolationOverlay } from './lib/interplot_subsidence_figure.js'
+import { createInterpolationOverlay } from './lib/interplot_figure.js'
 
 const mapContainer = ref(null)
 const loading = ref(true)
