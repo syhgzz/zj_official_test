@@ -2,6 +2,7 @@
 
 export function splatRender(data, options) {
   const { w, h, radius, idwPower = 2, idwEpsilon = 0.1, opacity = 0.7, colorLut, valueMin, valueMax, gridStep = 4 } = options
+  const safeR = isFinite(radius) ? radius : Math.hypot(w, h)
 
   // Create offscreen canvas with WebGL2
   const offscreen = new OffscreenCanvas(w, h)
@@ -90,7 +91,7 @@ export function splatRender(data, options) {
     void main() {
       float wv = texture(u_texWVal, v_uv).r;
       float w  = texture(u_texW, v_uv).r;
-      if (w < 1e-9) discard;
+      if (w <= 0.0) discard;
       float val = wv / w;
       float t = clamp((val - u_vMin) / u_vRange, 0.0, 1.0);
       vec4 c = texture(u_lut, vec2(t, 0.5));
@@ -196,8 +197,8 @@ export function splatRender(data, options) {
   gl.blendFunc(gl.ONE, gl.ONE)
 
   gl.uniform2f(gl.getUniformLocation(prog1, 'u_scale'), 1.0 / w, 1.0 / h)
-  gl.uniform1f(gl.getUniformLocation(prog1, 'u_radius2'), radius * radius)
-  gl.uniform1f(gl.getUniformLocation(prog1, 'u_radius'), radius)
+  gl.uniform1f(gl.getUniformLocation(prog1, 'u_radius2'), safeR * safeR)
+  gl.uniform1f(gl.getUniformLocation(prog1, 'u_radius'), safeR)
   gl.uniform1f(gl.getUniformLocation(prog1, 'u_power'), idwPower)
   gl.uniform1f(gl.getUniformLocation(prog1, 'u_eps'), idwEpsilon)
   gl.uniform1f(gl.getUniformLocation(prog1, 'u_h'), h)

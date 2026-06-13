@@ -1,13 +1,13 @@
 export function createInterpolationOverlay(options) {
   const {
     map, data, colorFn,
-    algorithm = 'gaussian', baseSigma = 25, sigmaMultiplier = 3, maxRadius = 2000,
-    debounceMs = 200, initDelayMs = 600, opacity = 0.7, gridStep = 4, baseZoom = 11,
+    algorithm = 'gaussian', baseSigma = 25, sigmaMultiplier = Infinity, maxRadius = 2000,
+    debounceMs = 200, initDelayMs = 600, opacity = 0.7, gridStep = 2, baseZoom = 11,
     idwPower = 2, idwEpsilon = 0.1,
     rbfType = 'thinPlate', rbfSmooth = 0,
     krigingModel = 'exponential', krigingNugget = 0, krigingRange = 200, krigingSill = 1,
     radiusJitter = false, mcSamples = 2, mcJitterFactor = 0.2,
-    blurEnabled = false, blurRadius = 3,
+    blurEnabled = false, blurRadius = 1.5,
     gpuEnabled = true,
     onRender = null
   } = options
@@ -244,9 +244,10 @@ export function createInterpolationOverlay(options) {
     // CPU fallback
     canvas.width = w; canvas.height = h
     ctx.clearRect(0, 0, w, h)
-    const binSize = Math.ceil(maxJitterR)
+    const isInfR = !isFinite(maxJitterR)
+    const binSize = isInfR ? Math.max(w, h) : Math.ceil(maxJitterR)
     const { bins, bCols, bRows } = buildBins(pixelPoints, w, h, binSize)
-    const bRange = Math.ceil(maxJitterR / binSize)
+    const bRange = isInfR ? 1 : Math.ceil(maxJitterR / binSize)
 
     for (let y = 0; y < h; y += gridStep) {
       for (let x = 0; x < w; x += gridStep) {

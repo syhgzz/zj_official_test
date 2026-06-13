@@ -14,7 +14,7 @@ const interpSigma = ref(25)
 const interpSigmaMult = ref(3)
 const interpMaxRadius = ref(20000)
 const interpOpacity = ref(0.6)
-const interpGridStep = ref(4)
+const interpGridStep = ref(2)
 const interpAlgorithm = ref('idw')
 const interpIdwPower = ref(3.5)
 const interpIdwEps = ref(0.1)
@@ -28,7 +28,9 @@ const interpRadiusJitter = ref(false)
 const interpMCSamples = ref(2)
 const interpMCJitterFactor = ref(0.2)
 const interpBlurEnabled = ref(false)
-const interpBlurRadius = ref(3)
+const interpBlurRadius = ref(1.5)
+const interpSigmaMultInf = ref(true)
+const interpMaxRadiusInf = ref(false)
 const gpuEnabled = ref(true)
 const renderTime = ref(0)
 const maxDataPoints = ref(10000)
@@ -343,7 +345,8 @@ function rebuildAll() {
     data: activeData.map(p => ({ lng: p.longitude, lat: p.latitude, value: p.subsidence })),
     colorFn: (v) => { const m = getSubsidenceColor(v).match(/\d+/g); return m ? m.map(Number) : [0,0,255] },
     algorithm: interpAlgorithm.value, baseSigma: interpSigma.value,
-    sigmaMultiplier: interpSigmaMult.value, maxRadius: interpMaxRadius.value,
+    sigmaMultiplier: interpSigmaMultInf.value ? Infinity : interpSigmaMult.value,
+    maxRadius: interpMaxRadiusInf.value ? Infinity : interpMaxRadius.value,
     opacity: interpOpacity.value, gridStep: interpGridStep.value,
     idwPower: interpIdwPower.value, idwEpsilon: interpIdwEps.value,
     rbfType: interpRbfType.value, rbfSmooth: interpRbfSmooth.value,
@@ -401,7 +404,7 @@ function rebuildAll() {
       </label>
       <div v-if="showDebug" class="debug-row">
         <span>点数: {{ debugCount }}</span>
-        <input type="range" v-model.number="debugCount" min="5" max="200" @change="generateDebugData" style="width:80px">
+        <input type="range" v-model.number="debugCount" min="1" max="200" @change="generateDebugData" style="width:80px">
       </div>
     </div>
 
@@ -422,12 +425,18 @@ function rebuildAll() {
         <input type="range" v-model.number="interpSigma" min="5" max="80" @change="rebuildInterp">
       </div>
       <div class="ctrl-row">
-        <label>最大搜索核半径倍率: <span>{{ interpSigmaMult }}</span></label>
-        <input type="range" v-model.number="interpSigmaMult" min="1" max="100" step="1" @change="rebuildInterp">
+        <label>最大搜索核半径倍率: <span>{{ interpSigmaMultInf ? '∞' : interpSigmaMult }}</span></label>
+        <div style="display:flex;align-items:center;gap:4px">
+          <input type="range" v-model.number="interpSigmaMult" min="1" max="100" step="1" :disabled="interpSigmaMultInf" @change="rebuildInterp" style="flex:1">
+          <label style="white-space:nowrap;font-size:10px;cursor:pointer;user-select:none"><input type="checkbox" v-model="interpSigmaMultInf" @change="rebuildInterp" style="accent-color:#1677ff;vertical-align:middle"> ∞</label>
+        </div>
       </div>
       <div class="ctrl-row">
-        <label>最大搜索半径上限: <span>{{ interpMaxRadius }}</span></label>
-        <input type="range" v-model.number="interpMaxRadius" min="100" max="50000" step="500" @change="rebuildInterp">
+        <label>最大搜索半径上限: <span>{{ interpMaxRadiusInf ? '∞' : interpMaxRadius }}</span></label>
+        <div style="display:flex;align-items:center;gap:4px">
+          <input type="range" v-model.number="interpMaxRadius" min="100" max="50000" step="500" :disabled="interpMaxRadiusInf" @change="rebuildInterp" style="flex:1">
+          <label style="white-space:nowrap;font-size:10px;cursor:pointer;user-select:none"><input type="checkbox" v-model="interpMaxRadiusInf" @change="rebuildInterp" style="accent-color:#1677ff;vertical-align:middle"> ∞</label>
+        </div>
       </div>
       <div class="ctrl-row">
         <label>透明度: <span>{{ interpOpacity }}</span></label>
@@ -465,7 +474,7 @@ function rebuildAll() {
       </div>
       <div v-if="interpBlurEnabled" class="ctrl-row">
         <label>模糊半径: <span>{{ interpBlurRadius }}</span>px</label>
-        <input type="range" v-model.number="interpBlurRadius" min="1" max="20" step="0.5" @change="rebuildAll">
+        <input type="range" v-model.number="interpBlurRadius" min="0.5" max="20" step="0.5" @change="rebuildAll">
       </div>
       <div v-if="interpAlgorithm === 'idw'" class="ctrl-row">
         <label>幂: <span>{{ interpIdwPower }}</span></label>

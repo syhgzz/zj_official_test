@@ -203,9 +203,10 @@ self.onmessage = function (e) {
       } catch (e) { /* CPU fallback */ }
     }
 
-    const binSize = Math.ceil(maxJitterR)
+    const isInfR = !isFinite(maxJitterR)
+    const binSize = isInfR ? Math.max(w, h) : Math.ceil(maxJitterR)
     const { bins, bCols, bRows } = buildBins(pixelPoints, w, h, binSize)
-    const bRange = Math.ceil(maxJitterR / binSize)
+    const bRange = isInfR ? 1 : Math.ceil(maxJitterR / binSize)
 
       for (let y = 0; y < h; y += gridStep) {
       for (let x = 0; x < w; x += gridStep) {
