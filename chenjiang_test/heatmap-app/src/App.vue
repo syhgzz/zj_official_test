@@ -11,19 +11,32 @@ const showHeatmap = ref(false)
 const showScatter = ref(true)
 const showInterp = ref(true)
 const interpSigma = ref(25)
-const interpSigmaMult = ref(3)
-const interpMaxRadius = ref(2000)
+const interpSigmaMult = ref(10)
+const interpMaxRadius = ref(20000)
 const interpOpacity = ref(0.6)
 const interpGridStep = ref(4)
+const interpAlgorithm = ref('idw')
+const interpIdwPower = ref(2)
+const interpIdwEps = ref(0.1)
+const interpRbfType = ref('thinPlate')
+const interpRbfSmooth = ref(0)
+const interpKrModel = ref('exponential')
+const interpKrNugget = ref(0)
+const interpKrRange = ref(200)
+const interpKrSill = ref(1)
 const currentZoom = ref(0)
+const showDebug = ref(false)
+const debugCount = ref(30)
 
 const histCanvas = ref(null)
 
 let map = null
 let heatmap = null
-let massMarks = null
+let massMarks = []
 let interpOverlay = null
 let pointsData = []
+let realPointsData = []
+let debugMarkers = []
 
 const dataUrlMap = import.meta.glob('./data/*.json', { query: '?url', eager: true, import: 'default' })
 const DATA_FILES = Object.values(dataUrlMap)
@@ -121,37 +134,12 @@ onMounted(async () => {
     })
     currentZoom.value = map.getZoom()
 
-    // 9. 创建散点图层（CircleMarker，每个点独立颜色）
-    massMarks = points.map(p => {
-      const marker = new AMap.CircleMarker({
-        center: [p.longitude, p.latitude],
-        radius: 2,
-        fillColor: getSubsidenceColor(p.subsidence),
-        fillOpacity: 0.8,
-        strokeColor: 'rgba(255,255,255,0.3)',
-        strokeWeight: 1,
-        zIndex: 20
-      })
-      marker.setMap(map)
-      marker.show()
-      return marker
-    })
-
-    // 10. 创建高斯核插值图层
+    // 9. 初始化数据并构建全部图层
     pointsData = points
-    interpOverlay = createInterpolationOverlay({
-      map,
-      data: points.map(p => ({ lng: p.longitude, lat: p.latitude, value: p.subsidence })),
-      colorFn: (v) => { const m = getSubsidenceColor(v).match(/\d+/g); return m ? m.map(Number) : [0,0,255] },
-      baseSigma: interpSigma.value,
-      sigmaMultiplier: interpSigmaMult.value,
-      maxRadius: interpMaxRadius.value,
-      opacity: interpOpacity.value,
-      gridStep: interpGridStep.value
-    })
-    interpOverlay.show()
+    realPointsData = points
+    rebuildAll()
 
-    // 11. 绘制分布直方图
+    // 10. 绘制分布直方图
     setTimeout(() => {
       const c = histCanvas.value
       if (!c) return
@@ -189,7 +177,8 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   if (heatmap) { heatmap.setMap(null); heatmap = null }
-  if (massMarks) { massMarks.forEach(m => m.setMap(null)); massMarks = null }
+  if (massMarks) { massMarks.forEach(m => m.setMap(null)); massMarks = [] }
+  clearDebugMarkers()
   if (interpOverlay) { interpOverlay.destroy(); interpOverlay = null }
   if (map) { map.destroy(); map = null }
 })
@@ -201,7 +190,9 @@ function toggleHeatmap() {
 
 function toggleScatter() {
   showScatter.value = !showScatter.value
-  if (massMarks) {
+  if (showDebug.value) {
+    debugMarkers.forEach(m => showScatter.value ? m.show() : m.hide())
+  } else {
     massMarks.forEach(m => showScatter.value ? m.show() : m.hide())
   }
 }
@@ -212,16 +203,89 @@ function toggleInterp() {
 }
 
 function rebuildInterp() {
+  rebuildAll()
+}
+
+function toggleDebug() {
+  showDebug.value = !showDebug.value
+  if (showDebug.value) {
+    realPointsData = pointsData
+    generateDebugData()
+  } else {
+    pointsData = realPointsData
+    realPointsData = []
+    clearDebugMarkers()
+    rebuildAll()
+  }
+}
+
+function generateDebugData() {
+  clearDebugMarkers()
+  const bounds = map.getBounds()
+  const sw = bounds.getSouthWest(), ne = bounds.getNorthEast()
+  pointsData = []
+  for (let i = 0; i < debugCount.value; i++) {
+    const lng = sw.lng + Math.random() * (ne.lng - sw.lng)
+    const lat = sw.lat + Math.random() * (ne.lat - sw.lat)
+    const subsidence = (Math.random() - 0.5) * 60
+    pointsData.push({ longitude: lng, latitude: lat, subsidence })
+  }
+  rebuildAll()
+}
+
+function clearDebugMarkers() {
+  debugMarkers.forEach(m => m.setMap(null))
+  debugMarkers = []
+}
+
+function rebuildAll() {
+  massMarks.forEach(m => m.setMap(null))
+  massMarks = []
   if (interpOverlay) { interpOverlay.destroy(); interpOverlay = null }
+  clearDebugMarkers()
+  pointCount.value = pointsData.length
+
+  if (showDebug.value) {
+    const color = (v) => getSubsidenceColor(v)
+    debugMarkers = pointsData.map(p => {
+      const el = document.createElement('div')
+      el.style.cssText = `width:12px;height:12px;border-radius:50%;background:${color(p.subsidence)};border:2px solid #fff;cursor:grab`
+      const m = new AMap.Marker({
+        position: [p.longitude, p.latitude], content: el,
+        draggable: true, zIndex: 25, offset: new AMap.Pixel(-6, -6)
+      })
+      m.on('dragend', (e) => {
+        const pos = e.target.getPosition()
+        p.longitude = pos.lng; p.latitude = pos.lat
+        rebuildAll()
+      })
+      if (showScatter.value) m.setMap(map); else { m.setMap(map); m.hide() }
+      return m
+    })
+  } else {
+    massMarks = pointsData.map(p => {
+      const m = new AMap.CircleMarker({
+        center: [p.longitude, p.latitude], radius: 2,
+        fillColor: getSubsidenceColor(p.subsidence), fillOpacity: 0.8,
+        strokeColor: 'rgba(255,255,255,0.3)', strokeWeight: 1, zIndex: 20
+      })
+      m.setMap(map)
+      if (!showScatter.value) m.hide()
+      return m
+    })
+  }
+
   interpOverlay = createInterpolationOverlay({
     map,
     data: pointsData.map(p => ({ lng: p.longitude, lat: p.latitude, value: p.subsidence })),
     colorFn: (v) => { const m = getSubsidenceColor(v).match(/\d+/g); return m ? m.map(Number) : [0,0,255] },
-    baseSigma: interpSigma.value,
-    sigmaMultiplier: interpSigmaMult.value,
-    maxRadius: interpMaxRadius.value,
-    opacity: interpOpacity.value,
-    gridStep: interpGridStep.value
+    algorithm: interpAlgorithm.value, baseSigma: interpSigma.value,
+    sigmaMultiplier: interpSigmaMult.value, maxRadius: interpMaxRadius.value,
+    opacity: interpOpacity.value, gridStep: interpGridStep.value,
+    idwPower: interpIdwPower.value, idwEpsilon: interpIdwEps.value,
+    rbfType: interpRbfType.value, rbfSmooth: interpRbfSmooth.value,
+    krigingModel: interpKrModel.value, krigingNugget: interpKrNugget.value,
+    krigingRange: interpKrRange.value, krigingSill: interpKrSill.value
   })
   if (showInterp.value) interpOverlay.show()
 }
@@ -260,22 +324,40 @@ function rebuildInterp() {
         <span class="check-box">{{ showInterp ? '☑' : '☐' }}</span>
         插值图
       </label>
+      <div style="border-top:1px solid #ddd;margin:2px 0"></div>
+      <label class="mode-item" @click="toggleDebug">
+        <span class="check-box">{{ showDebug ? '☑' : '☐' }}</span>
+        调试模式
+      </label>
+      <div v-if="showDebug" class="debug-row">
+        <span>点数: {{ debugCount }}</span>
+        <input type="range" v-model.number="debugCount" min="5" max="200" @change="generateDebugData" style="width:80px">
+      </div>
     </div>
 
     <!-- 插值参数控制 -->
     <div v-if="!loading && !errorMsg" class="control-panel">
       <div class="ctrl-title">插值参数</div>
       <div class="ctrl-row">
+        <label>算法:</label>
+        <select v-model="interpAlgorithm" @change="rebuildInterp" style="width:100%">
+          <option value="gaussian">Gaussian 高斯核</option>
+          <option value="idw">IDW 反距离加权</option>
+          <option value="rbf">RBF 径向基函数</option>
+          <option value="kriging">Kriging 克里金</option>
+        </select>
+      </div>
+      <div class="ctrl-row">
         <label>σ: <span>{{ interpSigma }}</span></label>
         <input type="range" v-model.number="interpSigma" min="5" max="80" @change="rebuildInterp">
       </div>
       <div class="ctrl-row">
         <label>最大搜索核半径倍率: <span>{{ interpSigmaMult }}</span></label>
-        <input type="range" v-model.number="interpSigmaMult" min="1" max="6" step="0.5" @change="rebuildInterp">
+        <input type="range" v-model.number="interpSigmaMult" min="1" max="100" step="1" @change="rebuildInterp">
       </div>
       <div class="ctrl-row">
         <label>最大搜索半径上限: <span>{{ interpMaxRadius }}</span></label>
-        <input type="range" v-model.number="interpMaxRadius" min="100" max="5000" step="100" @change="rebuildInterp">
+        <input type="range" v-model.number="interpMaxRadius" min="100" max="50000" step="500" @change="rebuildInterp">
       </div>
       <div class="ctrl-row">
         <label>透明度: <span>{{ interpOpacity }}</span></label>
@@ -284,6 +366,46 @@ function rebuildInterp() {
       <div class="ctrl-row">
         <label>采样步长: <span>{{ interpGridStep }}</span>px</label>
         <input type="range" v-model.number="interpGridStep" min="2" max="8" step="1" @change="rebuildInterp">
+      </div>
+      <div v-if="interpAlgorithm === 'idw'" class="ctrl-row">
+        <label>幂: <span>{{ interpIdwPower }}</span></label>
+        <input type="range" v-model.number="interpIdwPower" min="1" max="6" step="0.5" @change="rebuildInterp">
+      </div>
+      <div v-if="interpAlgorithm === 'idw'" class="ctrl-row">
+        <label>ε: <span>{{ interpIdwEps }}</span></label>
+        <input type="range" v-model.number="interpIdwEps" min="0.01" max="2" step="0.01" @change="rebuildInterp">
+      </div>
+      <div v-if="interpAlgorithm === 'rbf'" class="ctrl-row">
+        <label>核:</label>
+        <select v-model="interpRbfType" @change="rebuildInterp" style="width:100%">
+          <option value="thinPlate">Thin Plate Spline</option>
+          <option value="multiquadric">Multiquadric</option>
+          <option value="gaussian">Gaussian RBF</option>
+        </select>
+      </div>
+      <div v-if="interpAlgorithm === 'rbf'" class="ctrl-row">
+        <label>平滑: <span>{{ interpRbfSmooth }}</span></label>
+        <input type="range" v-model.number="interpRbfSmooth" min="0" max="10" step="0.5" @change="rebuildInterp">
+      </div>
+      <div v-if="interpAlgorithm === 'kriging'" class="ctrl-row">
+        <label>模型:</label>
+        <select v-model="interpKrModel" @change="rebuildInterp" style="width:100%">
+          <option value="exponential">Exponential 指数</option>
+          <option value="spherical">Spherical 球状</option>
+          <option value="gaussian">Gaussian 高斯</option>
+        </select>
+      </div>
+      <div v-if="interpAlgorithm === 'kriging'" class="ctrl-row">
+        <label>块金: <span>{{ interpKrNugget }}</span></label>
+        <input type="range" v-model.number="interpKrNugget" min="0" max="5" step="0.1" @change="rebuildInterp">
+      </div>
+      <div v-if="interpAlgorithm === 'kriging'" class="ctrl-row">
+        <label>变程: <span>{{ interpKrRange }}</span></label>
+        <input type="range" v-model.number="interpKrRange" min="50" max="800" step="50" @change="rebuildInterp">
+      </div>
+      <div v-if="interpAlgorithm === 'kriging'" class="ctrl-row">
+        <label>基台: <span>{{ interpKrSill }}</span></label>
+        <input type="range" v-model.number="interpKrSill" min="1" max="50" step="1" @change="rebuildInterp">
       </div>
     </div>
 
@@ -437,6 +559,14 @@ function rebuildInterp() {
   padding: 2px 0;
 }
 .mode-item:hover { color: #1677ff; }
+.debug-row {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; color: #555; padding-left: 26px;
+}
+.debug-row input {
+  border: 1px solid #ccc; border-radius: 4px;
+  padding: 1px 4px; text-align: center;
+}
 .check-box {
   font-size: 16px;
   width: 20px;
@@ -445,7 +575,7 @@ function rebuildInterp() {
 
 /* ---- 插值参数控制 ---- */
 .control-panel {
-  position: absolute; top: 120px; left: 20px;
+  position: absolute; top: 320px; left: 20px;
   background: rgba(255,255,255,0.95); backdrop-filter: blur(6px);
   padding: 8px 12px; border-radius: 8px;
   box-shadow: 0 2px 12px rgba(0,0,0,0.15); z-index: 500;
