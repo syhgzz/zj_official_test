@@ -28,6 +28,28 @@ maxLat_file = maxLat_global
 point_set = set()
 issue_list = []
 
+def run_all_tests():
+    """运行沉降态势感知模块的所有测试"""
+    client = APIClient(config.host, config.app_key, config.app_secret, config.timeout)
+
+    # test_get_overview(client) # 3.4.1
+    test_get_periods(client) # 3.4.2
+    # test_get_period_summary(client) # 3.4.3
+    for issue in issue_list:
+        for pg in range(1, 100):
+            test_get_regional_statistics(client, issue=issue, pageNum=pg) # 3.4.5
+        test_get_grid_rate(client, issue=issue) # 3.4.6
+        test_get_grid_gradient(client, issue=issue) # 3.4.7
+    test_get_warning_issue(client) # 3.4.8
+    test_get_statistics_issue(client) # 3.4.9
+    test_get_max_subsidence_timeseries(client) # 3.4.10
+    test_get_top_gradient(client) # 3.4.11
+    # test_get_risk(client) # 3.4.12
+    
+    point_set.add('1305')  # 添加一个默认点位，确保有数据可测
+    for pc in point_set:
+        test_get_point_history(client, pointcode=pc)
+
 
 def test_get_overview(client: APIClient):
     """测试获取模块概览"""
@@ -521,27 +543,7 @@ def test_get_risk(client: APIClient):
     return response
 
 
-def run_all_tests():
-    """运行沉降态势感知模块的所有测试"""
-    client = APIClient(config.host, config.app_key, config.app_secret, config.timeout)
 
-    # test_get_overview(client) # 3.4.1
-    test_get_periods(client) # 3.4.2
-    # test_get_period_summary(client) # 3.4.3
-    for issue in issue_list:
-        for pg in range(1, 11):
-            test_get_regional_statistics(client, issue=issue, pageNum=pg) # 3.4.5
-        test_get_grid_rate(client, issue=issue) # 3.4.6
-        test_get_grid_gradient(client, issue=issue) # 3.4.7
-    test_get_warning_issue(client) # 3.4.8
-    test_get_statistics_issue(client) # 3.4.9
-    test_get_max_subsidence_timeseries(client) # 3.4.10
-    test_get_top_gradient(client) # 3.4.11
-    # test_get_risk(client) # 3.4.12
-    
-    point_set.add('1305')  # 添加一个默认点位，确保有数据可测
-    for pc in point_set:
-        test_get_point_history(client, pointcode=pc)
 
 
 
