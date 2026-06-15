@@ -61,6 +61,7 @@ export function createInterpolationOverlay(options) {
 
   function handleWorkerMessage(e) {
     workerPending = false
+    if (e.data._seq !== undefined && e.data._seq !== renderSeq) return
     if (e.data.type === 'done') {
       const tNow = performance.now()
       const url = URL.createObjectURL(e.data.blob)
@@ -262,10 +263,10 @@ export function createInterpolationOverlay(options) {
       const { lut, vMin, vMax } = buildColorLUT()
       const tLut1 = performance.now()
       const sw = lastBounds.getSouthWest(), ne = lastBounds.getNorthEast()
-      worker.postMessage({
+      const seq = ++renderSeq
+      const msg = {
         type: 'render',
-        // raw lng/lat/value for GPU path (data stays on GPU)
-        rawData: data,
+        _seq: seq,
         bounds: { swLng: sw.lng, swLat: sw.lat, neLng: ne.lng, neLat: ne.lat },
         // pixel coords for CPU fallback
         pixelPoints, w, h, sigma, baseR, maxJitterR,
@@ -280,7 +281,9 @@ export function createInterpolationOverlay(options) {
           main_buildLUT: tLut1 - tLut0,
           main_postMessage: performance.now() - tLut1
         }
-      })
+      }
+      msg.rawData = data
+      worker.postMessage(msg)
       return
     }
 

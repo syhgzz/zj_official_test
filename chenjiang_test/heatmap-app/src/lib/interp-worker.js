@@ -182,7 +182,7 @@ self.onmessage = function (e) {
     if (!pixelPoints.length && !msg.rawData?.length) {
       offscreen.width = w; offscreen.height = h
       offscreen.convertToBlob({ type: 'image/png' }).then(blob => {
-        self.postMessage({ type: 'done', blob })
+        self.postMessage({ type: 'done', blob, _seq: msg._seq })
       })
       return
     }
@@ -234,6 +234,7 @@ self.onmessage = function (e) {
             const tPng1 = performance.now()
             self.postMessage({
               type: 'done', blob,
+              _seq: msg._seq,
               timings: {
                 ...gpuTimings,
                 worker_blur:  tBlur1 - tBlur0,
@@ -294,7 +295,7 @@ self.onmessage = function (e) {
     }
 
     outputCanvas.convertToBlob({ type: 'image/png' }).then(blob => {
-      self.postMessage({ type: 'done', blob })
+      self.postMessage({ type: 'done', blob, _seq: msg._seq })
     })
   }
 }
