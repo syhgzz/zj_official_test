@@ -171,43 +171,65 @@ self.onmessage = function (e) {
       colorLut, valueMin, valueMax
     } = msg
 
-    if (!offscreen || offscreen.width !== w || offscreen.height !== h) {
+    if (!ctx) {
       offscreen = new OffscreenCanvas(w, h)
       ctx = offscreen.getContext('2d')
       blurCanvas = new OffscreenCanvas(w, h)
       blurCtx = blurCanvas.getContext('2d')
     }
 
-    ctx.clearRect(0, 0, w, h)
-
     if (!pixelPoints.length) {
+      offscreen.width = w; offscreen.height = h
       offscreen.convertToBlob({ type: 'image/png' }).then(blob => {
         self.postMessage({ type: 'done', blob })
       })
       return
     }
 
-    // GPU splatting (no jitter, gpu enabled, idw / gaussian)
+    // GPU splatting — creates internal WebGL canvas, no readPixels needed
     if (gpuEnabled && (algorithm === 'idw' || algorithm === 'gaussian') && !radiusJitter && splatRender) {
+      const tGpu0 = performance.now()
       try {
-        const pixels = splatRender(pixelPoints, { w, h, radius: baseR, idwPower, idwEpsilon, sigma, algorithm, opacity, colorLut, valueMin, valueMax, gridStep })
-        if (pixels) {
-          const imgData = ctx.createImageData(w, h)
-          imgData.data.set(pixels)
-          ctx.putImageData(imgData, 0, 0)
+        const result = splatRender(pixelPoints, { w, h, radius: baseR, idwPower, idwEpsilon, sigma, algorithm, opacity, colorLut, valueMin, valueMax, gridStep })
+        const tGpu1 = performance.now()
+        if (result && result.ok) {
+          const gpuCanvas = result.canvas
+          const gpuTimings = result.timings || {}
+          gpuTimings.splatRender_wall = tGpu1 - tGpu0
+
+          const tBlur0 = performance.now()
+          let finalCanvas = gpuCanvas
           if (blurEnabled && blurRadius > 0) {
-            blurCanvas.width = w; blurCanvas.height = h
+            const bw = gpuCanvas.width, bh = gpuCanvas.height
+            blurCanvas.width = bw; blurCanvas.height = bh
             blurCtx.filter = `blur(${blurRadius}px)`
-            blurCtx.drawImage(offscreen, 0, 0)
+            blurCtx.drawImage(gpuCanvas, 0, 0)
             blurCtx.filter = 'none'
+            finalCanvas = blurCanvas
           }
-          (blurEnabled && blurRadius > 0 ? blurCanvas : offscreen).convertToBlob({ type: 'image/png' }).then(blob => {
-            self.postMessage({ type: 'done', blob })
+          const tBlur1 = performance.now()
+
+          const tPng0 = performance.now()
+          finalCanvas.convertToBlob({ type: 'image/png' }).then(blob => {
+            const tPng1 = performance.now()
+            self.postMessage({
+              type: 'done', blob,
+              timings: {
+                ...gpuTimings,
+                worker_blur:  tBlur1 - tBlur0,
+                worker_png:   tPng1 - tPng0,
+                worker_total: tPng1 - tGpu0
+              }
+            })
           })
           return
         }
       } catch (e) { /* CPU fallback */ }
     }
+
+    // CPU path — ensure offscreen is at full viewport resolution
+    offscreen.width = w; offscreen.height = h
+    ctx.clearRect(0, 0, w, h)
 
     const isInfR = !isFinite(maxJitterR)
     const binSize = isInfR ? Math.max(w, h) : Math.ceil(maxJitterR)

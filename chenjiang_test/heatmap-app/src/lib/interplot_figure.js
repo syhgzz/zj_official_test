@@ -35,7 +35,14 @@ export function createInterpolationOverlay(options) {
     worker.onerror = () => { useWorker = false; worker = null }
   } catch (e) { useWorker = false }
 
+  // --- Color LUT cache (rebuild only when data array identity changes) ---
+  let _cachedLUT = null, _cachedData = null
+
   function buildColorLUT() {
+    // Return cached LUT if data hasn't changed (reference equality is sufficient
+    // since App.vue creates a new array on every rebuildAll call)
+    if (_cachedData === data && _cachedLUT) return _cachedLUT
+
     const lut = new Uint8Array(256 * 4)
     let vMin = Infinity, vMax = -Infinity
     for (const d of data) { if (d.value < vMin) vMin = d.value; if (d.value > vMax) vMax = d.value }
@@ -47,18 +54,30 @@ export function createInterpolationOverlay(options) {
       lut[i * 4] = c[0]; lut[i * 4 + 1] = c[1]; lut[i * 4 + 2] = c[2]
       lut[i * 4 + 3] = c.length > 3 ? c[3] : 255
     }
-    return { lut, vMin, vMax }
+    _cachedLUT = { lut, vMin, vMax }
+    _cachedData = data
+    return _cachedLUT
   }
 
   function handleWorkerMessage(e) {
     workerPending = false
     if (e.data.type === 'done') {
+      const tNow = performance.now()
       const url = URL.createObjectURL(e.data.blob)
       if (imageLayer) { imageLayer.setMap(null); URL.revokeObjectURL(imageLayer._blobUrl) }
       imageLayer = new AMap.ImageLayer({ url, bounds: lastBounds, opacity, zooms: [2, 20] })
       imageLayer._blobUrl = url
       if (visible) imageLayer.setMap(map)
-      if (onRender) onRender(performance.now() - lastT0)
+      const tAfterLayer = performance.now()
+      const workerTimings = e.data.timings || {}
+      const mainTimings = e.data._mainTimings || {}
+      const allTimings = {
+        total: tNow - lastT0,
+        ...mainTimings,
+        ...workerTimings,
+        main_imageLayer: tAfterLayer - tNow
+      }
+      if (onRender) onRender(allTimings)
       if (dirty) render()
     }
   }
@@ -222,7 +241,7 @@ export function createInterpolationOverlay(options) {
     if (!visible || !dirty || !data.length) return
     if (workerPending) return
     dirty = false
-    lastT0 = performance.now()
+    const tStart = performance.now()
     const zoom = map.getZoom(), sigma = getSigma(zoom)
     const baseR = getRadius(sigma)
     const maxJitterR = radiusJitter && mcSamples >= 1 ? baseR * 1.5 : baseR
@@ -230,12 +249,17 @@ export function createInterpolationOverlay(options) {
     if (!w || !h) return
     lastBounds = map.getBounds()
 
+    const tCollect0 = performance.now()
     const pixelPoints = collectPixelPoints(maxJitterR, w, h)
+    const tCollect1 = performance.now()
+    lastT0 = tStart
     if (!pixelPoints.length) return
 
     if (worker) {
       workerPending = true
+      const tLut0 = performance.now()
       const { lut, vMin, vMax } = buildColorLUT()
+      const tLut1 = performance.now()
       worker.postMessage({
         type: 'render',
         pixelPoints, w, h, sigma, baseR, maxJitterR,
@@ -244,7 +268,12 @@ export function createInterpolationOverlay(options) {
         krigingRange, krigingSill, radiusJitter, mcSamples,
         mcJitterFactor, blurEnabled, blurRadius,
         gpuEnabled, maxNearbyPoints,
-        colorLut: lut, valueMin: vMin, valueMax: vMax
+        colorLut: lut, valueMin: vMin, valueMax: vMax,
+        _mainTimings: {
+          main_collectPoints: tCollect1 - tCollect0,
+          main_buildLUT: tLut1 - tLut0,
+          main_postMessage: performance.now() - tLut1
+        }
       })
       return
     }

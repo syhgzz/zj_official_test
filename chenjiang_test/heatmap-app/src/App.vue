@@ -361,7 +361,23 @@ function rebuildAll() {
     blurRadius: interpBlurRadius.value,
     gpuEnabled: gpuEnabled.value,
     maxNearbyPoints: interpMaxNearby.value,
-    onRender: (ms) => { renderTime.value = ms }
+    onRender: (timings) => {
+      renderTime.value = timings.total || 0
+      console.log('⏱ 渲染耗时 (ms):',
+        'collectPoints:', (timings.main_collectPoints||0).toFixed(1),
+        'buildLUT:', (timings.main_buildLUT||0).toFixed(1),
+        'postMsg:', (timings.main_postMessage||0).toFixed(1),
+        '| GPU_setup:', (timings.gpu_setup||0).toFixed(1),
+        'upload:', (timings.gpu_upload||0).toFixed(1),
+        'pass1:', (timings.gpu_pass1||0).toFixed(1),
+        'pass2:', (timings.gpu_pass2||0).toFixed(1),
+        'finish:', (timings.gpu_finish||0).toFixed(1),
+        '| blur:', (timings.worker_blur||0).toFixed(1),
+        'png:', (timings.worker_png||0).toFixed(1),
+        '| imgLayer:', (timings.main_imageLayer||0).toFixed(1),
+        '| TOTAL:', (timings.total||0).toFixed(1)
+      )
+    }
   })
   if (showInterp.value) interpOverlay.show()
   updateViewportInfo()
