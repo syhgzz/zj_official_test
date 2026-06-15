@@ -1,6 +1,7 @@
 export function createInterpolationOverlay(options) {
   const {
     map, data, colorFn,
+    binaryRawData = null,
     algorithm = 'gaussian', baseSigma = 25, sigmaMultiplier = Infinity, maxRadius = 2000,
     debounceMs = 200, initDelayMs = 600, opacity = 0.7, gridStep = 2, baseZoom = 11,
     maxNearbyPoints = 0,
@@ -35,17 +36,21 @@ export function createInterpolationOverlay(options) {
     worker.onerror = () => { useWorker = false; worker = null }
   } catch (e) { useWorker = false }
 
-  // --- Color LUT cache (rebuild only when data array identity changes) ---
-  let _cachedLUT = null, _cachedData = null
+  // --- Color LUT cache (rebuild only when data/binaryRawData identity changes) ---
+  let _cachedLUT = null, _cachedData = null, _cachedBinaryRawData = null
 
   function buildColorLUT() {
-    // Return cached LUT if data hasn't changed (reference equality is sufficient
-    // since App.vue creates a new array on every rebuildAll call)
-    if (_cachedData === data && _cachedLUT) return _cachedLUT
+    if (_cachedData === data && _cachedBinaryRawData === binaryRawData && _cachedLUT) return _cachedLUT
 
     const lut = new Uint8Array(256 * 4)
     let vMin = Infinity, vMax = -Infinity
-    for (const d of data) { if (d.value < vMin) vMin = d.value; if (d.value > vMax) vMax = d.value }
+    // Use binaryRawData.val for value range when available (remote data paths)
+    const brd = binaryRawData
+    if (brd && brd.val && brd.val.length > 0) {
+      for (let i = 0; i < brd.val.length; i++) { const v = brd.val[i]; if (v < vMin) vMin = v; if (v > vMax) vMax = v }
+    } else {
+      for (const d of data) { if (d.value < vMin) vMin = d.value; if (d.value > vMax) vMax = d.value }
+    }
     if (!isFinite(vMin)) { vMin = -35; vMax = 25 }
     const range = vMax - vMin || 1
     for (let i = 0; i < 256; i++) {
@@ -56,6 +61,7 @@ export function createInterpolationOverlay(options) {
     }
     _cachedLUT = { lut, vMin, vMax }
     _cachedData = data
+    _cachedBinaryRawData = binaryRawData
     return _cachedLUT
   }
 
@@ -238,8 +244,17 @@ export function createInterpolationOverlay(options) {
     return null
   }
 
+  function hasData() {
+    return data.length > 0 || (binaryRawData && binaryRawData.lng && binaryRawData.lng.length > 0)
+  }
+
+  function getDataCount() {
+    if (binaryRawData && binaryRawData.lng) return binaryRawData.lng.length
+    return data.length
+  }
+
   function render() {
-    if (!visible || !dirty || !data.length) return
+    if (!visible || !dirty || !hasData()) return
     if (workerPending) return
     dirty = false
     const tStart = performance.now()
@@ -252,10 +267,12 @@ export function createInterpolationOverlay(options) {
 
     const tCollect0 = performance.now()
     const useGPU = worker && gpuEnabled && (algorithm === 'idw' || algorithm === 'gaussian') && !radiusJitter
+    // For GPU path, we send raw lng/lat/val to worker - no need for pixelPoints
+    // For CPU path, collect pixelPoints from data (binaryRawData case uses GPU)
     const pixelPoints = useGPU ? [] : collectPixelPoints(maxJitterR, w, h)
     const tCollect1 = performance.now()
     lastT0 = tStart
-    if (!pixelPoints.length && !data.length) return
+    if (!pixelPoints.length && !hasData()) return
 
     if (worker) {
       workerPending = true
@@ -282,19 +299,32 @@ export function createInterpolationOverlay(options) {
           main_postMessage: performance.now() - tLut1
         }
       }
-      const n = data.length
-      const rawLng = new Float32Array(n)
-      const rawLat = new Float32Array(n)
-      const rawVal = new Float32Array(n)
-      for (let i = 0; i < n; i++) {
-        rawLng[i] = data[i].lng
-        rawLat[i] = data[i].lat
-        rawVal[i] = data[i].value
+      // Use binaryRawData arrays when available (copy via slice since
+      // the originals may be re-used across renders and must not be detached)
+      const brd = binaryRawData
+      if (brd && brd.lng && brd.val) {
+        const copyLng = brd.lng.slice()
+        const copyLat = brd.lat.slice()
+        const copyVal = brd.val.slice()
+        msg.rawLng = copyLng
+        msg.rawLat = copyLat
+        msg.rawVal = copyVal
+        worker.postMessage(msg, [copyLng.buffer, copyLat.buffer, copyVal.buffer])
+      } else {
+        const n = data.length
+        const rawLng = new Float32Array(n)
+        const rawLat = new Float32Array(n)
+        const rawVal = new Float32Array(n)
+        for (let i = 0; i < n; i++) {
+          rawLng[i] = data[i].lng
+          rawLat[i] = data[i].lat
+          rawVal[i] = data[i].value
+        }
+        msg.rawLng = rawLng
+        msg.rawLat = rawLat
+        msg.rawVal = rawVal
+        worker.postMessage(msg, [rawLng.buffer, rawLat.buffer, rawVal.buffer])
       }
-      msg.rawLng = rawLng
-      msg.rawLat = rawLat
-      msg.rawVal = rawVal
-      worker.postMessage(msg, [rawLng.buffer, rawLat.buffer, rawVal.buffer])
       return
     }
 

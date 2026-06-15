@@ -1,0 +1,1 @@
+{"name":"server_app","private":true,"scripts":{"http":"node http_server.js","ws":"node ws_server.js"},"dependencies":{"protobufjs":"^7.0.0","ws":"^8.0.0"}}

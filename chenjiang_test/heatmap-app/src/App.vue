@@ -2,6 +2,7 @@
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import AMapLoader from '@amap/amap-jsapi-loader'
 import { createInterpolationOverlay } from './lib/interplot_figure.js'
+import protobuf from 'protobufjs'
 
 const mapContainer = ref(null)
 const loading = ref(true)
@@ -40,12 +41,20 @@ const maxDataPoints = ref(Infinity)
 const currentZoom = ref(0)
 const showDebug = ref(false)
 const debugCount = ref(30)
+const dataSource = ref('local') // 'local' | 'http' | 'websocket'
+const dataConstruction = ref('json') // 'json' | 'random'
+const randomCount = ref(10000)
+// Network measurement
+const netTime = ref(0)
+const netBytes = ref(0)
+const netMethod = ref('')
 const viewportW = ref(0)
 const viewportH = ref(0)
 const renderW = ref(0)
 const renderH = ref(0)
 
 const histCanvas = ref(null)
+const ctrlPanel = ref(null)
 
 let map = null
 let heatmap = null
@@ -61,6 +70,28 @@ const DATA_FILES = Object.values(dataUrlMap)
 const AMAP_KEY = '244262d7f08882349099fad8cd2ae0cc'
 const BASE_ZOOM = 11
 const BASE_RADIUS = 30
+
+function genRandom(n, bounds) {
+  const swLng = bounds ? bounds.swLng : 120
+  const swLat = bounds ? bounds.swLat : 30
+  const neLng = bounds ? bounds.neLng : 122
+  const neLat = bounds ? bounds.neLat : 32
+  const pts = new Array(n)
+  for (let i = 0; i < n; i++)
+    pts[i] = {
+      longitude: swLng + Math.random() * (neLng - swLng),
+      latitude: swLat + Math.random() * (neLat - swLat),
+      subsidence: (Math.random() - 0.5) * 60
+    }
+  return pts
+}
+
+function getMapBounds() {
+  if (!map) return null
+  const b = map.getBounds()
+  const sw = b.getSouthWest(), ne = b.getNorthEast()
+  return { swLng: sw.lng, swLat: sw.lat, neLng: ne.lng, neLat: ne.lat }
+}
 
 function zoomRadius(zoom) {
   const r = Math.round(BASE_RADIUS * Math.pow(2, zoom - BASE_ZOOM))
@@ -219,6 +250,24 @@ onMounted(async () => {
     }, 300)
 
     loading.value = false
+    // Enable draggable control panel
+    setTimeout(() => {
+      const el = ctrlPanel.value
+      if (!el) return
+      const title = el.querySelector('.ctrl-title')
+      let dragging = false, ox = 0, oy = 0
+      title.style.cursor = 'move'
+      title.addEventListener('mousedown', e => {
+        dragging = true; ox = e.clientX - el.offsetLeft; oy = e.clientY - el.offsetTop
+        e.preventDefault()
+      })
+      window.addEventListener('mousemove', e => {
+        if (!dragging) return
+        el.style.left = (e.clientX - ox) + 'px'
+        el.style.top = (e.clientY - oy) + 'px'
+      })
+      window.addEventListener('mouseup', () => { dragging = false })
+    }, 500)
   } catch (err) {
     errorMsg.value = err.message || '未知错误'
     loading.value = false
@@ -252,10 +301,16 @@ function toggleInterp() {
   if (interpOverlay) showInterp.value ? interpOverlay.show() : interpOverlay.hide()
 }
 
-function renderScatter() {
+// dataSrc: array of {longitude,latitude,subsidence} objects, or {lng:Float32Array,lat:Float32Array,val:Float32Array}
+function renderScatter(dataSrc) {
   if (!map) return
-  // 超过 50000 点跳过散点图（主线程瓶颈且视觉无意义）
-  if (pointsData.length > 50000) {
+  // Resolve data source
+  let ptArr, isRaw = false
+  if (dataSrc && dataSrc.lng && dataSrc.val) { isRaw = true; ptArr = dataSrc }
+  else if (Array.isArray(dataSrc)) ptArr = dataSrc
+  else ptArr = pointsData
+  const n = isRaw ? ptArr.lng.length : ptArr.length
+  if (n > 50000) {
     if (scatterLayer) scatterLayer.setMap(null)
     return
   }
@@ -269,20 +324,32 @@ function renderScatter() {
   }
   scatterCanvas.width = w; scatterCanvas.height = h
   scatterCtx.clearRect(0, 0, w, h)
-  const activeData = pointsData.slice(0, maxDataPoints.value)
-  for (const p of activeData) {
-    const pixel = map.lngLatToContainer([p.longitude, p.latitude])
-    if (pixel.x < 0 || pixel.x > w || pixel.y < 0 || pixel.y > h) continue
-    scatterCtx.fillStyle = getSubsidenceColor(p.subsidence)
-    scatterCtx.beginPath()
-    scatterCtx.arc(pixel.x, pixel.y, 2, 0, Math.PI * 2)
-    scatterCtx.fill()
+  if (isRaw) {
+    for (let i = 0; i < n; i++) {
+      const pixel = map.lngLatToContainer([ptArr.lng[i], ptArr.lat[i]])
+      if (pixel.x < 0 || pixel.x > w || pixel.y < 0 || pixel.y > h) continue
+      scatterCtx.fillStyle = getSubsidenceColor(ptArr.val[i])
+      scatterCtx.beginPath()
+      scatterCtx.arc(pixel.x, pixel.y, 2, 0, Math.PI * 2)
+      scatterCtx.fill()
+    }
+  } else {
+    const limit = Math.min(n, maxDataPoints.value)
+    for (let i = 0; i < limit; i++) {
+      const p = ptArr[i]
+      const pixel = map.lngLatToContainer([p.longitude, p.latitude])
+      if (pixel.x < 0 || pixel.x > w || pixel.y < 0 || pixel.y > h) continue
+      scatterCtx.fillStyle = getSubsidenceColor(p.subsidence)
+      scatterCtx.beginPath()
+      scatterCtx.arc(pixel.x, pixel.y, 2, 0, Math.PI * 2)
+      scatterCtx.fill()
+    }
   }
-  const bounds = map.getBounds()
+  const imgBounds = map.getBounds()
   scatterCanvas.toBlob(blob => {
     const url = URL.createObjectURL(blob)
     if (scatterLayer) { scatterLayer.setMap(null); URL.revokeObjectURL(scatterLayer._url) }
-    scatterLayer = new AMap.ImageLayer({ url, bounds, opacity: 1, zooms: [2, 20] })
+    scatterLayer = new AMap.ImageLayer({ url, bounds: imgBounds, opacity: 1, zooms: [2, 20] })
     scatterLayer._url = url
     if (showScatter.value) scatterLayer.setMap(map)
   }, 'image/png')
@@ -339,18 +406,33 @@ function rebuildAll() {
   massMarks = []
   if (interpOverlay) { interpOverlay.destroy(); interpOverlay = null }
   clearDebugMarkers()
-  const activeData = pointsData.slice(0, maxDataPoints.value)
-  pointCount.value = activeData.length
 
-  if (showDebug.value) {
-    renderScatter()
+  // Reset network measurements
+  netTime.value = 0; netBytes.value = 0; netMethod.value = ''
+
+  // Determine data based on source + construction
+  let activeData, mappedData
+  const isRemote = dataSource.value === 'http' || dataSource.value === 'websocket'
+
+  const mapBounds = getMapBounds()
+  if (dataConstruction.value === 'random') {
+    // Local random: generate in-browser within map viewport
+    activeData = genRandom(randomCount.value, mapBounds)
+    mappedData = activeData.map(p => ({ lng: p.longitude, lat: p.latitude, value: p.subsidence }))
+    pointCount.value = activeData.length
+    if (!showDebug.value) renderScatter(activeData)
   } else {
-    renderScatter()
+    // JSON: use locally loaded pointsData
+    activeData = pointsData.slice(0, maxDataPoints.value)
+    pointCount.value = activeData.length
+    if (!showDebug.value) renderScatter(activeData)
+    mappedData = activeData.map(p => ({ lng: p.longitude, lat: p.latitude, value: p.subsidence }))
   }
 
-  interpOverlay = createInterpolationOverlay({
+  const overlayOpts = {
     map,
-    data: activeData.map(p => ({ lng: p.longitude, lat: p.latitude, value: p.subsidence })),
+    data: isRemote ? [] : mappedData,
+    binaryRawData: null,
     colorFn: (v) => getSubsidenceArray(v),
     algorithm: interpAlgorithm.value, baseSigma: interpSigma.value,
     sigmaMultiplier: interpSigmaMultInf.value ? Infinity : interpSigmaMult.value,
@@ -385,9 +467,95 @@ function rebuildAll() {
         '| TOTAL:', (timings.total||0).toFixed(1)
       )
     }
-  })
-  if (showInterp.value) interpOverlay.show()
-  updateViewportInfo()
+  }
+
+  // ---- Path 1 & 2: LOCAL (json / random) ----
+  if (dataSource.value === 'local') {
+    const n = mappedData.length
+    const rawLng = new Float32Array(n)
+    const rawLat = new Float32Array(n)
+    const rawVal = new Float32Array(n)
+    for (let i = 0; i < n; i++) {
+      rawLng[i] = mappedData[i].lng; rawLat[i] = mappedData[i].lat; rawVal[i] = mappedData[i].value
+    }
+    overlayOpts.binaryRawData = { lng: rawLng, lat: rawLat, val: rawVal }
+    interpOverlay = createInterpolationOverlay(overlayOpts)
+    if (showInterp.value) interpOverlay.show()
+    updateViewportInfo()
+    return
+  }
+
+  // ---- Path 3 & 4: HTTP ----
+  if (dataSource.value === 'http') {
+    const source = dataConstruction.value
+    const count = randomCount.value
+    let url = source === 'json'
+      ? 'http://localhost:3456/?source=json'
+      : `http://localhost:3456/?source=random&count=${count}`
+    // Send viewport bounds for random mode so server generates in-viewport points
+    if (source === 'random' && mapBounds) {
+      url += `&swLng=${mapBounds.swLng}&swLat=${mapBounds.swLat}&neLng=${mapBounds.neLng}&neLat=${mapBounds.neLat}`
+    }
+    const t0 = performance.now()
+    fetch(url)
+      .then(r => r.arrayBuffer()).then(buf => {
+        const elapsed = performance.now() - t0
+        netTime.value = elapsed
+        netBytes.value = buf.byteLength
+        netMethod.value = 'HTTP (binary)'
+        console.log('🌐 HTTP ' + source + ':', elapsed.toFixed(1), 'ms', buf.byteLength, 'B')
+        const c = new Uint32Array(buf, 0, 1)[0]
+        pointCount.value = c
+        const brd = {
+          lng: new Float32Array(buf.slice(4, 4 + c * 4)),
+          lat: new Float32Array(buf.slice(4 + c * 4, 4 + c * 8)),
+          val: new Float32Array(buf.slice(4 + c * 8, 4 + c * 12))
+        }
+        overlayOpts.binaryRawData = brd
+        interpOverlay = createInterpolationOverlay(overlayOpts)
+        if (showInterp.value) interpOverlay.show()
+        updateViewportInfo()
+        // Render scatter from received raw data
+        if (!showDebug.value && c <= 50000) renderScatter(brd)
+      })
+    return
+  }
+
+  // ---- Path 5 & 6: WebSocket + ProtoBuf ----
+  if (dataSource.value === 'websocket') {
+    const source = dataConstruction.value
+    const count = randomCount.value
+    const t0 = performance.now()
+    const ws = new WebSocket('ws://localhost:3457')
+    ws.binaryType = 'arraybuffer'
+    const payload = { source, count }
+    if (source === 'random' && mapBounds) payload.bounds = mapBounds
+    ws.onopen = () => ws.send(JSON.stringify(payload))
+    ws.onmessage = async e => {
+      const elapsed = performance.now() - t0
+      netTime.value = elapsed
+      netBytes.value = e.data.byteLength
+      netMethod.value = 'WebSocket + ProtoBuf'
+      console.log('🔌 WS+ProtoBuf ' + source + ':', elapsed.toFixed(1), 'ms', e.data.byteLength, 'B')
+      protobuf.load('/points.proto').then(root => {
+        const d = root.lookupType('PointsResponse').decode(new Uint8Array(e.data))
+        pointCount.value = d.lng.length
+        const brd = {
+          lng: new Float32Array(d.lng),
+          lat: new Float32Array(d.lat),
+          val: new Float32Array(d.val)
+        }
+        overlayOpts.binaryRawData = brd
+        interpOverlay = createInterpolationOverlay(overlayOpts)
+        if (showInterp.value) interpOverlay.show()
+        updateViewportInfo()
+        // Render scatter from received raw data
+        if (!showDebug.value && d.lng.length <= 50000) renderScatter(brd)
+        ws.close()
+      })
+    }
+    return
+  }
 }
 
 function updateViewportInfo() {
@@ -444,10 +612,39 @@ function updateViewportInfo() {
         <input v-model.number="debugCount" min="1" max="99999999" style="width:100px;text-align:center;border:1px solid #ccc;border-radius:4px;padding:2px 4px">
         <button @click="generateDebugData" style="font-size:11px;padding:2px 8px;border:1px solid #1677ff;border-radius:4px;background:#1677ff;color:#fff;cursor:pointer">确定</button>
       </div>
+      <div style="border-top:1px solid #ddd;margin:2px 0"></div>
+      <div style="font-size:10px;color:#999;margin-bottom:2px">数据来源</div>
+      <label class="mode-item" @click="dataSource = 'local'; rebuildAll()">
+        <span class="check-box">{{ dataSource === 'local' ? '☑' : '☐' }}</span>
+        本地
+      </label>
+      <label class="mode-item" @click="dataSource = 'http'; rebuildAll()">
+        <span class="check-box">{{ dataSource === 'http' ? '☑' : '☐' }}</span>
+        HTTP接口
+      </label>
+      <label class="mode-item" @click="dataSource = 'websocket'; rebuildAll()">
+        <span class="check-box">{{ dataSource === 'websocket' ? '☑' : '☐' }}</span>
+        WebSocket+ProtoBuf
+      </label>
+      <div style="border-top:1px solid #ddd;margin:2px 0"></div>
+      <div style="font-size:10px;color:#999;margin-bottom:2px">数据构造</div>
+      <label class="mode-item" @click="dataConstruction = 'json'; rebuildAll()">
+        <span class="check-box">{{ dataConstruction === 'json' ? '☑' : '☐' }}</span>
+        读取JSON文件
+      </label>
+      <label class="mode-item" @click="dataConstruction = 'random'; rebuildAll()">
+        <span class="check-box">{{ dataConstruction === 'random' ? '☑' : '☐' }}</span>
+        随机生成
+      </label>
+      <div v-if="dataConstruction === 'random'" class="debug-row">
+        <span>点数: </span>
+        <input v-model.number="randomCount" min="100" max="99999999" style="width:100px;text-align:center;border:1px solid #ccc;border-radius:4px;padding:2px 4px">
+        <button @click="rebuildAll" style="font-size:11px;padding:2px 8px;border:1px solid #1677ff;border-radius:4px;background:#1677ff;color:#fff;cursor:pointer">确定</button>
+      </div>
     </div>
 
     <!-- 插值参数控制 -->
-    <div v-if="!loading && !errorMsg" class="control-panel">
+    <div v-if="!loading && !errorMsg" ref="ctrlPanel" class="control-panel">
       <div class="ctrl-title">插值参数</div>
       <div class="ctrl-row">
         <label>算法:</label>
@@ -570,6 +767,7 @@ function updateViewportInfo() {
       <p>渲染分辨率：{{ renderW }} × {{ renderH }} (gridStep={{ interpGridStep }})</p>
       <p>渲染耗时：{{ renderTime.toFixed(0) }} ms</p>
       <p v-if="genDataTime">生成数据：{{ genDataTime.toFixed(0) }} ms</p>
+      <p v-if="netTime > 0" style="color:#1677ff">网络传输：{{ netMethod }}，{{ netTime.toFixed(0) }} ms，{{ (netBytes/1024).toFixed(1) }} KB</p>
       <div v-if="timingBreakdown.total" style="font-size:10px;line-height:1.4;margin-top:4px;max-height:200px;overflow-y:auto;background:#f5f5f5;padding:4px 6px;border-radius:4px">
         <div>main_collectPoints: {{ (timingBreakdown.main_collectPoints||0).toFixed(1) }}ms</div>
         <div>main_buildLUT: {{ (timingBreakdown.main_buildLUT||0).toFixed(1) }}ms</div>
@@ -694,14 +892,14 @@ function updateViewportInfo() {
 
 /* ---- 插值参数控制 ---- */
 .control-panel {
-  position: absolute; top: 190px; left: 20px;
+  position: absolute; top: 420px; left: 20px;
   background: rgba(255,255,255,0.95); backdrop-filter: blur(6px);
   padding: 8px 12px; border-radius: 8px;
   box-shadow: 0 2px 12px rgba(0,0,0,0.15); z-index: 500;
   font-size: 11px; display: flex; flex-direction: column; gap: 5px;
   user-select: none; min-width: 170px;
 }
-.ctrl-title { font-weight: 600; font-size: 12px; color: #333; margin-bottom: 2px; }
+.ctrl-title { font-weight: 600; font-size: 12px; color: #333; margin-bottom: 2px; cursor: move; }
 .ctrl-row { display: flex; flex-direction: column; gap: 1px; }
 .ctrl-row label { color: #555; display: flex; justify-content: space-between; }
 .ctrl-row input[type=range] { width: 100%; cursor: pointer; accent-color: #1677ff; }

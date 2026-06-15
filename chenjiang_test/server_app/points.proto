@@ -1,0 +1,6 @@
+syntax = "proto3";
+message PointsResponse {
+  repeated float lng = 1 [packed=true];
+  repeated float lat = 2 [packed=true];
+  repeated float val = 3 [packed=true];
+}
