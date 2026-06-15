@@ -32,7 +32,8 @@ function createFloatTex(gl, iw, ih) {
 // ---- shaders (lng/lat → pixel conversion on GPU) ----
 const SPLAT_VS = `#version 300 es
   in vec2 a_corner;
-  in vec2 a_lnglat;
+  in float a_lng;
+  in float a_lat;
   in float a_value;
   uniform vec4 u_bounds;    // swLng, swLat, neLng, neLat
   uniform vec2 u_viewport;  // w, h
@@ -42,8 +43,8 @@ const SPLAT_VS = `#version 300 es
   out vec2 v_center;
   out float v_value;
   void main() {
-    float nx = (a_lnglat.x - u_bounds.x) / (u_bounds.z - u_bounds.x);
-    float ny = (a_lnglat.y - u_bounds.y) / (u_bounds.w - u_bounds.y);
+    float nx = (a_lng - u_bounds.x) / (u_bounds.z - u_bounds.x);
+    float ny = (a_lat - u_bounds.y) / (u_bounds.w - u_bounds.y);
     vec2 center = vec2(nx * u_viewport.x, (1.0 - ny) * u_viewport.y) / u_gridStep;
     vec2 offset = (a_corner - 0.5) * u_radius * 2.0;
     vec2 pos = (center + offset) * u_scale * 2.0 - 1.0;
@@ -99,13 +100,14 @@ const COMP_FS = `#version 300 es
   }`
 
 // ======== splatInit: one-time setup, upload data to GPU ========
-export function splatInit(rawData, options) {
+export function splatInit(rawArrays, options) {
   const {
     colorLut, valueMin, valueMax,
     idwPower = 2, idwEpsilon = 0.1, opacity = 0.7
   } = options
-
-  if (!rawData || !rawData.length) return null
+  const { rawLng, rawLat, rawVal } = rawArrays
+  if (!rawLng || !rawLng.length) return null
+  const n = rawLng.length
 
   const canvas = new OffscreenCanvas(1, 1)
   const gl = canvas.getContext('webgl2', {
@@ -159,22 +161,18 @@ export function splatInit(rawData, options) {
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
 
-  // Upload instance data (raw lng/lat + value) — stays on GPU forever
-  const n = rawData.length
-  const lnglatArr = new Float32Array(n * 2)
-  const valuesArr = new Float32Array(n)
-  for (let i = 0; i < n; i++) {
-    lnglatArr[i * 2] = rawData[i].lng
-    lnglatArr[i * 2 + 1] = rawData[i].lat
-    valuesArr[i] = rawData[i].value
-  }
-  const lnglatBuf = gl.createBuffer()
-  gl.bindBuffer(gl.ARRAY_BUFFER, lnglatBuf)
-  gl.bufferData(gl.ARRAY_BUFFER, lnglatArr, gl.STATIC_DRAW)
+  // Upload instance data (raw lng/lat/value as Float32Arrays) — stays on GPU forever
+  const lngBuf = gl.createBuffer()
+  gl.bindBuffer(gl.ARRAY_BUFFER, lngBuf)
+  gl.bufferData(gl.ARRAY_BUFFER, rawLng, gl.STATIC_DRAW)
+
+  const latBuf = gl.createBuffer()
+  gl.bindBuffer(gl.ARRAY_BUFFER, latBuf)
+  gl.bufferData(gl.ARRAY_BUFFER, rawLat, gl.STATIC_DRAW)
 
   const valueBuf = gl.createBuffer()
   gl.bindBuffer(gl.ARRAY_BUFFER, valueBuf)
-  gl.bufferData(gl.ARRAY_BUFFER, valuesArr, gl.STATIC_DRAW)
+  gl.bufferData(gl.ARRAY_BUFFER, rawVal, gl.STATIC_DRAW)
 
   // Bind constant attribs + uniforms
   gl.useProgram(prog1)
@@ -184,11 +182,18 @@ export function splatInit(rawData, options) {
   gl.bindBuffer(gl.ARRAY_BUFFER, quadBuf)
   gl.enableVertexAttribArray(aCornerLoc)
   gl.vertexAttribPointer(aCornerLoc, 2, gl.FLOAT, false, 0, 0)
-  const aLnglatLoc = gl.getAttribLocation(prog1, 'a_lnglat')
-  gl.bindBuffer(gl.ARRAY_BUFFER, lnglatBuf)
-  gl.enableVertexAttribArray(aLnglatLoc)
-  gl.vertexAttribPointer(aLnglatLoc, 2, gl.FLOAT, false, 0, 0)
-  gl.vertexAttribDivisor(aLnglatLoc, 1)
+  const aLngLoc = gl.getAttribLocation(prog1, 'a_lng')
+  gl.bindBuffer(gl.ARRAY_BUFFER, lngBuf)
+  gl.enableVertexAttribArray(aLngLoc)
+  gl.vertexAttribPointer(aLngLoc, 1, gl.FLOAT, false, 0, 0)
+  gl.vertexAttribDivisor(aLngLoc, 1)
+
+  const aLatLoc = gl.getAttribLocation(prog1, 'a_lat')
+  gl.bindBuffer(gl.ARRAY_BUFFER, latBuf)
+  gl.enableVertexAttribArray(aLatLoc)
+  gl.vertexAttribPointer(aLatLoc, 1, gl.FLOAT, false, 0, 0)
+  gl.vertexAttribDivisor(aLatLoc, 1)
+
   const aValueLoc = gl.getAttribLocation(prog1, 'a_value')
   gl.bindBuffer(gl.ARRAY_BUFFER, valueBuf)
   gl.enableVertexAttribArray(aValueLoc)

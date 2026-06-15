@@ -179,7 +179,7 @@ self.onmessage = function (e) {
       blurCtx = blurCanvas.getContext('2d')
     }
 
-    if (!pixelPoints.length && !msg.rawData?.length) {
+    if (!pixelPoints.length && !msg.rawLng?.length) {
       offscreen.width = w; offscreen.height = h
       offscreen.convertToBlob({ type: 'image/png' }).then(blob => {
         self.postMessage({ type: 'done', blob, _seq: msg._seq })
@@ -191,18 +191,17 @@ self.onmessage = function (e) {
     if (gpuEnabled && (algorithm === 'idw' || algorithm === 'gaussian') && !radiusJitter) {
       const tGpu0 = performance.now()
       try {
-        const rawData = msg.rawData
-        if (rawData && rawData.length) {
-          if (!gpuState || rawData.length !== gpuDataLen ||
+        if (msg.rawLng && msg.rawLng.length) {
+          if (!gpuState || msg.rawLng.length !== gpuDataLen ||
               gpuInitOpts?.idwPower !== idwPower || gpuInitOpts?.idwEpsilon !== idwEpsilon ||
               gpuInitOpts?.opacity !== opacity) {
             if (gpuState) gpuState.destroy()
             gpuInitOpts = { idwPower, idwEpsilon, opacity }
-            gpuDataLen = rawData.length
-            gpuState = splatInit(rawData, {
-              colorLut, valueMin, valueMax,
-              idwPower, idwEpsilon, opacity
-            })
+            gpuDataLen = msg.rawLng.length
+            gpuState = splatInit(
+              { rawLng: msg.rawLng, rawLat: msg.rawLat, rawVal: msg.rawVal },
+              { colorLut, valueMin, valueMax, idwPower, idwEpsilon, opacity }
+            )
           }
         }
 

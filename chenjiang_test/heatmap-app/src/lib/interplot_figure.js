@@ -282,8 +282,19 @@ export function createInterpolationOverlay(options) {
           main_postMessage: performance.now() - tLut1
         }
       }
-      msg.rawData = data
-      worker.postMessage(msg)
+      const n = data.length
+      const rawLng = new Float32Array(n)
+      const rawLat = new Float32Array(n)
+      const rawVal = new Float32Array(n)
+      for (let i = 0; i < n; i++) {
+        rawLng[i] = data[i].lng
+        rawLat[i] = data[i].lat
+        rawVal[i] = data[i].value
+      }
+      msg.rawLng = rawLng
+      msg.rawLat = rawLat
+      msg.rawVal = rawVal
+      worker.postMessage(msg, [rawLng.buffer, rawLat.buffer, rawVal.buffer])
       return
     }
 
