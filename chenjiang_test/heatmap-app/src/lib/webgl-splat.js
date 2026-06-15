@@ -88,13 +88,13 @@ export function splatRender(data, options) {
   gl.linkProgram(prog1)
   if (!gl.getProgramParameter(prog1, gl.LINK_STATUS)) return { ok: false }
 
-  // Pass 2: Composite (Y-flip in vertex shader)
+  // Pass 2: Composite (no Y-flip — default framebuffer + convertToBlob handles orientation)
   const compVS = `#version 300 es
     in vec2 a_pos;
     out vec2 v_uv;
     void main() {
       gl_Position = vec4(a_pos, 0.0, 1.0);
-      v_uv = vec2(a_pos.x * 0.5 + 0.5, 1.0 - (a_pos.y * 0.5 + 0.5));
+      v_uv = a_pos * 0.5 + 0.5;
     }`
 
   const compFS = `#version 300 es
