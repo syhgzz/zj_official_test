@@ -34,6 +34,8 @@ const interpMaxRadiusInf = ref(false)
 const gpuEnabled = ref(true)
 const interpMaxNearby = ref(0)
 const renderTime = ref(0)
+const timingBreakdown = ref({})
+const genDataTime = ref(0)
 const maxDataPoints = ref(Infinity)
 const currentZoom = ref(0)
 const showDebug = ref(false)
@@ -310,16 +312,20 @@ function toggleDebug() {
 }
 
 function generateDebugData() {
+  const t0 = performance.now()
   clearDebugMarkers()
   const bounds = map.getBounds()
   const sw = bounds.getSouthWest(), ne = bounds.getNorthEast()
-  pointsData = []
-  for (let i = 0; i < debugCount.value; i++) {
-    const lng = sw.lng + Math.random() * (ne.lng - sw.lng)
-    const lat = sw.lat + Math.random() * (ne.lat - sw.lat)
-    const subsidence = (Math.random() - 0.5) * 60
-    pointsData.push({ longitude: lng, latitude: lat, subsidence })
+  const count = debugCount.value
+  pointsData = new Array(count)
+  for (let i = 0; i < count; i++) {
+    pointsData[i] = {
+      longitude: sw.lng + Math.random() * (ne.lng - sw.lng),
+      latitude: sw.lat + Math.random() * (ne.lat - sw.lat),
+      subsidence: (Math.random() - 0.5) * 60
+    }
   }
+  genDataTime.value = performance.now() - t0
   rebuildAll()
 }
 
@@ -363,6 +369,7 @@ function rebuildAll() {
     maxNearbyPoints: interpMaxNearby.value,
     onRender: (timings) => {
       renderTime.value = timings.total || 0
+      timingBreakdown.value = { ...timings }
       console.log('⏱ 渲染耗时 (ms):',
         'collectPoints:', (timings.main_collectPoints||0).toFixed(1),
         'buildLUT:', (timings.main_buildLUT||0).toFixed(1),
@@ -434,7 +441,7 @@ function updateViewportInfo() {
       </label>
       <div v-if="showDebug" class="debug-row">
         <span>点数: </span>
-        <input v-model.number="debugCount" min="1" max="1000000" style="width:70px;text-align:center;border:1px solid #ccc;border-radius:4px;padding:2px 4px">
+        <input v-model.number="debugCount" min="1" max="99999999" style="width:100px;text-align:center;border:1px solid #ccc;border-radius:4px;padding:2px 4px">
         <button @click="generateDebugData" style="font-size:11px;padding:2px 8px;border:1px solid #1677ff;border-radius:4px;background:#1677ff;color:#fff;cursor:pointer">确定</button>
       </div>
     </div>
@@ -562,6 +569,20 @@ function updateViewportInfo() {
       <p>视口：{{ viewportW }} × {{ viewportH }}</p>
       <p>渲染分辨率：{{ renderW }} × {{ renderH }} (gridStep={{ interpGridStep }})</p>
       <p>渲染耗时：{{ renderTime.toFixed(0) }} ms</p>
+      <p v-if="genDataTime">生成数据：{{ genDataTime.toFixed(0) }} ms</p>
+      <div v-if="timingBreakdown.total" style="font-size:10px;line-height:1.4;margin-top:4px;max-height:200px;overflow-y:auto;background:#f5f5f5;padding:4px 6px;border-radius:4px">
+        <div>main_collectPoints: {{ (timingBreakdown.main_collectPoints||0).toFixed(1) }}ms</div>
+        <div>main_buildLUT: {{ (timingBreakdown.main_buildLUT||0).toFixed(1) }}ms</div>
+        <div>main_postMessage: {{ (timingBreakdown.main_postMessage||0).toFixed(1) }}ms</div>
+        <div style="color:#1677ff">GPU_setup: {{ (timingBreakdown.gpu_setup||0).toFixed(1) }}ms</div>
+        <div style="color:#1677ff">GPU_upload: {{ (timingBreakdown.gpu_upload||0).toFixed(1) }}ms</div>
+        <div style="color:#1677ff">GPU_pass1: {{ (timingBreakdown.gpu_pass1||0).toFixed(1) }}ms</div>
+        <div style="color:#1677ff">GPU_pass2: {{ (timingBreakdown.gpu_pass2||0).toFixed(1) }}ms</div>
+        <div style="color:#1677ff">GPU_finish: {{ (timingBreakdown.gpu_finish||0).toFixed(1) }}ms</div>
+        <div>worker_blur: {{ (timingBreakdown.worker_blur||0).toFixed(1) }}ms</div>
+        <div style="color:#cf1322">worker_png: {{ (timingBreakdown.worker_png||0).toFixed(1) }}ms</div>
+        <div>main_imageLayer: {{ (timingBreakdown.main_imageLayer||0).toFixed(1) }}ms</div>
+      </div>
     </div>
 
     <!-- 分布直方图 -->

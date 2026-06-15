@@ -1,6 +1,6 @@
 // interp-worker.js — OffscreenCanvas interpolation renderer
 
-import { splatRender } from './webgl-splat.js'
+import { splatInit, splatDraw } from './webgl-splat.js'
 
 function hashLngLat(lng, lat, seed = 0) {
   let h = seed * 0x9e3779b9 + Math.floor(lng * 10000) * 73856093 ^ Math.floor(lat * 10000) * 19349663
@@ -158,6 +158,7 @@ function lookupColor(v, lut, vMin, vMax) {
 }
 
 let offscreen = null, ctx = null, blurCanvas = null, blurCtx = null
+let gpuState = null, gpuDataLen = -1, gpuInitOpts = null
 
 self.onmessage = function (e) {
   const msg = e.data
@@ -178,7 +179,7 @@ self.onmessage = function (e) {
       blurCtx = blurCanvas.getContext('2d')
     }
 
-    if (!pixelPoints.length) {
+    if (!pixelPoints.length && !msg.rawData?.length) {
       offscreen.width = w; offscreen.height = h
       offscreen.convertToBlob({ type: 'image/png' }).then(blob => {
         self.postMessage({ type: 'done', blob })
@@ -186,17 +187,36 @@ self.onmessage = function (e) {
       return
     }
 
-    // GPU splatting — creates internal WebGL canvas, no readPixels needed
-    if (gpuEnabled && (algorithm === 'idw' || algorithm === 'gaussian') && !radiusJitter && splatRender) {
+    // GPU splatting — data stays on GPU, per-frame uniform-only updates
+    if (gpuEnabled && (algorithm === 'idw' || algorithm === 'gaussian') && !radiusJitter) {
       const tGpu0 = performance.now()
       try {
-        const result = splatRender(pixelPoints, { w, h, radius: baseR, idwPower, idwEpsilon, sigma, algorithm, opacity, colorLut, valueMin, valueMax, gridStep })
-        const tGpu1 = performance.now()
-        if (result && result.ok) {
-          const gpuCanvas = result.canvas
-          const gpuTimings = result.timings || {}
-          gpuTimings.splatRender_wall = tGpu1 - tGpu0
+        const rawData = msg.rawData
+        if (rawData && rawData.length) {
+          if (!gpuState || rawData.length !== gpuDataLen ||
+              gpuInitOpts?.idwPower !== idwPower || gpuInitOpts?.idwEpsilon !== idwEpsilon ||
+              gpuInitOpts?.opacity !== opacity) {
+            if (gpuState) gpuState.destroy()
+            gpuInitOpts = { idwPower, idwEpsilon, opacity }
+            gpuDataLen = rawData.length
+            gpuState = splatInit(rawData, {
+              colorLut, valueMin, valueMax,
+              idwPower, idwEpsilon, opacity
+            })
+          }
+        }
 
+        if (!gpuState) { /* fall through to CPU */ }
+        else {
+          const result = splatDraw(gpuState, {
+            w, h, gridStep,
+            bounds: msg.bounds,
+            sigma, radius: baseR, algorithm
+          })
+          const gpuTimings = result.timings || {}
+          gpuTimings.splatDraw_wall = performance.now() - tGpu0
+
+          const gpuCanvas = result.canvas
           const tBlur0 = performance.now()
           let finalCanvas = gpuCanvas
           if (blurEnabled && blurRadius > 0) {
@@ -219,7 +239,8 @@ self.onmessage = function (e) {
                 worker_blur:  tBlur1 - tBlur0,
                 worker_png:   tPng1 - tPng0,
                 worker_total: tPng1 - tGpu0
-              }
+              },
+              _mainTimings: msg._mainTimings || {}
             })
           })
           return

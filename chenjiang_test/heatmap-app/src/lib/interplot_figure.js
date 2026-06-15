@@ -250,18 +250,24 @@ export function createInterpolationOverlay(options) {
     lastBounds = map.getBounds()
 
     const tCollect0 = performance.now()
-    const pixelPoints = collectPixelPoints(maxJitterR, w, h)
+    const useGPU = worker && gpuEnabled && (algorithm === 'idw' || algorithm === 'gaussian') && !radiusJitter
+    const pixelPoints = useGPU ? [] : collectPixelPoints(maxJitterR, w, h)
     const tCollect1 = performance.now()
     lastT0 = tStart
-    if (!pixelPoints.length) return
+    if (!pixelPoints.length && !data.length) return
 
     if (worker) {
       workerPending = true
       const tLut0 = performance.now()
       const { lut, vMin, vMax } = buildColorLUT()
       const tLut1 = performance.now()
+      const sw = lastBounds.getSouthWest(), ne = lastBounds.getNorthEast()
       worker.postMessage({
         type: 'render',
+        // raw lng/lat/value for GPU path (data stays on GPU)
+        rawData: data,
+        bounds: { swLng: sw.lng, swLat: sw.lat, neLng: ne.lng, neLat: ne.lat },
+        // pixel coords for CPU fallback
         pixelPoints, w, h, sigma, baseR, maxJitterR,
         gridStep, opacity, algorithm, idwPower, idwEpsilon,
         rbfType, rbfSmooth, krigingModel, krigingNugget,
