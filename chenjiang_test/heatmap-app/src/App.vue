@@ -44,6 +44,8 @@ const debugCount = ref(30)
 const dataSource = ref('local') // 'local' | 'http' | 'websocket'
 const dataConstruction = ref('json') // 'json' | 'random'
 const randomCount = ref(10000)
+const savedSource = ref('local')
+const savedConstruction = ref('json')
 // Network measurement
 const netTime = ref(0)
 const netBytes = ref(0)
@@ -367,10 +369,19 @@ function rebuildInterp() {
 function toggleDebug() {
   showDebug.value = !showDebug.value
   if (showDebug.value) {
+    // Save current mode, force local+random
+    savedSource.value = dataSource.value
+    savedConstruction.value = dataConstruction.value
+    dataSource.value = 'local'
+    dataConstruction.value = 'random'
     realPointsData = pointsData
     if (scatterLayer) scatterLayer.setMap(null)
+    if (interpOverlay) { interpOverlay.destroy(); interpOverlay = null }
     generateDebugData()
   } else {
+    // Restore previous mode
+    dataSource.value = savedSource.value
+    dataConstruction.value = savedConstruction.value
     pointsData = realPointsData
     realPointsData = []
     clearDebugMarkers()
@@ -415,7 +426,13 @@ function rebuildAll() {
   const isRemote = dataSource.value === 'http' || dataSource.value === 'websocket'
 
   const mapBounds = getMapBounds()
-  if (dataConstruction.value === 'random') {
+  if (showDebug.value) {
+    // Debug mode: use pointsData set by generateDebugData directly
+    activeData = pointsData.slice(0, maxDataPoints.value)
+    pointCount.value = activeData.length
+    renderScatter(activeData)
+    mappedData = activeData.map(p => ({ lng: p.longitude, lat: p.latitude, value: p.subsidence }))
+  } else if (dataConstruction.value === 'random') {
     // Local random: generate in-browser within map viewport
     activeData = genRandom(randomCount.value, mapBounds)
     mappedData = activeData.map(p => ({ lng: p.longitude, lat: p.latitude, value: p.subsidence }))
@@ -613,33 +630,35 @@ function updateViewportInfo() {
         <button @click="generateDebugData" style="font-size:11px;padding:2px 8px;border:1px solid #1677ff;border-radius:4px;background:#1677ff;color:#fff;cursor:pointer">确定</button>
       </div>
       <div style="border-top:1px solid #ddd;margin:2px 0"></div>
-      <div style="font-size:10px;color:#999;margin-bottom:2px">数据来源</div>
-      <label class="mode-item" @click="dataSource = 'local'; rebuildAll()">
-        <span class="check-box">{{ dataSource === 'local' ? '☑' : '☐' }}</span>
-        本地
-      </label>
-      <label class="mode-item" @click="dataSource = 'http'; rebuildAll()">
-        <span class="check-box">{{ dataSource === 'http' ? '☑' : '☐' }}</span>
-        HTTP接口
-      </label>
-      <label class="mode-item" @click="dataSource = 'websocket'; rebuildAll()">
-        <span class="check-box">{{ dataSource === 'websocket' ? '☑' : '☐' }}</span>
-        WebSocket+ProtoBuf
-      </label>
-      <div style="border-top:1px solid #ddd;margin:2px 0"></div>
-      <div style="font-size:10px;color:#999;margin-bottom:2px">数据构造</div>
-      <label class="mode-item" @click="dataConstruction = 'json'; rebuildAll()">
-        <span class="check-box">{{ dataConstruction === 'json' ? '☑' : '☐' }}</span>
-        读取JSON文件
-      </label>
-      <label class="mode-item" @click="dataConstruction = 'random'; rebuildAll()">
-        <span class="check-box">{{ dataConstruction === 'random' ? '☑' : '☐' }}</span>
-        随机生成
-      </label>
-      <div v-if="dataConstruction === 'random'" class="debug-row">
-        <span>点数: </span>
-        <input v-model.number="randomCount" min="100" max="99999999" style="width:100px;text-align:center;border:1px solid #ccc;border-radius:4px;padding:2px 4px">
-        <button @click="rebuildAll" style="font-size:11px;padding:2px 8px;border:1px solid #1677ff;border-radius:4px;background:#1677ff;color:#fff;cursor:pointer">确定</button>
+      <div :class="{ 'mode-disabled': showDebug }">
+        <div style="font-size:10px;color:#999;margin-bottom:2px">数据来源</div>
+        <label class="mode-item" @click="!showDebug && (dataSource = 'local', rebuildAll())">
+          <span class="check-box">{{ dataSource === 'local' ? '☑' : '☐' }}</span>
+          本地
+        </label>
+        <label class="mode-item" @click="!showDebug && (dataSource = 'http', rebuildAll())">
+          <span class="check-box">{{ dataSource === 'http' ? '☑' : '☐' }}</span>
+          HTTP接口
+        </label>
+        <label class="mode-item" @click="!showDebug && (dataSource = 'websocket', rebuildAll())">
+          <span class="check-box">{{ dataSource === 'websocket' ? '☑' : '☐' }}</span>
+          WebSocket+ProtoBuf
+        </label>
+        <div style="border-top:1px solid #ddd;margin:2px 0"></div>
+        <div style="font-size:10px;color:#999;margin-bottom:2px">数据构造</div>
+        <label class="mode-item" @click="!showDebug && (dataConstruction = 'json', rebuildAll())">
+          <span class="check-box">{{ dataConstruction === 'json' ? '☑' : '☐' }}</span>
+          读取JSON文件
+        </label>
+        <label class="mode-item" @click="!showDebug && (dataConstruction = 'random', rebuildAll())">
+          <span class="check-box">{{ dataConstruction === 'random' ? '☑' : '☐' }}</span>
+          随机生成
+        </label>
+        <div v-if="dataConstruction === 'random' && !showDebug" class="debug-row">
+          <span>点数: </span>
+          <input v-model.number="randomCount" min="100" max="99999999" style="width:100px;text-align:center;border:1px solid #ccc;border-radius:4px;padding:2px 4px">
+          <button @click="rebuildAll" style="font-size:11px;padding:2px 8px;border:1px solid #1677ff;border-radius:4px;background:#1677ff;color:#fff;cursor:pointer">确定</button>
+        </div>
       </div>
     </div>
 
@@ -942,5 +961,10 @@ function updateViewportInfo() {
   border-radius: 8px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
   z-index: 500;
+}
+
+.mode-disabled {
+  pointer-events: none;
+  opacity: 0.4;
 }
 </style>
