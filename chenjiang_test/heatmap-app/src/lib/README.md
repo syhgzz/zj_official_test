@@ -9,9 +9,14 @@
 - PNG 编码异步（`toBlob` / `convertToBlob`），不阻塞
 - Worker 不可用时自动降级主线程；GPU 不可用自动降级 CPU Worker 路径
 - 销毁：调用 `overlay.destroy()` 终止 Worker、移除图层
-- 渲染耗时通过 `onRender: (ms) => {}` 回调获取
-- 性能:开启GPU时, 如果搜索半径倍率选择无限, 1万个数据点可以比较流畅运行, 但10万个数据点需要3-4秒, 百万数据点会卡死. 
-  - 当数据点数很大时, 可以缩小搜索半径倍率到3-7
+- 渲染耗时通过 `onRender: (timings) => {}` 回调获取，`timings` 对象包含各阶段耗时（详见下方）
+- **数据格式**：支持两种传入方式
+  - `data: [{lng, lat, value}]` — 对象数组（本地 JSON）
+  - `binaryRawData: {lng: Float32Array, lat: Float32Array, val: Float32Array}` — 类型数组（远程 HTTP/WebSocket 路径）
+- **性能**：
+  - GPU 路径（IDW/Gaussian）：1 万点流畅，10 万点约 3-4 秒，百万点会卡死
+  - CPU 路径（RBF/Kriging/jitter）：比 GPU 慢 5-10 倍，建议点数 < 5000
+  - 数据点数很大时，缩小搜索半径倍率到 3-7 可大幅提速
 
 ## 快速开始
 
@@ -20,10 +25,17 @@ import { createInterpolationOverlay } from './lib/interplot_figure.js'
 
 const overlay = createInterpolationOverlay({
   map,                     // AMap.Map 实例
-  data: [{ lng, lat, value }],  // 数据点
+  data: [{ lng, lat, value }],  // 数据点（对象数组）
+  binaryRawData: {              // 或使用类型数组（远程路径）
+    lng: new Float32Array([...]),
+    lat: new Float32Array([...]),
+    val: new Float32Array([...]),
+  },
   colorFn: (v) => [r, g, b],    // (v) => [r, g, b] 或 [r, g, b, a]（a: 0-255）
   algorithm: 'idw',             // gaussian | idw | rbf | kriging
-  onRender: (ms) => {},         // 渲染耗时回调（可选）
+  onRender: (timings) => {      // 渲染耗时回调，timings 为各阶段耗时对象
+    console.log('total:', timings.total)
+  },
 })
 ```
 
@@ -32,18 +44,19 @@ const overlay = createInterpolationOverlay({
 | 参数 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
 | `map` | AMap.Map | 必填 | |
-| `data` | Array | 必填 | `[{lng, lat, value}]` |
+| `data` | Array | `[]` | `[{lng, lat, value}]` 对象数组 |
+| `binaryRawData` | Object | `null` | `{lng: Float32Array, lat: Float32Array, val: Float32Array}` 类型数组，优先级高于 `data` |
 | `colorFn` | Function | 必填 | `(v) => [r, g, b]` 或 `[r, g, b, a]` (a: 0-255) |
 | `algorithm` | string | `idw` | `gaussian` \| `idw` \| `rbf` \| `kriging` |
 | `opacity` | number | 0.7 | 图层透明度 |
 | `gridStep` | number | 2 | 采样步长 px，越小越精细 |
-| `maxNearbyPoints` | number | 0 | 每像素最多处理数据点数，0=不限制, GPU下不生效 |
+| `maxNearbyPoints` | number | 0 | 每像素最多处理数据点数，0=不限制，GPU 下不生效 |
 | `baseSigma` | number | 25 | 基础 σ |
 | `sigmaMultiplier` | number | ∞ | 搜索半径 = σ × 此值 |
 | `maxRadius` | number | 20000 | 搜索半径上限 px |
 | `baseZoom` | number | 11 | σ 等比缩放基准级别 |
 | `debounceMs` | number | 200 | 防抖延迟 ms |
-| `onRender` | Function | null | `(ms) => void` |
+| `onRender` | Function | null | `(timings) => void`，timings 结构见下方 |
 
 ### IDW 专属
 
@@ -81,16 +94,47 @@ const overlay = createInterpolationOverlay({
 
 **返回** `{ show(), hide(), destroy() }`
 
+### `onRender` 回调 timings 对象结构
+
+```js
+onRender: (timings) => {
+  // timings 包含以下字段（单位 ms）：
+  timings.total                    // 总耗时
+  timings.main_collectPoints       // 主线程：lngLatToContainer 像素转换
+  timings.main_buildLUT            // 主线程：颜色 LUT 构建
+  timings.main_postMessage         // 主线程：发消息到 Worker
+  // GPU 路径专属：
+  timings.gpu_setup                // GPU：纹理/状态初始化
+  timings.gpu_upload               // GPU：数据上传
+  timings.gpu_pass1                // GPU：Pass 1 累加
+  timings.gpu_pass2                // GPU：Pass 2 合成
+  timings.gpu_finish               // GPU：读取像素
+  // 通用：
+  timings.worker_blur              // Worker：高斯模糊（若启用）
+  timings.worker_png               // Worker：PNG 编码
+  timings.main_imageLayer          // 主线程：创建 ImageLayer
+}
+```
+
 ## 架构
 
 ```
 createInterpolationOverlay()
-  ├─ 主线程: lngLatToContainer → LUT → postMessage
-  └─ Worker: GPU(IDW/Gaussian) | CPU(全部算法) → putImageData → toBlob → postMessage
+  ├─ 主线程: lngLatToContainer → buildColorLUT → postMessage
+  └─ Worker (interp-worker.js)
+     ├─ GPU 路径 (webgl-splat.js): IDW / Gaussian（jitter 关闭时）
+     │   splatInit() → splatDraw()
+     │   Pass 1: instanced quad splatting → float 纹理累加 (w*val, w)
+     │   Pass 2: fullscreen quad → wv/w 归一化 → LUT 查色 → canvas
+     │   (可选) blur → convertToBlob → postMessage
+     └─ CPU 路径: RBF / Kriging / jitter 模式
+         分箱 (buildBins) → 逐像素查询 (queryBins)
+         → computeCellValue → fillRect → (可选) blur → convertToBlob
 ```
 
 - 主线程不阻塞，渲染在 Worker 中完成
 - GPU 支持 IDW 和 Gaussian，jitter 关闭时生效，不满足自动降级 CPU
+- `data` 和 `binaryRawData` 两种输入格式，`binaryRawData` 用于远程数据路径（HTTP/WebSocket），避免重复序列化
 
 ## 算法公式
 
@@ -141,9 +185,9 @@ $$R = \min(\text{sigmaMultiplier} \times \sigma,\; \text{maxRadius})$$
 
 | 文件 | 作用 |
 |------|------|
-| `interplot_figure.js` | 主入口，`createInterpolationOverlay()`。管理 Worker 创建/通信、像素坐标转换、LUT 预计算、ImageLayer 更新 |
-| `interp-worker.js` | Web Worker。接收像素坐标数据 → CPU 分箱/插值 或 GPU splatting → Canvas 绘制 → toBlob 返回主线程 |
-| `webgl-splat.js` | GPU IDW / Gaussian 加速。WebGL2 instanced quad + float 纹理 + composite pass |
+| `interplot_figure.js` | 主入口，`createInterpolationOverlay()`。管理 Worker 创建/通信、像素坐标转换（`lngLatToContainer`）、颜色 LUT 预计算、`AMap.ImageLayer` 创建与更新 |
+| `interp-worker.js` | Web Worker。接收像素坐标或 `binaryRawData` → 分派到 GPU 或 CPU 路径 → OffscreenCanvas 绘制 → `convertToBlob` 返回主线程。支持所有 4 种算法 + MC 抖动 + 高斯模糊 |
+| `webgl-splat.js` | GPU IDW / Gaussian 加速。`splatInit()` 上传数据到 GPU（一次性），`splatDraw()` 每帧渲染（仅更新 uniform）。WebGL2 instanced quad + 双 float 纹理（w*val, w）+ composite pass |
 
 ## 非阻塞原理
 
@@ -152,19 +196,27 @@ $$R = \min(\text{sigmaMultiplier} \times \sigma,\; \text{maxRadius})$$
   │                                    │
   ├─ map.lngLatToContainer(points)     │
   ├─ buildColorLUT()                   │
-  ├─ postMessage(pixelPoints...) ─────→│
-  │                                    ├─ GPU: splatRender()
-  │                                    ├─ CPU: 分箱循环插值
-  │                                    ├─ ctx.putImageData → toBlob()
-  │                                    └─ postMessage(blob) ──→
-  │  toBlob(onRender) ←────────────────│
-  │  blob → URL → AMap.ImageLayer      │
+  ├─ postMessage({pixelPoints,          │
+  │    rawLng, rawLat, rawVal,         │  (binaryRawData 直传，零拷贝)
+  │    bounds, ...}) ─────────────────→│
+  │                                    ├─ GPU: splatInit (首次) / splatDraw
+  │                                    │   Pass 1: splatting 累加
+  │                                    │   Pass 2: 归一化 + LUT 查色
+  │                                    ├─ CPU: buildBins → queryBins
+  │                                    │   → computeCellValue → fillRect
+  │                                    ├─ (可选) blur
+  │                                    ├─ convertToBlob()
+  │                                    └─ postMessage({blob, timings}) ─→
+  │  URL.createObjectURL(blob) ←───────│
+  │  new AMap.ImageLayer({url})        │
+  │  onRender(timings)                 │
 ```
 
 - `lngLatToContainer` 是唯一需 AMap API 的步骤 → 在主线程执行
 - 其余全部（插值计算、Canvas 填充、PNG 编码）在 Worker 内完成
 - **不阻塞**：主线程发起后立即返回，Worker 完成后通过 `postMessage` 回传 Blob
-- 异步 PNG 编码使用 `toBlob` / `OffscreenCanvas.convertToBlob`
+- 异步 PNG 编码使用 `OffscreenCanvas.convertToBlob`
+- `binaryRawData` 为 `Float32Array`，通过 `postMessage` 传递时可被 Transferable 零拷贝传输
 
 ## 示例：发散色阶 colorFn
 
