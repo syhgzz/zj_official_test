@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+// 精简自 src/main/proto/MessageInfo.proto，仅保留 /api/v1/upss/samples 接口
+// octet-stream 响应体使用的消息。字段编号/类型与服务端保持一致，供 Python 端解析。
+option optimize_for = SPEED;
+option java_outer_classname = "MessageInfo";
+option java_package = "com.atomdata.zhongjian.dataplatform.proto";
+
+// /api/v1/upss/samples 响应体：lng/lat/val 三个等长 packed double 数组，
+// 按索引一一对应；val 无值的位置填 0。
+message SubsidencePointStream {
+  repeated double lng = 1 [packed = true];  // 经度
+  repeated double lat = 2 [packed = true];  // 纬度
+  repeated double val = 3 [packed = true];  // 值(沉降量mm / 速率mm·年⁻¹ / 梯度mm)
+}
