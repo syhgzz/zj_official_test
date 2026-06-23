@@ -1,5 +1,6 @@
 # 中检项目接口测试集合包
-包括 **API 测试程序**、**interplot_figure.js 插值渲染库示例** 与 **Protobuf 接口调试工具** 。
+
+包括 **API 测试程序** 与 **interplot_figure.js 插值渲染库示例**。
 
 ## 项目结构
 
@@ -15,16 +16,15 @@ zj_official_test/
 │   ├── api_client.py             # 统一 API 请求客户端
 │   └── response_printer.py       # 响应格式化输出与统计采集
 │
-├── test_cases/                    # 模块测试用例
-│   ├── test_overview.py          # 系统概览
-│   ├── test_upss.py              # 沉降态势感知
-│   ├── test_udmds.py             # 形变安全监测
-│   ├── test_ugss.py              # GNSS 干扰监测
-│   ├── test_unga.py              # 走航甲烷检测
-│   └── test_gnss_device.py       # 北斗设备状态
-│
-├── test-samples/                  # 单接口 Protobuf 调试工具
-│   ├── request_samples.py        # HTTP + Protobuf 客户端 CLI（接口: /api/v1/upss/samples）
+├── test_cases/                    # 模块测试用例（每个文件可独立运行）
+│   ├── common.py                 # 公共配置（地点坐标、时间范围等）
+│   ├── test_overview.py          # 系统概览（2 接口）
+│   ├── test_upss.py              # 沉降态势感知（11 接口）
+│   ├── test_udmds.py             # 形变安全监测（7 接口）
+│   ├── test_ugss.py              # GNSS 干扰监测（7 接口）
+│   ├── test_unga.py              # 走航甲烷检测（5 接口）
+│   ├── test_gnss_device.py       # 北斗设备状态（3 接口）
+│   ├── test_api_v1_upss_samples.py  # 单接口 Protobuf 调试（独立 CLI）
 │   ├── subsidence.proto          # SubsidencePointStream Protobuf 定义
 │   └── subsidence_pb2.py         # protoc 编译后的 Python 代码
 │
@@ -50,7 +50,7 @@ zj_official_test/
 
 ## 一、API 测试程序 (Python)
 
-基于 Python 的中检项目 API 测试程序，覆盖 **7 大模块、44+ 接口**，支持统一的 HmacSHA256 签名认证、配置管理与结果采集。
+基于 Python 的中检项目 API 测试程序，覆盖 **7 大模块、40+ 接口**，支持统一的 HmacSHA256 签名认证、配置管理与结果采集。
 
 ### 环境要求
 
@@ -92,16 +92,64 @@ sign = Base64(HmacSHA256(timestamp + "\n" + appSecret))
 
 参见 `lib/signature.py`。
 
-### 运行测试
+---
+
+### 运行测试用例
+
+`test_cases/` 下每个文件 **都自带 `if __name__ == '__main__'` 入口，可以独立运行**。
+
+#### 运行单个模块
 
 ```bash
-# 运行单个模块
+# 方式一：python 模块名方式
 python -m test_cases.test_overview
 python -m test_cases.test_upss
 
-# 运行全部模块（pytest）
+# 方式二：直接执行文件
+python test_cases/test_overview.py
+python test_cases/test_udmds.py
+```
+
+#### 运行全部模块
+
+```bash
 python -m pytest test_cases/
 ```
+
+---
+
+### 各模块独立运行说明
+
+每个测试文件都通过 `common.py` 获取公共配置（默认区域为重庆，时间范围为 2026-05-05 ~ 2026-06-05），无需额外参数即可运行。
+
+| # | 文件 | 模块名称 | 接口数 | 独立运行命令 |
+|---|------|---------|--------|-------------|
+| 1 | `test_overview.py` | 系统概览 | 2 | `python test_cases/test_overview.py` |
+| 2 | `test_upss.py` | 沉降态势感知 | 11 | `python test_cases/test_upss.py` |
+| 3 | `test_udmds.py` | 形变安全监测 | 7 | `python test_cases/test_udmds.py` |
+| 4 | `test_ugss.py` | GNSS 干扰监测 | 7 | `python test_cases/test_ugss.py` |
+| 5 | `test_unga.py` | 走航甲烷检测 | 5 | `python test_cases/test_unga.py` |
+| 6 | `test_gnss_device.py` | 北斗设备状态 | 3 | `python test_cases/test_gnss_device.py` |
+| 7 | `test_api_v1_upss_samples.py` | 单接口 Protobuf 调试 | 1 | `python test_cases/test_api_v1_upss_samples.py` |
+
+---
+
+### 修改测试参数
+
+公共配置在 `test_cases/common.py` 中，可调整地点坐标和时间范围：
+
+```python
+loc_list = {
+    '重庆': [105.782, 108.345, 28.999, 30.147],
+    '北京': [115.814, 116.816, 39.637, 40.423],
+    '唐山': [117.903, 118.825, 39.185, 40.131],
+    '天津': [116.919, 117.831, 38.695, 39.525],
+}
+```
+
+切换地点：将 `loc_list['重庆']` 改为 `loc_list['北京']` 等。
+
+---
 
 ### 数据抓取
 
@@ -113,36 +161,22 @@ python scripts/fetch_upss.py
 python scripts/fetch_udmds.py
 ```
 
-### 测试模块一览
-
-| 模块代码 | 模块名称 | 接口数 | 覆盖接口 |
-|---------|---------|--------|---------|
-| overview | 系统概览 | 2 | 实时概览、综合统计 |
-| upss | 沉降态势感知 | 11 | 概览、期次列表、期次汇总、单点历史、沉降地图(热力图)、沉降速率、沉降速率梯度、预警信息、态势统计、最大沉降时序、前五梯度 |
-| udmds | 形变安全监测 | 7 | 概览、工程列表、监测点列表、单点实时、单点历史、工程统计、告警汇总 |
-| ugss | GNSS 干扰监测 | 7 | 概览、基站列表、单站实时、干扰事件、频率统计、预警汇总 |
-| unga | 走航甲烷检测 | 5 | 概览、检测任务、走航轨迹、泄露点管理、统计分析 |
-| upns | 短临降水预警 | 9 | 概览、站点列表、单站实时、单站历史、区域统计、预警汇总、降雨量实时、PWV 实时统计 |
-| gnss-device | 北斗设备状态 | 3 | 设备概览、设备列表、设备详情 |
-
 ---
 
-## 二、单接口 Protobuf 调试工具 (test-samples)
+## 二、Protobuf 调试工具
 
-`test-samples/` 是针对 **单个新增接口** `GET /api/v1/upss/samples` 的独立调试 CLI 工具。该接口以 `application/octet-stream` 返回 Protobuf 编码的二进制数据。
+`test_cases/test_api_v1_upss_samples.py` 针对 **单个接口** `GET /api/v1/upss/samples`，响应以 `application/octet-stream` 返回 Protobuf 编码的二进制数据。
 
 ### 接口说明
 
 | 项目 | 内容 |
 |------|------|
 | 路径 | `GET /api/v1/upss/samples` |
-| 参数 | `issue`(期次 yyyyMMdd)、`minLng/maxLng/minLat/maxLat`(空间范围)、`dataType`(subsidence \| gradient \| velocity) |
+| 参数 | `issue`（期次 yyyyMMdd）、`minLng/maxLng/minLat/maxLat`（空间范围）、`dataType`（subsidence \| gradient \| velocity） |
 | 响应 | `application/octet-stream`，body 为 `SubsidencePointStream` Protobuf 消息 |
 | 错误处理 | 参数非法时 `text/plain` + `HTTP 400` |
 
 ### Protobuf 消息定义
-
-`test-samples/subsidence.proto` 定义了 `SubsidencePointStream` 消息——三个等长 `packed double` 数组，按索引一一对应；val 无值的位置填 0：
 
 ```protobuf
 message SubsidencePointStream {
@@ -152,23 +186,28 @@ message SubsidencePointStream {
 }
 ```
 
+三个 `repeated double` 数组等长，按索引一一对应；val 无值的位置填 0。
+
 ### 使用方法
 
 ```bash
+# 查看帮助
+python test_cases/test_api_v1_upss_samples.py --help
+
 # 默认参数（重庆市周边，2020-02-22 期次，沉降量）
-python test-samples/request_samples.py
+python test_cases/test_api_v1_upss_samples.py
 
 # 指定参数
-python test-samples/request_samples.py \
+python test_cases/test_api_v1_upss_samples.py \
   --issue 20200222 \
   --min-lng 105.7 --max-lng 108.4 \
   --min-lat 28.9 --max-lat 30.2 \
   --data-type gradient
 
 # 输出控制
-python test-samples/request_samples.py --limit 20           # 预览前 20 条
-python test-samples/request_samples.py --csv output.csv      # 保存为 CSV
-python test-samples/request_samples.py --raw response.bin    # 保存原始二进制
+python test_cases/test_api_v1_upss_samples.py --limit 20        # 预览前 20 条
+python test_cases/test_api_v1_upss_samples.py --csv output.csv  # 保存为 CSV
+python test_cases/test_api_v1_upss_samples.py --raw response.bin  # 保存原始二进制
 ```
 
 ---

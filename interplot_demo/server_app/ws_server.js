@@ -1,4 +1,4 @@
-const { WebSocketServer } = require('ws')
+const { WebSocketServer } = require('./node_modules/ws')
 const protobuf = require('protobufjs')
 const fs = require('fs')
 const path = require('path')

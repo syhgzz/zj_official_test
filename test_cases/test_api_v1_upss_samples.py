@@ -136,15 +136,18 @@ def build_arg_parser():
     ap.add_argument("--max-lat", type=float, default=DEFAULT_PARAMS["maxLat"])
     ap.add_argument("--data-type", default=DEFAULT_PARAMS["dataType"],
                     choices=["subsidence", "gradient", "velocity"])
-    ap.add_argument("--limit", type=int, default=10, help="预览样本条数，默认 10")
-    ap.add_argument("--csv", help="将解析结果保存为 CSV 的路径")
-    ap.add_argument("--raw", help="将原始 protobuf 二进制保存到该路径(便于调试)")
+    ap.add_argument("--limit", type=int, default=100, help="预览样本条数")
+    ap.add_argument("--csv", type=str, default="./responses/stream.csv", help="将解析结果保存为 CSV 的路径")
+    ap.add_argument("--raw", type=str, default="./responses/stream.bin", help="将原始 protobuf 二进制保存到该路径(便于调试)")
     ap.add_argument("--timeout", type=int, default=30, help="请求超时秒数，默认 30")
     return ap
 
 
 def main():
     args = build_arg_parser().parse_args()
+    # 确保输出目录存在
+    Path(args.csv).parent.mkdir(parents=True, exist_ok=True)
+    Path(args.raw).parent.mkdir(parents=True, exist_ok=True)
     params = {
         "minLng": args.min_lng, "maxLng": args.max_lng,
         "minLat": args.min_lat, "maxLat": args.max_lat,
