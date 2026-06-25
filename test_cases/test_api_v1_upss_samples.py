@@ -43,7 +43,8 @@ DEFAULT_PARAMS = {
     "maxLng": 108.345,
     "minLat": 28.999,
     "maxLat": 30.147,
-    "issue": "20200222",
+    # "issue": "20200222",
+    "issue": "20250203",
     "dataType": "subsidence",
 }
 
@@ -143,43 +144,70 @@ def build_arg_parser():
     return ap
 
 
-def main():
-    args = build_arg_parser().parse_args()
-    # 确保输出目录存在
-    Path(args.csv).parent.mkdir(parents=True, exist_ok=True)
-    Path(args.raw).parent.mkdir(parents=True, exist_ok=True)
+def test_api_v1_upss_samples(
+    host=DEFAULT_HOST,
+    app_key=DEFAULT_APP_KEY,
+    app_secret=DEFAULT_APP_SECRET,
+    issue=DEFAULT_PARAMS["issue"],
+    min_lng=DEFAULT_PARAMS["minLng"],
+    max_lng=DEFAULT_PARAMS["maxLng"],
+    min_lat=DEFAULT_PARAMS["minLat"],
+    max_lat=DEFAULT_PARAMS["maxLat"],
+    data_type=DEFAULT_PARAMS["dataType"],
+    limit=100,
+    csv="./responses/stream.csv",
+    raw="./responses/stream.bin",
+    timeout=30,
+):
+    """请求 /api/v1/upss/samples 并解析 protobuf 响应"""
+    Path(csv).parent.mkdir(parents=True, exist_ok=True)
+    Path(raw).parent.mkdir(parents=True, exist_ok=True)
     params = {
-        "minLng": args.min_lng, "maxLng": args.max_lng,
-        "minLat": args.min_lat, "maxLat": args.max_lat,
-        "issue": args.issue, "dataType": args.data_type,
+        "minLng": min_lng,
+        "maxLng": max_lng,
+        "minLat": min_lat,
+        "maxLat": max_lat,
+        "issue": issue,
+        "dataType": data_type,
     }
-    print(f"GET {args.host}/api/v1/upss/samples")
+    print(f"GET {host}/api/v1/upss/samples")
     print(f"参数: {params}")
 
     try:
-        body = fetch_samples(args.host, params, args.app_key, args.app_secret, timeout=args.timeout)
+        body = fetch_samples(host, params, app_key, app_secret, timeout=timeout)
     except requests.exceptions.ConnectionError:
-        sys.exit(f"连接失败：请确认服务已启动 {args.host}")
+        sys.exit(f"连接失败：请确认服务已启动 {host}")
     except requests.exceptions.Timeout:
-        sys.exit(f"请求超时({args.timeout}s)")
+        sys.exit(f"请求超时({timeout}s)")
     except RuntimeError as e:
         sys.exit(str(e))
 
     print(f"收到 {len(body)} 字节 protobuf")
-    if args.raw:
-        Path(args.raw).write_bytes(body)
-        print(f"已保存原始二进制: {args.raw}")
+    if raw:
+        Path(raw).write_bytes(body)
+        print(f"已保存原始二进制: {raw}")
 
     try:
         stream = parse(body)
     except Exception as e:
         sys.exit(f"protobuf 解析失败: {e}\n(响应可能非二进制流，前 200 字节: {body[:200]!r})")
 
-    summarize(stream, VAL_LABEL.get(args.data_type, "val"))
-    preview(stream, args.limit)
-    if args.csv:
-        save_csv(stream, args.csv)
+    summarize(stream, VAL_LABEL.get(data_type, "val"))
+    preview(stream, limit)
+    if csv:
+        save_csv(stream, csv)
 
 
 if __name__ == "__main__":
-    main()
+    issues = ["20250203", "20250110"]
+    data_types = ["subsidence", "gradient", "velocity"]
+
+    for issue in issues:
+        for data_type in data_types:
+            suffix = f"{issue}_{data_type}"
+            csv_path = f"./responses/samples_{suffix}.csv"
+            raw_path = f"./responses/samples_{suffix}.bin"
+            print(f"\n{'=' * 60}")
+            print(f"测试: issue={issue}, dataType={data_type}")
+            print(f"{'=' * 60}")
+            test_api_v1_upss_samples(issue=issue, data_type=data_type, csv=csv_path, raw=raw_path)
