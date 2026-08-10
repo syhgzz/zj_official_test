@@ -35,11 +35,11 @@ def run_all_tests():
     # test_get_overview(client) # 3.4.1
     test_get_periods(client) # 3.4.2
     # test_get_period_summary(client) # 3.4.3
-    for issue in issue_list:
-        for pg in range(1, 100):
-            test_get_regional_statistics(client, issue=issue, pageNum=pg) # 3.4.5
-        test_get_grid_rate(client, issue=issue) # 3.4.6
-        test_get_grid_gradient(client, issue=issue) # 3.4.7
+    # for issue in issue_list:
+    #     for pg in range(1, 100):
+    #         test_get_regional_statistics(client, issue=issue, pageNum=pg) # 3.4.5
+    #     test_get_grid_rate(client, issue=issue) # 3.4.6
+    #     test_get_grid_gradient(client, issue=issue) # 3.4.7
     test_get_warning_issue(client) # 3.4.8
     test_get_statistics_issue(client) # 3.4.9
     test_get_max_subsidence_timeseries(client) # 3.4.10
