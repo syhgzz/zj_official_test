@@ -341,6 +341,48 @@ def test_get_statistics_ext(client: APIClient):
     return response
 
 
+def test_update_leak_status(
+    client: APIClient,
+    leak_id: int,
+    status: str = 'checking'
+):
+    """
+    测试设置泄露点处置状态
+    POST /api/v1/unga/leaks/{leakId}/status
+
+    status取值:
+        unchecked: 疑似
+        checking: 已处置
+        confirmed: 已确认
+    """
+    number = '3.5.8'
+    title = '设置泄露点处置状态'
+    path = f'/api/v1/unga/leaks/{leak_id}/status'
+    data = {
+        'status': status,
+    }
+    start_dt = datetime.now()
+    response = client.request('POST', path, data=data)
+    end_dt = datetime.now()
+    elapsed = (end_dt - start_dt).total_seconds()
+
+    print_response(
+        '设置泄露点处置状态',
+        'POST',
+        path,
+        response,
+        config.verbose,
+        number=number,
+        title=title,
+        elapsed_seconds=elapsed,
+    )
+
+    if config.save_response and response:
+        save_response_to_file('unga_leak_status', response, path, data, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
+
+    return response
+
+
 def run_all_tests():
     """运行走航甲烷检测模块的所有测试 1 2 3 4 5 6"""
     client = APIClient(config.host, config.app_key, config.app_secret, config.timeout)
@@ -366,6 +408,9 @@ def run_all_tests():
 
     # 测试7: 获取区域内走航统计数据
     test_get_statistics_ext(client) # 3.5.7
+
+    # 测试8: 设置泄露点处置状态
+    # test_update_leak_status(client, leak_id=1, status='checking') # 3.5.8
 
 if __name__ == '__main__':
     run_all_tests()
