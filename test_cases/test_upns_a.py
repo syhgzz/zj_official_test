@@ -2,3 +2,416 @@
 """
 短临降水测试程序A
 """
+
+import os
+import sys
+from datetime import datetime
+
+# 支持直接执行：python test_cases/test_upns.py
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from config.config import config
+from lib.api_client import APIClient
+from lib.response_printer import print_response, save_response_to_file
+
+try:
+    from test_cases.common import *
+except ImportError:
+    from common import *
+
+
+startTime_file = startTime_global
+endTime_file = endTime_global
+minLng_file = minLng_global
+maxLng_file = maxLng_global
+minLat_file = minLat_global
+maxLat_file = maxLat_global
+
+UPNS_BASE_PATH = '/api/v1/upns'
+
+# 第 10 个接口的测试组合：4 个实时观测图层和 4 个预测图层。
+# 预测偏移：60=1 小时后，120=2 小时后。
+LAYER_CASES = [
+    {
+        'case_name': '大气可降水量（10分钟）',
+        'file_name': 'upns_layer_xtskpwv',
+        'params': {'layer': 'XTSKPWV'},
+    },
+    {
+        'case_name': '小时降水量',
+        'file_name': 'upns_layer_xtskjsxs',
+        'params': {'layer': 'XTSKJSXS'},
+    },
+    {
+        'case_name': '10分钟降水量',
+        'file_name': 'upns_layer_xtskjsxs10min',
+        'params': {'layer': 'XTSKJSXS10Min'},
+    },
+    {
+        'case_name': '分钟降水量',
+        'file_name': 'upns_layer_xtskjsfz',
+        'params': {'layer': 'XTSKJSFZ'},
+    },
+    {
+        'case_name': '时序模型预测1小时后',
+        'file_name': 'upns_layer_lstm_60min',
+        'params': {'layer': 'LSTMXSJS', 'forecastOffsetMinutes': 60},
+    },
+    {
+        'case_name': '时序模型预测2小时后',
+        'file_name': 'upns_layer_lstm_120min',
+        'params': {'layer': 'LSTMXSJS', 'forecastOffsetMinutes': 120},
+    },
+    {
+        'case_name': '卷积模型预测1小时后',
+        'file_name': 'upns_layer_convlstm_60min',
+        'params': {'layer': 'CONVLSTMXSJS', 'forecastOffsetMinutes': 60},
+    },
+    {
+        'case_name': '卷积模型预测2小时后',
+        'file_name': 'upns_layer_convlstm_120min',
+        'params': {'layer': 'CONVLSTMXSJS', 'forecastOffsetMinutes': 120},
+    },
+]
+
+
+def _request_and_record(
+    client: APIClient,
+    path: str,
+    params: dict,
+    display_name: str,
+    file_name: str,
+    number: str,
+    title: str,
+):
+    """统一执行 GET 请求，并沿用项目现有格式打印、计时和保存响应。"""
+    start_dt = datetime.now()
+    response = client.request('GET', path, params=params)
+    end_dt = datetime.now()
+    elapsed = (end_dt - start_dt).total_seconds()
+
+    print_response(
+        display_name,
+        'GET',
+        path,
+        response,
+        config.verbose,
+        number=number,
+        title=title,
+        elapsed_seconds=elapsed,
+    )
+
+    if config.save_response and response:
+        save_response_to_file(
+            file_name,
+            response,
+            path,
+            params,
+            config.response_dir,
+            number=number,
+            title=title,
+            start_time=start_dt,
+            end_time=end_dt,
+        )
+
+    return response
+
+
+# -----------------------------------------------------------------------------
+# 接口 1：模块概览
+# 服务于大屏整体概况，包括站点在线情况、预警数量和当前平均气象条件。
+# GET /api/v1/upns/overview
+# -----------------------------------------------------------------------------
+def test_get_overview(client: APIClient):
+    """测试获取短临降水预警模块概览。"""
+    return _request_and_record(
+        client,
+        f'{UPNS_BASE_PATH}/overview',
+        {},
+        '获取短临降水预警模块概览',
+        'upns_overview',
+        '3.7.1',
+        '模块概览',
+    )
+
+
+# -----------------------------------------------------------------------------
+# 接口 2：风险评估
+# 服务于区域风险等级、评分、风险因素和处置建议展示。
+# GET /api/v1/upns/risk
+# -----------------------------------------------------------------------------
+def test_get_risk(client: APIClient, region_code: str = None):
+    """测试获取短临降水风险评估，可选按区域编码筛选。"""
+    params = {}
+    if region_code:
+        params['regionCode'] = region_code
+
+    return _request_and_record(
+        client,
+        f'{UPNS_BASE_PATH}/risk',
+        params,
+        '获取短临降水风险评估',
+        'upns_risk',
+        '3.7.2',
+        '风险评估',
+    )
+
+
+# -----------------------------------------------------------------------------
+# 接口 3：监测站点列表
+# 服务于地图站点和站点下拉框；返回的 stationCode 继续服务接口 7、8。
+# GET /api/v1/upns/stations
+# -----------------------------------------------------------------------------
+def test_get_stations(client: APIClient, page_num: int = 1, page_size: int = 20):
+    """测试获取监测站点列表，并返回响应及站点编码列表。"""
+    params = {
+        'pageNum': page_num,
+        'pageSize': page_size,
+        'minLng': minLng_file,
+        'maxLat': maxLat_file,
+        'maxLng': maxLng_file,
+        'minLat': minLat_file,
+    }
+    response = _request_and_record(
+        client,
+        f'{UPNS_BASE_PATH}/stations',
+        params,
+        '获取降水监测站点列表',
+        'upns_stations',
+        '3.7.3',
+        '监测站点列表',
+    )
+
+    stations = []
+    if response and isinstance(response.get('data'), dict):
+        stations = response['data'].get('stations', []) or []
+    station_codes = [
+        station['stationCode']
+        for station in stations
+        if isinstance(station, dict) and station.get('stationCode')
+    ]
+    return response, station_codes
+
+
+# -----------------------------------------------------------------------------
+# 接口 4：预警信息列表
+# 服务于大屏左上角“预警信息”，必须传入 BBOX 和起止时间。
+# GET /api/v1/upns/warnings
+# -----------------------------------------------------------------------------
+def test_get_warnings(client: APIClient):
+    """测试按地理范围和时间范围获取降水预警列表。"""
+    params = {
+        'minLng': minLng_file,
+        'maxLat': maxLat_file,
+        'maxLng': maxLng_file,
+        'minLat': minLat_file,
+        'startTime': startTime_file,
+        'endTime': endTime_file,
+    }
+    return _request_and_record(
+        client,
+        f'{UPNS_BASE_PATH}/warnings',
+        params,
+        '获取降水预警信息列表',
+        'upns_warnings',
+        '3.7.4',
+        '预警信息列表',
+    )
+
+
+# -----------------------------------------------------------------------------
+# 接口 5：过去一小时降雨量统计
+# 服务于大屏“过去1小时内降水量最大前五/前十”排名图表。
+# GET /api/v1/upns/statistics/rain/now
+# -----------------------------------------------------------------------------
+def test_get_rain_statistics_now(client: APIClient):
+    """测试获取过去一小时降雨量排名统计。"""
+    params = {
+        'minLng': minLng_file,
+        'maxLat': maxLat_file,
+        'maxLng': maxLng_file,
+        'minLat': minLat_file,
+    }
+    return _request_and_record(
+        client,
+        f'{UPNS_BASE_PATH}/statistics/rain/now',
+        params,
+        '获取过去一小时降雨量统计',
+        'upns_statistics_rain_now',
+        '3.7.5',
+        '过去一小时降雨量统计',
+    )
+
+
+# -----------------------------------------------------------------------------
+# 接口 6：当前大气可降水量（PWV）统计
+# 服务于大屏“当前大气可降水量最大前五/前十”排名图表。
+# GET /api/v1/upns/statistics/pwv/now
+# -----------------------------------------------------------------------------
+def test_get_pwv_statistics_now(client: APIClient):
+    """测试获取当前大气可降水量排名统计。"""
+    params = {
+        'minLng': minLng_file,
+        'maxLat': maxLat_file,
+        'maxLng': maxLng_file,
+        'minLat': minLat_file,
+    }
+    return _request_and_record(
+        client,
+        f'{UPNS_BASE_PATH}/statistics/pwv/now',
+        params,
+        '获取当前大气可降水量统计',
+        'upns_statistics_pwv_now',
+        '3.7.6',
+        '当前大气可降水量统计',
+    )
+
+
+# -----------------------------------------------------------------------------
+# 接口 7：指定站点实时数据
+# 服务于单站最新温度、湿度、降雨、气压、PWV 和预警状态展示。
+# 依赖接口 3 返回的 stationCode。
+# GET /api/v1/upns/stations/{code}/realtime
+# -----------------------------------------------------------------------------
+def test_get_station_realtime(client: APIClient, code: str):
+    """测试获取指定降水监测站点的最新实时数据。"""
+    path = f'{UPNS_BASE_PATH}/stations/{code}/realtime'
+    return _request_and_record(
+        client,
+        path,
+        {},
+        f'获取站点 {code} 实时数据',
+        f'upns_station_{code}_realtime',
+        '3.7.7',
+        '单站实时数据',
+    )
+
+
+# -----------------------------------------------------------------------------
+# 接口 8：指定站点历史趋势
+# 服务于右侧站点降水/PWV/温湿度等历史曲线和汇总统计。
+# 依赖接口 3 返回的 stationCode。
+# GET /api/v1/upns/stations/{code}/history
+# -----------------------------------------------------------------------------
+def test_get_station_history(client: APIClient, code: str):
+    """测试获取指定站点在公共时间范围内的多指标历史趋势。"""
+    path = f'{UPNS_BASE_PATH}/stations/{code}/history'
+    params = {
+        'metrics': 'temperature,humidity,rain,windSpeed,windDirection,pressure,pwv',
+        'interval': '1h',
+        'startTime': startTime_file,
+        'endTime': endTime_file,
+    }
+    return _request_and_record(
+        client,
+        path,
+        params,
+        f'获取站点 {code} 历史趋势',
+        f'upns_station_{code}_history',
+        '3.7.8',
+        '单站历史趋势',
+    )
+
+
+# -----------------------------------------------------------------------------
+# 接口 9：区域降水统计
+# 服务于行政区域维度的降雨量、PWV、预警时序及汇总展示。
+# GET /api/v1/upns/statistics/regional
+# -----------------------------------------------------------------------------
+def test_get_regional_statistics(client: APIClient, region_code: str = None):
+    """测试获取区域降水、PWV 和预警统计。"""
+    params = {}
+    if region_code:
+        params['regionCode'] = region_code
+
+    return _request_and_record(
+        client,
+        f'{UPNS_BASE_PATH}/statistics/regional',
+        params,
+        '获取区域降水统计',
+        'upns_statistics_regional',
+        '3.7.9',
+        '区域降水统计',
+    )
+
+
+# -----------------------------------------------------------------------------
+# 接口 10：降水图层二维网格数据
+# 服务于历史/实时降水图和预测降水图的地图渲染。
+# 区间模式使用 startTime/endTime；预测模式使用 forecastOffsetMinutes。
+# GET /api/v1/upns/precipitation/layers
+# -----------------------------------------------------------------------------
+def test_get_precipitation_layers(client: APIClient):
+    """测试全部观测图层，以及两个模型在 1/2 小时后的预测图层。"""
+    path = f'{UPNS_BASE_PATH}/precipitation/layers'
+    responses = {}
+
+    for layer_case in LAYER_CASES:
+        params = {
+            **layer_case['params'],
+            'minLng': minLng_file,
+            'maxLng': maxLng_file,
+            'minLat': minLat_file,
+            'maxLat': maxLat_file,
+        }
+
+        # 只有观测图层使用历史时间区间；预测图层按偏移量查询单时刻。
+        if 'forecastOffsetMinutes' not in params:
+            params['startTime'] = startTime_file
+            params['endTime'] = endTime_file
+
+        case_name = layer_case['case_name']
+        responses[case_name] = _request_and_record(
+            client,
+            path,
+            params,
+            f'获取降水图层：{case_name}',
+            layer_case['file_name'],
+            '3.7.10',
+            f'降水图层-{case_name}',
+        )
+
+    return responses
+
+
+def run_all_tests():
+    """按依赖顺序运行短临降水预警模块的全部 10 个接口测试。"""
+    client = APIClient(config.host, config.app_key, config.app_secret, config.timeout)
+
+    # 测试 1：模块整体概览，对应 3.7.1。
+    test_get_overview(client)
+
+    # 测试 2：风险评估，对应 3.7.2。
+    test_get_risk(client)
+
+    # 测试 3：站点列表，对应 3.7.3；站点编码服务于测试 7、8。
+    _, station_codes = test_get_stations(client)
+
+    # 测试 4：预警信息列表，对应 3.7.4。
+    test_get_warnings(client)
+
+    # 测试 5：过去一小时降雨量统计，对应 3.7.5。
+    test_get_rain_statistics_now(client)
+
+    # 测试 6：当前大气可降水量统计，对应 3.7.6。
+    test_get_pwv_statistics_now(client)
+
+    # 测试 7、8：逐站测试实时数据和历史趋势，对应 3.7.7、3.7.8。
+    if station_codes:
+        print(f'\n共获取到 {len(station_codes)} 个降水监测站，开始测试单站接口。\n')
+        for code in station_codes:
+            print(f'正在测试降水监测站：{code}')
+            test_get_station_realtime(client, code)
+            test_get_station_history(client, code)
+    else:
+        print('\n站点列表未返回 stationCode，跳过依赖站点编码的接口 7、8。\n')
+
+    # 测试 9：区域降水统计，对应 3.7.9。
+    test_get_regional_statistics(client)
+
+    # 测试 10：历史/实时与预测降水图层，对应 3.7.10。
+    test_get_precipitation_layers(client)
+
+
+if __name__ == '__main__':
+    run_all_tests()
