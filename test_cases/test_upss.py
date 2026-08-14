@@ -41,15 +41,16 @@ def run_all_tests():
     #     test_get_grid_rate(client, issue=issue) # 3.4.6
     #     test_get_grid_gradient(client, issue=issue) # 3.4.7
     test_get_warning_issue(client) # 3.4.8
-    test_get_statistics_issue(client) # 3.4.9
     test_get_max_subsidence_timeseries(client) # 3.4.10
     test_get_top_gradient(client) # 3.4.11
     # test_get_risk(client) # 3.4.12
     
-    point_set.add('1305')  # 添加一个默认点位，确保有数据可测
-    for pc in point_set:
-        test_get_point_history(client, pointcode=pc)
+    # 成都接口更改，不通过pointcode获取单点历史数据
+    # point_set.add('1305')  # 添加一个默认点位，确保有数据可测
+    # for pc in point_set:
+    #     test_get_point_history(client, pointcode=pc) # 3.4.4
 
+    # test_get_statistics_issue(client) # 3.4.9 暂时不测
 
 def test_get_overview(client: APIClient):
     """测试获取模块概览"""

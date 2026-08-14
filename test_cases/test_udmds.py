@@ -5,6 +5,7 @@
 import sys
 import os
 from datetime import datetime
+from xmlrpc import client
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
@@ -19,8 +20,8 @@ except ImportError:
 
 # startTime_file = startTime_global
 # endTime_file = endTime_global
-startTime_file = int(datetime(2026,5,5,0,0,0).timestamp()) * 1000    
-endTime_file = int(datetime(2026,6,5,23,59,59).timestamp()) * 1000
+startTime_file = int(datetime(2026,5,1,0,0,0).timestamp()) * 1000    
+endTime_file = int(datetime(2026,5,31,23,59,59).timestamp()) * 1000
 minLng_file = minLng_global
 maxLng_file = maxLng_global
 minLat_file = minLat_global
@@ -330,7 +331,7 @@ def test_get_risk(client: APIClient):
 def run_all_tests():
     """运行形变安全监测模块的所有测试, 用到的接口 1 2 3 4 5 7"""
     client = APIClient(config.host, config.app_key, config.app_secret, config.timeout)
-
+    test_get_alerts_summary(client) # 3.2.7
     test_get_overview(client) # 3.2.1
     test_get_projects(client) # 3.2.2
     _, pointcode_list = test_get_points(client) # 3.2.3
@@ -341,7 +342,7 @@ def run_all_tests():
         test_get_point_realtime(client, code) # 3.2.4
         test_get_point_history(client, code) # 3.2.5
     # test_get_project_statistics(client)
-    test_get_alerts_summary(client) # 3.2.7
+    
     # test_get_risk(client)
 
 
