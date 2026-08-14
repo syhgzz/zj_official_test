@@ -161,7 +161,7 @@ def _sanitize_path_for_filename(path_value: Any) -> str:
         return 'root'
 
     safe = text
-    for old, new in (('/', '_'), ('-', '_'), ('{', ''), ('}', ''), (' ', '_')):
+    for old, new in (('/', '_'), ('-', '_'), ('{', ''), ('}', ''), (' ', '_'), (':', '_')):
         safe = safe.replace(old, new)
 
     while '__' in safe:
@@ -498,13 +498,14 @@ def save_response_to_file(
 
     filepath = os.path.join(response_dir, filename)
 
-    # 按固定顺序写入: number -> title -> path -> request_params -> (timing) -> response
+    # 编号为空时不写入 number；其他字段保持固定顺序。
     payload = {
-        'number': number,
         'title': title,
         'path': path,
         'request_params': request_params or {},
     }
+    if number:
+        payload = {'number': number, **payload}
 
     if start_time is not None and end_time is not None:
         elapsed = (end_time - start_time).total_seconds()
