@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-短临降水测试程序B by wangshiyu
+降水页
 """
 
 import os
@@ -62,14 +62,14 @@ def test_get_precipitation_layers(
     response_records: list = None,
 ):
     """
-    测试获取降雨图层格网数据。
+    降水页: 测试获取降雨图层格网数据。
 
     forecast_offset_minutes 为 None 时按时间区间查询；
     传入预测偏移分钟数时查询单个预测时刻。
     GET /api/v1/upns/precipitation/layers
     """
     number = ''
-    title = '降雨图层格网数据'
+    title = '降水页: 降雨图层格网数据'
 
     if layer in OBSERVATION_LAYER_CODES:
         if forecast_offset_minutes is not None:
@@ -164,6 +164,7 @@ def run_all_tests():
     response_records = []
     batch_start_dt = datetime.now()
 
+    # 降水页: 降雨图层格网数据 /api/v1/upns/precipitation/layers
     # 4 个实时观测图层使用区间模式。
     for layer, layer_name in OBSERVATION_LAYERS:
         print(f'\n正在测试观测图层：{layer_name}（{layer}）')
@@ -174,6 +175,7 @@ def run_all_tests():
             response_records=response_records,
         )
 
+    # 降水页: 降雨图层格网数据 /api/v1/upns/precipitation/layers
     # LSTM 测试 1 小时；CONVLSTM 分别测试 1 小时和 2 小时。
     for layer, layer_name, forecast_offset_minutes in FORECAST_LAYER_CASES:
         print(
@@ -209,7 +211,7 @@ def run_all_tests():
             },
             config.response_dir,
             number='',
-            title='降雨图层格网数据',
+            title='降水页: 降雨图层格网数据',
             start_time=batch_start_dt,
             end_time=batch_end_dt,
         )

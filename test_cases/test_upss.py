@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-沉降态势感知模块API测试
+沉降页
 """
 import sys
 import os
@@ -29,33 +29,46 @@ point_set = set()
 issue_list = []
 
 def run_all_tests():
-    """运行沉降态势感知模块的所有测试"""
+    """运行沉降页模块的所有测试"""
     client = APIClient(config.host, config.app_key, config.app_secret, config.timeout)
 
+    # 沉降页: 模块概览 /api/v1/upss/overview
     # test_get_overview(client) # 3.4.1
+    # 沉降页: 沉降期列表 /api/v1/upss/periods
     test_get_periods(client) # 3.4.2
+    # 沉降页: 期次汇总 /api/v1/upss/periods/{issue}/summary
     # test_get_period_summary(client) # 3.4.3
+    # 沉降页: 沉降地图（热力图） /api/v1/upss/statistics/regional
     # for issue in issue_list:
     #     for pg in range(1, 100):
     #         test_get_regional_statistics(client, issue=issue, pageNum=pg) # 3.4.5
+    # 沉降页: 沉降速率 /api/v1/upss/statistics/gridRate
     #     test_get_grid_rate(client, issue=issue) # 3.4.6
+    # 沉降页: 沉降速率梯度 /api/v1/upss/statistics/gridGradient
     #     test_get_grid_gradient(client, issue=issue) # 3.4.7
+    # 沉降页: 预警信息 /api/v1/upss/visualization/warning/issue
     test_get_warning_issue(client) # 3.4.8
+    # 沉降页: 最大沉降点时序统计 /api/v1/upss/visualization/max-subsidence/timeseries
     test_get_max_subsidence_timeseries(client) # 3.4.10
+    # 沉降页: 前五沉降梯度值位置统计 /api/v1/upss/visualization/top-gradient
     test_get_top_gradient(client) # 3.4.11
+    # 沉降页: 风险评估 /api/v1/upss/risk
     # test_get_risk(client) # 3.4.12
     
     # 成都接口更改，不通过pointcode获取单点历史数据
+    # 沉降页: 单点沉降历史 /api/v1/upss/points/{code}/history
     # point_set.add('1305')  # 添加一个默认点位，确保有数据可测
     # for pc in point_set:
     #     test_get_point_history(client, pointcode=pc) # 3.4.4
 
+    # 沉降页: 沉降态势统计 /api/v1/upss/visualization/statistics/issue
     test_get_statistics_issue(client) # 3.4.9 暂时不测
 
 def test_get_overview(client: APIClient):
-    """测试获取模块概览"""
+    """沉降页: 测试获取模块概览"""
     number = '3.4.1'
-    title = '模块概览'
+    title = '沉降页: 模块概览'
+    path = '/api/v1/upss/overview'
     startTime = startTime_file
     endTime = endTime_file
     minLng = minLng_file
@@ -71,14 +84,14 @@ def test_get_overview(client: APIClient):
         'maxLat': maxLat,
     }
     start_dt = datetime.now()
-    response = client.request('GET', '/api/v1/upss/overview', params=params)
+    response = client.request('GET', path, params=params)
     end_dt = datetime.now()
     elapsed = (end_dt - start_dt).total_seconds()
     
     print_response(
-        '获取沉降态势模块概览',
+        title,
         'GET',
-        '/api/v1/upss/overview',
+        path,
         response,
         config.verbose,
         number=number,
@@ -86,14 +99,15 @@ def test_get_overview(client: APIClient):
         elapsed_seconds=elapsed,
     )
     if config.save_response and response:
-        save_response_to_file('upss_overview', response, '/api/v1/upss/overview', params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
+        save_response_to_file('upss_overview', response, path, params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
     return response
 
 
 def test_get_periods(client: APIClient):
-    """测试获取沉降期次列表"""
+    """沉降页: 测试获取沉降期次列表"""
     number = '3.4.2'
-    title = '沉降期列表'
+    title = '沉降页: 沉降期列表'
+    path = '/api/v1/upss/periods'
     startTime = startTime_file
     endTime = endTime_file
     minLng = minLng_file
@@ -111,14 +125,14 @@ def test_get_periods(client: APIClient):
         'maxLat': maxLat,
     }
     start_dt = datetime.now()
-    response = client.request('GET', '/api/v1/upss/periods', params=params)
+    response = client.request('GET', path, params=params)
     end_dt = datetime.now()
     elapsed = (end_dt - start_dt).total_seconds()
     
     print_response(
-        '获取沉降期次列表',
+        title,
         'GET',
-        '/api/v1/upss/periods',
+        path,
         response,
         config.verbose,
         number=number,
@@ -126,7 +140,7 @@ def test_get_periods(client: APIClient):
         elapsed_seconds=elapsed,
     )
     if config.save_response and response:
-        save_response_to_file('upss_periods', response, '/api/v1/upss/periods', params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
+        save_response_to_file('upss_periods', response, path, params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
     if response and response.get('code') == 200:
         data = response.get('data', [])
         for item in data:
@@ -136,10 +150,11 @@ def test_get_periods(client: APIClient):
 
 
 def test_get_period_summary(client: APIClient, issue: str = "20221220"):
-    """测试获取期次汇总统计"""
+    """沉降页: 测试获取期次汇总统计"""
     number = '3.4.3'
-    title = '期次汇总'
+    title = '沉降页: 期次汇总'
     issue = "20220424"
+    path = f'/api/v1/upss/periods/{issue}/summary'
     startTime = startTime_file
     endTime = endTime_file
     minLng = minLng_file
@@ -155,14 +170,14 @@ def test_get_period_summary(client: APIClient, issue: str = "20221220"):
         'maxLat': maxLat,
     }
     start_dt = datetime.now()
-    response = client.request('GET', f'/api/v1/upss/periods/{issue}/summary', params=params)
+    response = client.request('GET', path, params=params)
     end_dt = datetime.now()
     elapsed = (end_dt - start_dt).total_seconds()
     
     print_response(
-        '获取期次汇总统计',
+        title,
         'GET',
-        f'/api/v1/upss/periods/{issue}/summary',
+        path,
         response,
         config.verbose,
         number=number,
@@ -170,15 +185,16 @@ def test_get_period_summary(client: APIClient, issue: str = "20221220"):
         elapsed_seconds=elapsed,
     )
     if config.save_response and response:
-        save_response_to_file('upss_period_summary', response, f'/api/v1/upss/periods/{issue}/summary', params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
+        save_response_to_file('upss_period_summary', response, path, params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
     return response
 
 
 def test_get_point_history(client: APIClient, pointcode: str):
-    """测试获取单点沉降历史"""
+    """沉降页: 测试获取单点沉降历史"""
     number = '3.4.4'
-    title = '单点沉降历史'
+    title = '沉降页: 单点沉降历史'
     code = pointcode
+    path = f'/api/v1/upss/points/{code}/history'
     startTime = startTime_file
     endTime = endTime_file
     minLng = minLng_file
@@ -196,14 +212,14 @@ def test_get_point_history(client: APIClient, pointcode: str):
         'maxLat': maxLat,
     }
     start_dt = datetime.now()
-    response = client.request('GET', f'/api/v1/upss/points/{code}/history', params=params)
+    response = client.request('GET', path, params=params)
     end_dt = datetime.now()
     elapsed = (end_dt - start_dt).total_seconds()
     
     print_response(
-        '获取单点沉降历史',
+        title,
         'GET',
-        f'/api/v1/upss/points/{code}/history',
+        path,
         response,
         config.verbose,
         number=number,
@@ -211,14 +227,15 @@ def test_get_point_history(client: APIClient, pointcode: str):
         elapsed_seconds=elapsed,
     )
     if config.save_response and response:
-        save_response_to_file('upss_point_history', response, f'/api/v1/upss/points/{code}/history', params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
+        save_response_to_file('upss_point_history', response, path, params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
     return response
 
 
 def test_get_regional_statistics(client: APIClient, issue: str = None, pageNum: int = 1):
-    """测试获取区域沉降统计"""
+    """沉降页: 测试获取区域沉降统计"""
     number = '3.4.5'
-    title = '沉降地图（热力图）'
+    title = '沉降页: 沉降地图（热力图）'
+    path = '/api/v1/upss/statistics/regional'
     startTime = startTime_file
     endTime = endTime_file
     minLng = minLng_file
@@ -236,7 +253,7 @@ def test_get_regional_statistics(client: APIClient, issue: str = None, pageNum: 
         'maxLat': maxLat,
     }
     start_dt = datetime.now()
-    response = client.request('GET', '/api/v1/upss/statistics/regional', params=params)
+    response = client.request('GET', path, params=params)
     end_dt = datetime.now()
     elapsed = (end_dt - start_dt).total_seconds()
     
@@ -246,9 +263,9 @@ def test_get_regional_statistics(client: APIClient, issue: str = None, pageNum: 
             if 'pointCode' in point:
                 point_set.add(point['pointCode'])
     print_response(
-        '获取区域沉降统计',
+        title,
         'GET',
-        '/api/v1/upss/statistics/regional',
+        path,
         response,
         config.verbose,
         number=number,
@@ -256,14 +273,15 @@ def test_get_regional_statistics(client: APIClient, issue: str = None, pageNum: 
         elapsed_seconds=elapsed,
     )
     if config.save_response and response:
-        save_response_to_file('upss_regional_statistics', response, '/api/v1/upss/statistics/regional' + f'_{issue}' + f'_page{pageNum}', params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
+        save_response_to_file('upss_regional_statistics', response, path + f'_{issue}' + f'_page{pageNum}', params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
     return response
 
 
 def test_get_grid_rate(client: APIClient, issue: str = None):
-    """测试获取网格沉降速率"""
+    """沉降页: 测试获取网格沉降速率"""
     number = '3.4.6'
-    title = '沉降速率'
+    title = '沉降页: 沉降速率'
+    path = '/api/v1/upss/statistics/gridRate'
     startTime = startTime_file
     endTime = endTime_file
     minLng = minLng_file
@@ -278,7 +296,7 @@ def test_get_grid_rate(client: APIClient, issue: str = None):
         'maxLat': maxLat,
     }
     start_dt = datetime.now()
-    response = client.request('GET', '/api/v1/upss/statistics/gridRate', params=params)
+    response = client.request('GET', path, params=params)
     end_dt = datetime.now()
     elapsed = (end_dt - start_dt).total_seconds()
     
@@ -288,9 +306,9 @@ def test_get_grid_rate(client: APIClient, issue: str = None):
             if 'pointCode' in point:
                 point_set.add(point['pointCode'])
     print_response(
-        '获取网格沉降速率',
+        title,
         'GET',
-        '/api/v1/upss/statistics/gridRate',
+        path,
         response,
         config.verbose,
         number=number,
@@ -298,14 +316,15 @@ def test_get_grid_rate(client: APIClient, issue: str = None):
         elapsed_seconds=elapsed,
     )
     if config.save_response and response:
-        save_response_to_file('upss_grid_rate', response, '/api/v1/upss/statistics/gridRate' + f'_{issue}', params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
+        save_response_to_file('upss_grid_rate', response, path + f'_{issue}', params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
     return response
 
 
 def test_get_grid_gradient(client: APIClient, issue: str = None):
-    """测试获取网格沉降梯度"""
+    """沉降页: 测试获取网格沉降梯度"""
     number = '3.4.7'
-    title = '沉降速率梯度'
+    title = '沉降页: 沉降速率梯度'
+    path = '/api/v1/upss/statistics/gridGradient'
     startTime = startTime_file
     endTime = endTime_file
     minLng = minLng_file
@@ -320,7 +339,7 @@ def test_get_grid_gradient(client: APIClient, issue: str = None):
         'maxLat': maxLat,
     }
     start_dt = datetime.now()
-    response = client.request('GET', '/api/v1/upss/statistics/gridGradient', params=params)
+    response = client.request('GET', path, params=params)
     end_dt = datetime.now()
     elapsed = (end_dt - start_dt).total_seconds()
     
@@ -330,9 +349,9 @@ def test_get_grid_gradient(client: APIClient, issue: str = None):
             if 'pointCode' in point:
                 point_set.add(point['pointCode'])
     print_response(
-        '获取网格沉降梯度',
+        title,
         'GET',
-        '/api/v1/upss/statistics/gridGradient',
+        path,
         response,
         config.verbose,
         number=number,
@@ -340,14 +359,15 @@ def test_get_grid_gradient(client: APIClient, issue: str = None):
         elapsed_seconds=elapsed,
     )
     if config.save_response and response:
-        save_response_to_file('upss_grid_gradient', response, '/api/v1/upss/statistics/gridGradient' + f'_{issue}', params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
+        save_response_to_file('upss_grid_gradient', response, path + f'_{issue}', params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
     return response
 
 
 def test_get_warning_issue(client: APIClient):
-    """测试获取沉降预警信息"""
+    """沉降页: 测试获取沉降预警信息"""
     number = '3.4.8'
-    title = '预警信息'
+    title = '沉降页: 预警信息'
+    path = '/api/v1/upss/visualization/warning/issue'
     startTime = startTime_file
     endTime = endTime_file
     minLng = minLng_file
@@ -364,7 +384,7 @@ def test_get_warning_issue(client: APIClient):
         'maxLat': maxLat,
     }
     start_dt = datetime.now()
-    response = client.request('GET', '/api/v1/upss/visualization/warning/issue', params=params)
+    response = client.request('GET', path, params=params)
     end_dt = datetime.now()
     elapsed = (end_dt - start_dt).total_seconds()
     
@@ -374,9 +394,9 @@ def test_get_warning_issue(client: APIClient):
             if 'pointCode' in warning:
                 point_set.add(warning['pointCode'])
     print_response(
-        '获取沉降预警信息',
+        title,
         'GET',
-        '/api/v1/upss/visualization/warning/issue',
+        path,
         response,
         config.verbose,
         number=number,
@@ -384,14 +404,15 @@ def test_get_warning_issue(client: APIClient):
         elapsed_seconds=elapsed,
     )
     if config.save_response and response:
-        save_response_to_file('upss_warning_issue', response, '/api/v1/upss/visualization/warning/issue', params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
+        save_response_to_file('upss_warning_issue', response, path, params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
     return response
 
 
 def test_get_statistics_issue(client: APIClient):
-    """测试获取沉降态势统计"""
+    """沉降页: 测试获取沉降态势统计"""
     number = '3.4.9'
-    title = '沉降态势统计'
+    title = '沉降页: 沉降态势统计'
+    path = '/api/v1/upss/visualization/statistics/issue'
     startTime = startTime_file
     endTime = endTime_file
     minLng = minLng_file
@@ -408,14 +429,14 @@ def test_get_statistics_issue(client: APIClient):
         'maxLat': maxLat,
     }
     start_dt = datetime.now()
-    response = client.request('GET', '/api/v1/upss/visualization/statistics/issue', params=params)
+    response = client.request('GET', path, params=params)
     end_dt = datetime.now()
     elapsed = (end_dt - start_dt).total_seconds()
     
     print_response(
-        '获取沉降态势统计',
+        title,
         'GET',
-        '/api/v1/upss/visualization/statistics/issue',
+        path,
         response,
         config.verbose,
         number=number,
@@ -423,14 +444,15 @@ def test_get_statistics_issue(client: APIClient):
         elapsed_seconds=elapsed,
     )
     if config.save_response and response:
-        save_response_to_file('upss_statistics_issue', response, '/api/v1/upss/visualization/statistics/issue', params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
+        save_response_to_file('upss_statistics_issue', response, path, params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
     return response
 
 
 def test_get_max_subsidence_timeseries(client: APIClient):
-    """测试获取最大沉降点时序"""
+    """沉降页: 测试获取最大沉降点时序"""
     number = '3.4.10'
-    title = '最大沉降点时序统计'
+    title = '沉降页: 最大沉降点时序统计'
+    path = '/api/v1/upss/visualization/max-subsidence/timeseries'
     startTime = startTime_file
     endTime = endTime_file
     minLng = minLng_file
@@ -446,7 +468,7 @@ def test_get_max_subsidence_timeseries(client: APIClient):
         'maxLat': maxLat,
     }
     start_dt = datetime.now()
-    response = client.request('GET', '/api/v1/upss/visualization/max-subsidence/timeseries', params=params)
+    response = client.request('GET', path, params=params)
     end_dt = datetime.now()
     elapsed = (end_dt - start_dt).total_seconds()
     
@@ -456,9 +478,9 @@ def test_get_max_subsidence_timeseries(client: APIClient):
         if 'pointCode' in point_info:
             point_set.add(point_info['pointCode'])
     print_response(
-        '获取最大沉降点时序',
+        title,
         'GET',
-        '/api/v1/upss/visualization/max-subsidence/timeseries',
+        path,
         response,
         config.verbose,
         number=number,
@@ -466,14 +488,15 @@ def test_get_max_subsidence_timeseries(client: APIClient):
         elapsed_seconds=elapsed,
     )
     if config.save_response and response:
-        save_response_to_file('upss_max_subsidence_timeseries', response, '/api/v1/upss/visualization/max-subsidence/timeseries', params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
+        save_response_to_file('upss_max_subsidence_timeseries', response, path, params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
     return response
 
 
 def test_get_top_gradient(client: APIClient):
-    """测试获取Top5沉降梯度"""
+    """沉降页: 测试获取Top5沉降梯度"""
     number = '3.4.11'
-    title = '前五沉降梯度值位置统计'
+    title = '沉降页: 前五沉降梯度值位置统计'
+    path = '/api/v1/upss/visualization/top-gradient'
     startTime = startTime_file
     endTime = endTime_file
     minLng = minLng_file
@@ -491,7 +514,7 @@ def test_get_top_gradient(client: APIClient):
         'maxLat': maxLat,
     }
     start_dt = datetime.now()
-    response = client.request('GET', '/api/v1/upss/visualization/top-gradient', params=params)
+    response = client.request('GET', path, params=params)
     end_dt = datetime.now()
     elapsed = (end_dt - start_dt).total_seconds()
     
@@ -501,9 +524,9 @@ def test_get_top_gradient(client: APIClient):
             if 'pointCode' in point:
                 point_set.add(point['pointCode'])
     print_response(
-        '获取Top5沉降梯度',
+        title,
         'GET',
-        '/api/v1/upss/visualization/top-gradient',
+        path,
         response,
         config.verbose,
         number=number,
@@ -511,14 +534,15 @@ def test_get_top_gradient(client: APIClient):
         elapsed_seconds=elapsed,
     )
     if config.save_response and response:
-        save_response_to_file('upss_top_gradient', response, '/api/v1/upss/visualization/top-gradient', params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
+        save_response_to_file('upss_top_gradient', response, path, params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
     return response
 
 
 def test_get_risk(client: APIClient):
-    """测试获取风险评估"""
+    """沉降页: 测试获取风险评估"""
     number = '3.4.12'
-    title = '风险评估'
+    title = '沉降页: 风险评估'
+    path = '/api/v1/upss/risk'
     startTime = startTime_file
     endTime = endTime_file
     minLng = minLng_file
@@ -534,13 +558,13 @@ def test_get_risk(client: APIClient):
         'maxLat': maxLat,
     }
     start_dt = datetime.now()
-    response = client.request('GET', '/api/v1/upss/risk', params=params)
+    response = client.request('GET', path, params=params)
     end_dt = datetime.now()
     elapsed = (end_dt - start_dt).total_seconds()
     
-    print_response('获取风险评估', 'GET', '/api/v1/upss/risk', response, config.verbose, number=number, title=title, elapsed_seconds=elapsed)
+    print_response(title, 'GET', path, response, config.verbose, number=number, title=title, elapsed_seconds=elapsed)
     if config.save_response and response:
-        save_response_to_file('upss_risk', response, '/api/v1/upss/risk', params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
+        save_response_to_file('upss_risk', response, path, params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
     return response
 
 

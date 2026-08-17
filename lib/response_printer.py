@@ -499,10 +499,26 @@ def save_response_to_file(
     filepath = os.path.join(response_dir, filename)
 
     # 编号为空时不写入 number；其他字段保持固定顺序。
+    # 用副本转换时间参数，避免影响调用方传入的原始 request_params
+    saved_params = {}
+    for k, v in (deepcopy(request_params) if request_params else {}).items():
+        if k in ('startTime', 'endTime') and v not in (None, ''):
+            try:
+                timestamp = int(v)
+            except (TypeError, ValueError):
+                saved_params[k] = v
+                continue
+            # 毫秒时间戳 -> 人类可读时间字符串，原时间戳保留为 *Stamp 字段
+            seconds = timestamp / 1000 if timestamp > 1e12 else timestamp
+            saved_params[k] = datetime.fromtimestamp(seconds).strftime('%Y/%m/%d %H:%M:%S')
+            saved_params[k + 'Stamp'] = v
+        else:
+            saved_params[k] = v
+
     payload = {
         'title': title,
         'path': path,
-        'request_params': request_params or {},
+        'request_params': saved_params,
     }
     if number:
         payload = {'number': number, **payload}
