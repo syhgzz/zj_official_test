@@ -50,7 +50,7 @@ def run_all_tests():
     # for pc in point_set:
     #     test_get_point_history(client, pointcode=pc) # 3.4.4
 
-    # test_get_statistics_issue(client) # 3.4.9 暂时不测
+    test_get_statistics_issue(client) # 3.4.9 暂时不测
 
 def test_get_overview(client: APIClient):
     """测试获取模块概览"""
