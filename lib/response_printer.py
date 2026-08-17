@@ -96,6 +96,9 @@ def _evaluate_response(response: Any) -> Tuple[bool, str, Any]:
     if not isinstance(response, dict):
         return False, f"响应格式异常: {type(response).__name__}", None
 
+    if response.get('timeout'):
+        return False, response.get('msg') or '请求超时', None
+
     if 'code' not in response:
         return False, '响应缺少code字段', None
 
