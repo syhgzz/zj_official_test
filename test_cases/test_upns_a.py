@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-短临降水测试程序A
+降水页
 """
 import os
 import sys
@@ -75,15 +75,15 @@ def _request_and_record(
 # GET /api/v1/upns/overview
 # -----------------------------------------------------------------------------
 def test_get_overview(client: APIClient):
-    """测试获取短临降水预警模块概览。"""
+    """降水页: 测试获取短临降水预警模块概览。"""
     return _request_and_record(
         client,
         f'{UPNS_BASE_PATH}/overview',
         {},
-        '获取短临降水预警模块概览',
+        '降水页: 获取短临降水预警模块概览',
         'upns_overview',
-        '3.7.1',
-        '模块概览',
+        '',
+        '降水页: 模块概览',
     )
 
 
@@ -93,7 +93,7 @@ def test_get_overview(client: APIClient):
 # GET /api/v1/upns/risk
 # -----------------------------------------------------------------------------
 def test_get_risk(client: APIClient, region_code: str = None):
-    """测试获取短临降水风险评估，可选按区域编码筛选。"""
+    """降水页: 测试获取短临降水风险评估，可选按区域编码筛选。"""
     params = {}
     if region_code:
         params['regionCode'] = region_code
@@ -101,10 +101,10 @@ def test_get_risk(client: APIClient, region_code: str = None):
         client,
         f'{UPNS_BASE_PATH}/risk',
         params,
-        '获取短临降水风险评估',
+        '降水页: 获取短临降水风险评估',
         'upns_risk',
-        '3.7.2',
-        '风险评估',
+        '',
+        '降水页: 风险评估',
     )
 
 
@@ -114,7 +114,7 @@ def test_get_risk(client: APIClient, region_code: str = None):
 # GET /api/v1/upns/stations
 # -----------------------------------------------------------------------------
 def test_get_stations(client: APIClient, page_num: int = 1, page_size: int = 20):
-    """测试获取监测站点列表，并返回响应及站点编码列表。"""
+    """降水页: 测试获取监测站点列表，并返回响应及站点编码列表。"""
     params = {
         'pageNum': page_num,
         'pageSize': page_size,
@@ -127,10 +127,10 @@ def test_get_stations(client: APIClient, page_num: int = 1, page_size: int = 20)
         client,
         f'{UPNS_BASE_PATH}/stations',
         params,
-        '获取降水监测站点列表',
+        '降水页: 获取降水监测站点列表',
         'upns_stations',
-        '3.7.3',
-        '监测站点列表',
+        '',
+        '降水页: 监测站点列表',
     )
 
     stations = []
@@ -150,7 +150,7 @@ def test_get_stations(client: APIClient, page_num: int = 1, page_size: int = 20)
 # GET /api/v1/upns/warnings
 # -----------------------------------------------------------------------------
 def test_get_warnings(client: APIClient):
-    """测试按地理范围和时间范围获取降水预警列表。"""
+    """降水页: 测试按地理范围和时间范围获取降水预警列表。"""
     params = {
         'minLng': minLng_file,
         'maxLat': maxLat_file,
@@ -163,10 +163,10 @@ def test_get_warnings(client: APIClient):
         client,
         f'{UPNS_BASE_PATH}/warnings',
         params,
-        '获取降水预警信息列表',
+        '降水页: 获取降水预警信息列表',
         'upns_warnings',
-        '3.7.4',
-        '预警信息列表',
+        '',
+        '降水页: 预警信息列表',
     )
 
 
@@ -176,7 +176,7 @@ def test_get_warnings(client: APIClient):
 # GET /api/v1/upns/statistics/rain/now
 # -----------------------------------------------------------------------------
 def test_get_rain_statistics_now(client: APIClient):
-    """测试获取过去一小时降雨量排名统计。"""
+    """降水页: 测试获取过去一小时降雨量排名统计。"""
     params = {
         'minLng': minLng_file,
         'maxLat': maxLat_file,
@@ -187,10 +187,10 @@ def test_get_rain_statistics_now(client: APIClient):
         client,
         f'{UPNS_BASE_PATH}/statistics/rain/now',
         params,
-        '获取过去一小时降雨量统计',
+        '降水页: 获取过去一小时降雨量统计',
         'upns_statistics_rain_now',
-        '3.7.5',
-        '过去一小时降雨量统计',
+        '',
+        '降水页: 过去一小时降雨量统计',
     )
 
 
@@ -200,7 +200,7 @@ def test_get_rain_statistics_now(client: APIClient):
 # GET /api/v1/upns/statistics/pwv/now
 # -----------------------------------------------------------------------------
 def test_get_pwv_statistics_now(client: APIClient):
-    """测试获取当前大气可降水量排名统计。"""
+    """降水页: 测试获取当前大气可降水量排名统计。"""
     params = {
         'minLng': minLng_file,
         'maxLat': maxLat_file,
@@ -211,10 +211,10 @@ def test_get_pwv_statistics_now(client: APIClient):
         client,
         f'{UPNS_BASE_PATH}/statistics/pwv/now',
         params,
-        '获取当前大气可降水量统计',
+        '降水页: 获取当前大气可降水量统计',
         'upns_statistics_pwv_now',
-        '3.7.6',
-        '当前大气可降水量统计',
+        '',
+        '降水页: 当前大气可降水量统计',
     )
 
 
@@ -225,16 +225,16 @@ def test_get_pwv_statistics_now(client: APIClient):
 # GET /api/v1/upns/stations/{code}/realtime
 # -----------------------------------------------------------------------------
 def test_get_station_realtime(client: APIClient, code: str):
-    """测试获取指定降水监测站点的最新实时数据。"""
+    """降水页: 测试获取指定降水监测站点的最新实时数据。"""
     path = f'{UPNS_BASE_PATH}/stations/{code}/realtime'
     return _request_and_record(
         client,
         path,
         {},
-        f'获取站点 {code} 实时数据',
+        f'降水页: 获取站点 {code} 实时数据',
         f'upns_station_{code}_realtime',
-        '3.7.7',
-        '单站实时数据',
+        '',
+        '降水页: 单站实时数据',
     )
 
 
@@ -245,7 +245,7 @@ def test_get_station_realtime(client: APIClient, code: str):
 # GET /api/v1/upns/stations/{code}/history
 # -----------------------------------------------------------------------------
 def test_get_station_history(client: APIClient, code: str):
-    """测试获取指定站点在公共时间范围内的多指标历史趋势。"""
+    """降水页: 测试获取指定站点在公共时间范围内的多指标历史趋势。"""
     path = f'{UPNS_BASE_PATH}/stations/{code}/history'
     params = {
         'metrics': 'temperature,humidity,rain,windSpeed,windDirection,pressure,pwv',
@@ -257,10 +257,10 @@ def test_get_station_history(client: APIClient, code: str):
         client,
         path,
         params,
-        f'获取站点 {code} 历史趋势',
+        f'降水页: 获取站点 {code} 历史趋势',
         f'upns_station_{code}_history',
-        '3.7.8',
-        '单站历史趋势',
+        '',
+        '降水页: 单站历史趋势',
     )
 
 
@@ -270,7 +270,7 @@ def test_get_station_history(client: APIClient, code: str):
 # GET /api/v1/upns/statistics/regional
 # -----------------------------------------------------------------------------
 def test_get_regional_statistics(client: APIClient, region_code: str = None):
-    """测试获取区域降水、PWV 和预警统计。"""
+    """降水页: 测试获取区域降水、PWV 和预警统计。"""
     params = {}
     if region_code:
         params['regionCode'] = region_code
@@ -278,36 +278,37 @@ def test_get_regional_statistics(client: APIClient, region_code: str = None):
         client,
         f'{UPNS_BASE_PATH}/statistics/regional',
         params,
-        '获取区域降水统计',
+        '降水页: 获取区域降水统计',
         'upns_statistics_regional',
-        '3.7.9',
-        '区域降水统计',
+        '',
+        '降水页: 区域降水统计',
     )
 
 
 def run_all_tests():
-    """按依赖顺序运行短临降水预警模块的全部 9 个接口测试。"""
+    """按依赖顺序运行降水页的全部 9 个接口测试。"""
     client = APIClient(config.host, config.app_key, config.app_secret, config.timeout)
 
-    # 测试 1：模块整体概览，对应 3.7.1。
+    # 降水页: 模块概览 /api/v1/upns/overview (对应 3.7.1)
     test_get_overview(client)
 
-    # 测试 2：风险评估，对应 3.7.2。
+    # 降水页: 风险评估 /api/v1/upns/risk (对应 3.7.2)
     test_get_risk(client)
 
-    # 测试 3：站点列表，对应 3.7.3；站点编码服务于测试 7、8。
+    # 降水页: 监测站点列表 /api/v1/upns/stations (对应 3.7.3)；站点编码服务于测试 7、8。
     _, station_codes = test_get_stations(client)
 
-    # 测试 4：预警信息列表，对应 3.7.4。
+    # 降水页: 预警信息列表 /api/v1/upns/warnings (对应 3.7.4)
     test_get_warnings(client)
 
-    # 测试 5：过去一小时降雨量统计，对应 3.7.5。
+    # 降水页: 过去一小时降雨量统计 /api/v1/upns/statistics/rain/now (对应 3.7.5)
     test_get_rain_statistics_now(client)
 
-    # 测试 6：当前大气可降水量统计，对应 3.7.6。
+    # 降水页: 当前大气可降水量统计 /api/v1/upns/statistics/pwv/now (对应 3.7.6)
     test_get_pwv_statistics_now(client)
 
-    # 测试 7、8：逐站测试实时数据和历史趋势，对应 3.7.7、3.7.8。
+    # 降水页: 单站实时数据 /api/v1/upns/stations/{code}/realtime、
+    # 降水页: 单站历史趋势 /api/v1/upns/stations/{code}/history (对应 3.7.7、3.7.8)
     if station_codes:
         print(f'\n共获取到 {len(station_codes)} 个降水监测站，开始测试单站接口。\n')
         for code in station_codes:
@@ -317,7 +318,7 @@ def run_all_tests():
     else:
         print('\n站点列表未返回 stationCode，跳过依赖站点编码的接口 7、8。\n')
 
-    # 测试 9：区域降水统计，对应 3.7.9。
+    # 降水页: 区域降水统计 /api/v1/upns/statistics/regional (对应 3.7.9)
     test_get_regional_statistics(client)
 
 

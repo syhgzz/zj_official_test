@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-走航甲烷检测模块API测试
+燃气页
 """
 import sys
 import os
@@ -32,11 +32,12 @@ task_set = []
 
 def test_get_overview(client: APIClient):
     """
-    测试获取模块概览
+    燃气页: 测试获取模块概览
     GET /api/v1/unga/overview
     """
     number = '3.5.1'
-    title = '模块概览'
+    title = '燃气页: 模块概览'
+    path = '/api/v1/unga/overview'
     startTime = startTime_file
     endTime = endTime_file
     minLng = minLng_file
@@ -52,14 +53,14 @@ def test_get_overview(client: APIClient):
         'maxLat': maxLat,
     }
     start_dt = datetime.now()
-    response = client.request('GET', '/api/v1/unga/overview', params=params)
+    response = client.request('GET', path, params=params)
     end_dt = datetime.now()
     elapsed = (end_dt - start_dt).total_seconds()
     
     print_response(
-        '获取走航甲烷模块概览',
+        title,
         'GET',
-        '/api/v1/unga/overview',
+        path,
         response,
         config.verbose,
         number=number,
@@ -68,18 +69,19 @@ def test_get_overview(client: APIClient):
     )
 
     if config.save_response and response:
-        save_response_to_file('unga_overview', response, '/api/v1/unga/overview', params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
+        save_response_to_file('unga_overview', response, path, params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
 
     return response
 
 
 def test_get_tasks(client: APIClient, page_num: int = 1, page_size: int = 20):
     """
-    测试获取检测任务列表
+    燃气页: 测试获取检测任务列表
     GET /api/v1/unga/tasks
     """
     number = '3.5.2'
-    title = '检测任务列表'
+    title = '燃气页: 检测任务列表'
+    path = '/api/v1/unga/tasks'
     startTime = startTime_file
     endTime = endTime_file
     minLng = minLng_file
@@ -97,14 +99,14 @@ def test_get_tasks(client: APIClient, page_num: int = 1, page_size: int = 20):
         'maxLat': maxLat,
     }
     start_dt = datetime.now()
-    response = client.request('GET', '/api/v1/unga/tasks', params=params)
+    response = client.request('GET', path, params=params)
     end_dt = datetime.now()
     elapsed = (end_dt - start_dt).total_seconds()
     
     print_response(
-        '获取检测任务列表',
+        title,
         'GET',
-        '/api/v1/unga/tasks',
+        path,
         response,
         config.verbose,
         number=number,
@@ -113,7 +115,7 @@ def test_get_tasks(client: APIClient, page_num: int = 1, page_size: int = 20):
     )
 
     if config.save_response and response:
-        save_response_to_file('unga_tasks', response, '/api/v1/unga/tasks', params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
+        save_response_to_file('unga_tasks', response, path, params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
 
     global task_set
     if response :
@@ -126,11 +128,12 @@ def test_get_tasks(client: APIClient, page_num: int = 1, page_size: int = 20):
 
 def test_get_task_trajectory(client: APIClient, task_id: int = 1):
     """
-    测试获取任务轨迹数据
+    燃气页: 测试获取任务轨迹数据
     GET /api/v1/unga/tasks/{id}/trajectory
     """
     number = '3.5.3'
-    title = '走航轨迹查询'
+    title = '燃气页: 走航轨迹查询'
+    path = f'/api/v1/unga/tasks/{task_id}/trajectory'
     startTime = startTime_file
     endTime = endTime_file
     minLng = minLng_file
@@ -146,14 +149,14 @@ def test_get_task_trajectory(client: APIClient, task_id: int = 1):
         'maxLat': maxLat,
     }
     start_dt = datetime.now()
-    response = client.request('GET', f'/api/v1/unga/tasks/{task_id}/trajectory', params=params)
+    response = client.request('GET', path, params=params)
     end_dt = datetime.now()
     elapsed = (end_dt - start_dt).total_seconds()
     
     print_response(
-        '获取任务轨迹数据',
+        title,
         'GET',
-        f'/api/v1/unga/tasks/{task_id}/trajectory',
+        path,
         response,
         config.verbose,
         number=number,
@@ -162,18 +165,19 @@ def test_get_task_trajectory(client: APIClient, task_id: int = 1):
     )
 
     if config.save_response and response:
-        save_response_to_file('unga_task_trajectory', response, f'/api/v1/unga/tasks/{task_id}/trajectory', params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
+        save_response_to_file('unga_task_trajectory', response, path, params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
 
     return response
 
 
 def test_get_leaks(client: APIClient, page_num: int = 1, page_size: int = 20):
     """
-    测试获取泄露点列表
+    燃气页: 测试获取泄露点列表
     GET /api/v1/unga/leaks
     """
     number = '3.5.4'
-    title = '泄露点管理'
+    title = '燃气页: 泄露点管理'
+    path = '/api/v1/unga/leaks'
     startTime = startTime_file
     endTime = endTime_file
     minLng = minLng_file
@@ -191,14 +195,14 @@ def test_get_leaks(client: APIClient, page_num: int = 1, page_size: int = 20):
         'maxLat': maxLat,
     }
     start_dt = datetime.now()
-    response = client.request('GET', '/api/v1/unga/leaks', params=params)
+    response = client.request('GET', path, params=params)
     end_dt = datetime.now()
     elapsed = (end_dt - start_dt).total_seconds()
     
     print_response(
-        '获取泄露点列表',
+        title,
         'GET',
-        '/api/v1/unga/leaks',
+        path,
         response,
         config.verbose,
         number=number,
@@ -207,18 +211,19 @@ def test_get_leaks(client: APIClient, page_num: int = 1, page_size: int = 20):
     )
 
     if config.save_response and response:
-        save_response_to_file('unga_leaks', response, '/api/v1/unga/leaks', params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
+        save_response_to_file('unga_leaks', response, path, params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
 
     return response
 
 
 def test_get_statistics(client: APIClient):
     """
-    测试获取走航统计数据
+    燃气页: 测试获取走航统计数据
     GET /api/v1/unga/statistics
     """
     number = '3.5.5'
-    title = '统计分析'
+    title = '燃气页: 统计分析'
+    path = '/api/v1/unga/statistics'
     startTime = startTime_file
     endTime = endTime_file
     minLng = minLng_file
@@ -235,14 +240,14 @@ def test_get_statistics(client: APIClient):
         'maxLat': maxLat,
     }
     start_dt = datetime.now()
-    response = client.request('GET', '/api/v1/unga/statistics', params=params)
+    response = client.request('GET', path, params=params)
     end_dt = datetime.now()
     elapsed = (end_dt - start_dt).total_seconds()
     
     print_response(
-        '获取走航统计数据',
+        title,
         'GET',
-        '/api/v1/unga/statistics',
+        path,
         response,
         config.verbose,
         number=number,
@@ -251,17 +256,18 @@ def test_get_statistics(client: APIClient):
     )
 
     if config.save_response and response:
-        save_response_to_file('unga_statistics', response, '/api/v1/unga/statistics', params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
+        save_response_to_file('unga_statistics', response, path, params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
 
     return response
 
 def test_get_tasks_trajectory(client: APIClient, task_id: int = 1):
     """
-    测试获取地理区域内轨迹数据
+    燃气页: 测试获取地理区域内轨迹数据
     GET /api/v1/unga/tasks/trajectory
     """
     number = '3.5.6'
-    title = '走航轨迹查询'
+    title = '燃气页: 走航轨迹查询'
+    path = '/api/v1/unga/tasks/trajectory'
     startTime = startTime_file
     endTime = endTime_file
     minLng = minLng_file
@@ -277,14 +283,14 @@ def test_get_tasks_trajectory(client: APIClient, task_id: int = 1):
         'maxLat': maxLat,
     }
     start_dt = datetime.now()
-    response = client.request('GET', f'/api/v1/unga/tasks/trajectory', params=params)
+    response = client.request('GET', path, params=params)
     end_dt = datetime.now()
     elapsed = (end_dt - start_dt).total_seconds()
     
     print_response(
-        '获取地理区域内轨迹数据',
+        title,
         'GET',
-        f'/api/v1/unga/tasks/trajectory',
+        path,
         response,
         config.verbose,
         number=number,
@@ -293,17 +299,18 @@ def test_get_tasks_trajectory(client: APIClient, task_id: int = 1):
     )
 
     if config.save_response and response:
-        save_response_to_file('unga_tasks_trajectory', response, f'/api/v1/unga/tasks/trajectory', params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
+        save_response_to_file('unga_tasks_trajectory', response, path, params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
 
     return response
 
 def test_get_statistics_ext(client: APIClient):
     """
-    测试获取区域内走航统计数据
+    燃气页: 测试获取区域内走航统计数据
     GET /api/v1/unga/statistics/ext
     """
     number = '3.5.7'
-    title = '统计分析'
+    title = '燃气页: 统计分析'
+    path = '/api/v1/unga/statistics/ext'
     startTime = startTime_file
     endTime = endTime_file
     minLng = minLng_file
@@ -320,14 +327,14 @@ def test_get_statistics_ext(client: APIClient):
         'maxLat': maxLat,
     }
     start_dt = datetime.now()
-    response = client.request('GET', '/api/v1/unga/statistics/ext', params=params)
+    response = client.request('GET', path, params=params)
     end_dt = datetime.now()
     elapsed = (end_dt - start_dt).total_seconds()
     
     print_response(
-        '获取走航统计数据',
+        title,
         'GET',
-        '/api/v1/unga/statistics/ext',
+        path,
         response,
         config.verbose,
         number=number,
@@ -336,36 +343,83 @@ def test_get_statistics_ext(client: APIClient):
     )
 
     if config.save_response and response:
-        save_response_to_file('unga_statistics_ext', response, '/api/v1/unga/statistics/ext', params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
+        save_response_to_file('unga_statistics_ext', response, path, params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
+
+    return response
+
+
+def test_update_sampling_point_status(client: APIClient, status: str):
+    """
+    燃气页: 测试设置采样点处置状态
+    PUT /api/v1/unga/leaks/{samplingPointId}/status
+
+    status取值:
+        unchecked: 疑似
+        checking: 已处置
+        confirmed: 已确认
+    """
+    number = '3.5.8'
+    title = '燃气页: 设置采样点处置状态'
+    samplingPointId = '180500001587_20190903_2254:leak_0'  # 原状态: unchecked
+    path = f'/api/v1/unga/leaks/{samplingPointId}/status'
+    data = {
+        'status': status,
+    }
+    start_dt = datetime.now()
+    response = client.request('PUT', path, data=data)
+    end_dt = datetime.now()
+    elapsed = (end_dt - start_dt).total_seconds()
+
+    print_response(
+        title,
+        'PUT',
+        path,
+        response,
+        config.verbose,
+        number=number,
+        title=title,
+        elapsed_seconds=elapsed,
+    )
+
+    if config.save_response and response:
+        save_response_to_file('unga_sampling_point_status', response, path, data, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
 
     return response
 
 
 def run_all_tests():
-    """运行走航甲烷检测模块的所有测试 1 2 3 4 5 6"""
+    """运行燃气页模块的所有测试 1 2 3 4 5 6"""
     client = APIClient(config.host, config.app_key, config.app_secret, config.timeout)
 
-    # 测试1: 获取模块概览
+    # 燃气页: 模块概览 /api/v1/unga/overview
     test_get_overview(client) # 3.5.1
 
-    # 测试2: 获取检测任务列表
+    # 燃气页: 检测任务列表 /api/v1/unga/tasks
     test_get_tasks(client, page_num=1, page_size=2000) # 3.5.2
 
-    # 测试3: 获取任务轨迹数据
+    # 燃气页: 走航轨迹查询 /api/v1/unga/tasks/{id}/trajectory
     for task_id in task_set:
         test_get_task_trajectory(client, task_id=task_id) # 3.5.3
 
-    # 测试4: 获取泄露点列表
+    # 燃气页: 泄露点管理 /api/v1/unga/leaks
     test_get_leaks(client, page_num=1, page_size=2000) # 3.5.4
 
-    # 测试5: 获取走航统计数据
+    # 燃气页: 统计分析 /api/v1/unga/statistics
     # test_get_statistics(client) # 3.5.5
     
-    # 测试6: 获取地理区域内轨迹数据
+    # 燃气页: 走航轨迹查询 /api/v1/unga/tasks/trajectory
     test_get_tasks_trajectory(client) # 3.5.6
 
-    # 测试7: 获取区域内走航统计数据
+    # 燃气页: 统计分析 /api/v1/unga/statistics/ext
     test_get_statistics_ext(client) # 3.5.7
+
+    # 燃气页: 设置采样点处置状态 /api/v1/unga/leaks/{samplingPointId}/status
+    test_update_sampling_point_status(client, status='checking') # 3.5.8
+    test_update_sampling_point_status(client, status='confirmed') # 3.5.8
+
+    # 燃气页: 设置采样点处置状态 /api/v1/unga/leaks/{samplingPointId}/status
+    # 测试unchecked状态，同时恢复原状态
+    test_update_sampling_point_status(client, status='unchecked') # 3.5.8
 
 if __name__ == '__main__':
     run_all_tests()

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-北斗设备状态模块API测试
+卫星模块
 """
 import sys
 import os
@@ -26,11 +26,12 @@ maxLat_file = maxLat_global
 
 def test_get_overview(client: APIClient):
     """
-    测试获取模块概览
+    卫星模块: 测试获取模块概览
     GET /api/v1/gnss-device/overview
     """
     number = '3.6.1'
-    title = '模块概览'
+    title = '卫星模块: 模块概览'
+    path = '/api/v1/gnss-device/overview'
     startTime = startTime_file
     endTime = endTime_file
     minLng = minLng_file
@@ -44,14 +45,14 @@ def test_get_overview(client: APIClient):
         'maxLat': maxLat,
     }
     start_dt = datetime.now()
-    response = client.request('GET', '/api/v1/gnss-device/overview', params=params)
+    response = client.request('GET', path, params=params)
     end_dt = datetime.now()
     elapsed = (end_dt - start_dt).total_seconds()
     
     print_response(
-        '获取北斗设备模块概览',
+        title,
         'GET',
-        '/api/v1/gnss-device/overview',
+        path,
         response,
         config.verbose,
         number=number,
@@ -60,7 +61,7 @@ def test_get_overview(client: APIClient):
     )
 
     if config.save_response and response:
-        save_response_to_file('gnss_device_overview', response, '/api/v1/gnss-device/overview', params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
+        save_response_to_file('gnss_device_overview', response, path, params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
 
     return response
 
@@ -69,11 +70,12 @@ station_codes = []
 
 def test_get_stations(client: APIClient, page_num: int = 1, page_size: int = 20):
     """
-    测试获取站点列表
+    卫星模块: 测试获取站点列表
     GET /api/v1/gnss-device/stations
     """
     number = '3.6.2'
-    title = '站点列表及状态'
+    title = '卫星模块: 站点列表及状态'
+    path = '/api/v1/gnss-device/stations'
     startTime = startTime_file
     endTime = endTime_file
     minLng = minLng_file
@@ -89,14 +91,14 @@ def test_get_stations(client: APIClient, page_num: int = 1, page_size: int = 20)
         'maxLat': maxLat,
     }
     start_dt = datetime.now()
-    response = client.request('GET', '/api/v1/gnss-device/stations', params=params)
+    response = client.request('GET', path, params=params)
     end_dt = datetime.now()
     elapsed = (end_dt - start_dt).total_seconds()
     
     print_response(
-        '获取站点列表',
+        title,
         'GET',
-        '/api/v1/gnss-device/stations',
+        path,
         response,
         config.verbose,
         number=number,
@@ -107,7 +109,7 @@ def test_get_stations(client: APIClient, page_num: int = 1, page_size: int = 20)
 
 
     if config.save_response and response:
-        save_response_to_file('gnss_device_stations', response, '/api/v1/gnss-device/stations', params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
+        save_response_to_file('gnss_device_stations', response, path, params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
 
     # station_codes = []  # 定义一个空列表来存储站点编码
     global station_codes  # 声明使用全局变量
@@ -121,11 +123,12 @@ def test_get_stations(client: APIClient, page_num: int = 1, page_size: int = 20)
 
 def test_get_station_realtime(client: APIClient, code: str = "BJ001"):
     """
-    测试获取站点实时数据
+    卫星模块: 测试获取站点实时数据
     GET /api/v1/gnss-device/stations/{code}/realtime
     """
     number = '3.6.3'
-    title = '单站实时数据'
+    title = '卫星模块: 单站实时数据'
+    path = f'/api/v1/gnss-device/stations/{code}/realtime'
     startTime = startTime_file
     endTime = endTime_file
     minLng = minLng_file
@@ -142,14 +145,14 @@ def test_get_station_realtime(client: APIClient, code: str = "BJ001"):
     for code in station_codes:
     # code = 'CQQX0038'
         start_dt = datetime.now()
-        response = client.request('GET', f'/api/v1/gnss-device/stations/{code}/realtime', params=params)
+        response = client.request('GET', path, params=params)
         end_dt = datetime.now()
         elapsed = (end_dt - start_dt).total_seconds()
         
         print_response(
-            '获取站点实时数据',
+            title,
             'GET',
-            f'/api/v1/gnss-device/stations/{code}/realtime',
+            path,
             response,
             config.verbose,
             number=number,
@@ -160,7 +163,7 @@ def test_get_station_realtime(client: APIClient, code: str = "BJ001"):
             save_response_to_file(
                 f'gnss_device_stations_{code}_realtime',
                 response,
-                f'/api/v1/gnss-device/stations/{code}/realtime',
+                path,
                 params,
                 config.response_dir,
                 number=number,
@@ -173,16 +176,16 @@ def test_get_station_realtime(client: APIClient, code: str = "BJ001"):
 
 
 def run_all_tests():
-    """运行北斗设备状态模块的所有测试"""
+    """运行卫星模块的所有测试"""
     client = APIClient(config.host, config.app_key, config.app_secret, config.timeout)
 
-    # 测试1: 获取模块概览
+    # 卫星模块: 模块概览 /api/v1/gnss-device/overview
     test_get_overview(client)
 
-    # 测试2: 获取站点列表
+    # 卫星模块: 站点列表及状态 /api/v1/gnss-device/stations
     test_get_stations(client)
 
-    # 测试3: 获取站点实时数据
+    # 卫星模块: 单站实时数据 /api/v1/gnss-device/stations/{code}/realtime
     test_get_station_realtime(client)
 
 
