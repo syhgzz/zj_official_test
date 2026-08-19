@@ -100,8 +100,8 @@ class APIClient:
                 return None
 
         except requests.exceptions.Timeout:
-            print(f"请求超时: {url}")
-            return None
+            print(f"请求超时(超过{self.timeout}s): {url}")
+            return {'code': None, 'timeout': True, 'msg': f'请求超时(超过{self.timeout}s)'}
         except requests.exceptions.ConnectionError as e:
             print(f"连接失败: {e}")
             return None

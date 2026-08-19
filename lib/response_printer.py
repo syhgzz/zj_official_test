@@ -96,6 +96,9 @@ def _evaluate_response(response: Any) -> Tuple[bool, str, Any]:
     if not isinstance(response, dict):
         return False, f"响应格式异常: {type(response).__name__}", None
 
+    if response.get('timeout'):
+        return False, response.get('msg') or '请求超时', None
+
     if 'code' not in response:
         return False, '响应缺少code字段', None
 
@@ -161,7 +164,7 @@ def _sanitize_path_for_filename(path_value: Any) -> str:
         return 'root'
 
     safe = text
-    for old, new in (('/', '_'), ('-', '_'), ('{', ''), ('}', ''), (' ', '_')):
+    for old, new in (('/', '_'), ('-', '_'), ('{', ''), ('}', ''), (' ', '_'), (':', '_')):
         safe = safe.replace(old, new)
 
     while '__' in safe:
@@ -498,13 +501,30 @@ def save_response_to_file(
 
     filepath = os.path.join(response_dir, filename)
 
-    # 按固定顺序写入: number -> title -> path -> request_params -> (timing) -> response
+    # 编号为空时不写入 number；其他字段保持固定顺序。
+    # 用副本转换时间参数，避免影响调用方传入的原始 request_params
+    saved_params = {}
+    for k, v in (deepcopy(request_params) if request_params else {}).items():
+        if k in ('startTime', 'endTime') and v not in (None, ''):
+            try:
+                timestamp = int(v)
+            except (TypeError, ValueError):
+                saved_params[k] = v
+                continue
+            # 毫秒时间戳 -> 人类可读时间字符串，原时间戳保留为 *Stamp 字段
+            seconds = timestamp / 1000 if timestamp > 1e12 else timestamp
+            saved_params[k] = datetime.fromtimestamp(seconds).strftime('%Y/%m/%d %H:%M:%S')
+            saved_params[k + 'Stamp'] = v
+        else:
+            saved_params[k] = v
+
     payload = {
-        'number': number,
         'title': title,
         'path': path,
-        'request_params': request_params or {},
+        'request_params': saved_params,
     }
+    if number:
+        payload = {'number': number, **payload}
 
     if start_time is not None and end_time is not None:
         elapsed = (end_time - start_time).total_seconds()
