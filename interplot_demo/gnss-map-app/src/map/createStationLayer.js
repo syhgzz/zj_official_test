@@ -19,10 +19,10 @@ function iconForStatus(status) {
 
 export function extractStationFromLayerEvent(event) {
   const candidates = [
-    event?.data?.data,
-    event?.data?.target,
-    event?.marker,
     event?.target,
+    event?.marker,
+    event?.data?.target,
+    event?.data?.data,
     event?.data,
   ]
 
@@ -58,7 +58,7 @@ export function createStationLayer({ AMap, map, stations, onStationClick }) {
     const station = extractStationFromLayerEvent(event)
     if (station) onStationClick(station)
   }
-  layer.on('click', handleClick)
+  markers.forEach(marker => marker.on('click', handleClick))
   map.add(layer)
 
   let destroyed = false
@@ -73,7 +73,7 @@ export function createStationLayer({ AMap, map, stations, onStationClick }) {
     destroy() {
       if (destroyed) return
       destroyed = true
-      layer.off('click', handleClick)
+      markers.forEach(marker => marker.off('click', handleClick))
       map.remove(layer)
     },
   }
