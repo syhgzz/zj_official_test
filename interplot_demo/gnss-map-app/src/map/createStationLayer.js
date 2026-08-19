@@ -1,6 +1,6 @@
 const STATUS_COLORS = {
   online: { core: '#00efaa', glow: '#00efaa' },
-  offline: { core: '#ff5364', glow: '#ff3148' },
+  offline: { core: '#00efaa', glow: '#00efaa' },
   unknown: { core: '#92a8bd', glow: '#6f879d' },
 }
 

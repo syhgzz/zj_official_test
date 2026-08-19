@@ -107,6 +107,7 @@ describe('createStationLayer', () => {
 
     expect(controller.markerCount).toBe(3)
     expect(controller.layer.markers).toHaveLength(3)
+    expect(decodeURIComponent(controller.layer.markers[1].options.icon.image)).toContain('#00efaa')
     expect(controller.layer.listeners.size).toBe(0)
     expect(controller.layer.markers.every(marker => marker.listeners.size === 1)).toBe(true)
     expect(new Set(controller.layer.markers.map(marker => marker.listeners.get('click'))).size).toBe(1)
