@@ -4,6 +4,7 @@
 """
 import sys
 import os
+from contextlib import contextmanager
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
@@ -15,13 +16,45 @@ try:
 except ImportError:
     from common import *
 
-
+# 模块私有配置，运行卫星模块测试时可临时覆盖，调用结束后恢复
 startTime_file = startTime_global
 endTime_file = endTime_global
 minLng_file = minLng_global
 maxLng_file = maxLng_global
 minLat_file = minLat_global
 maxLat_file = maxLat_global
+
+_NATIONWIDE_BBOX = loc_list['全国']
+_NATIONWIDE_START_TIME = int(datetime(2026, 5, 5, 0, 0, 0).timestamp()) * 1000
+_NATIONWIDE_END_TIME = int(datetime(2026, 8, 19, 23, 59, 59).timestamp()) * 1000
+
+
+@contextmanager
+def _nationwide_config():
+    """临时使用全国范围与时间，退出后恢复原来的私有配置。"""
+    global startTime_file, endTime_file, minLng_file, maxLng_file, minLat_file, maxLat_file
+    original = (
+        startTime_file,
+        endTime_file,
+        minLng_file,
+        maxLng_file,
+        minLat_file,
+        maxLat_file,
+    )
+    startTime_file = _NATIONWIDE_START_TIME
+    endTime_file = _NATIONWIDE_END_TIME
+    minLng_file, maxLng_file, minLat_file, maxLat_file = _NATIONWIDE_BBOX
+    try:
+        yield
+    finally:
+        (
+            startTime_file,
+            endTime_file,
+            minLng_file,
+            maxLng_file,
+            minLat_file,
+            maxLat_file,
+        ) = original
 
 
 def test_get_overview(client: APIClient):
@@ -100,10 +133,8 @@ def test_get_stations(
         elapsed_seconds = (all_records_end_dt - all_records_start_dt).total_seconds()
         print(f'获取所有记录站点列表总时间: {elapsed_seconds:.3f} 秒')
 
-    current_page = page_num
-    last_page = page_num
-
-    while current_page <= last_page:
+    def fetch_page(current_page):
+        """请求一页站点列表，超时或空响应时自动重试一次。"""
         params = {
             'pageNum': current_page,
             'pageSize': page_size,
@@ -113,14 +144,11 @@ def test_get_stations(
             'maxLat': maxLat,
         }
         start_dt = datetime.now()
-        if first_start_dt is None:
-            first_start_dt = start_dt
         response = client.request('GET', path, params=params)
         if not response or response.get('timeout'):
             print(f'第 {current_page} 页请求失败或超时，重试 1 次')
             response = client.request('GET', path, params=params)
         end_dt = datetime.now()
-        last_end_dt = end_dt
         elapsed = (end_dt - start_dt).total_seconds()
         page_title = f'{title}（第{current_page}页）'
 
@@ -148,27 +176,38 @@ def test_get_stations(
                 end_time=end_dt,
             )
 
+        return response, start_dt, end_dt
+
+    # 先请求第一页，用接口返回的 total 计算总页数，再拉取剩余页面
+    first_response, first_start_dt, first_end_dt = fetch_page(page_num)
+    last_end_dt = first_end_dt
+
+    if not first_response or first_response.get('code') != 200:
+        failed_pages.append(page_num)
+        print_all_records_elapsed()
+        raise RuntimeError(f'站点列表请求失败页码: {failed_pages}')
+
+    data = first_response.get('data') or {}
+    try:
+        reported_total = int(data.get('total'))
+    except (TypeError, ValueError):
+        print_all_records_elapsed()
+        raise RuntimeError(f'接口返回的站点总数无效: {data.get("total")}')
+    if reported_total < 0:
+        print_all_records_elapsed()
+        raise RuntimeError(f'接口返回的站点总数不能为负数: {reported_total}')
+
+    total_page_count = max(1, (reported_total + page_size - 1) // page_size)
+    last_page = max(page_num, total_page_count)
+    all_stations.extend(data.get('stations') or [])
+
+    for current_page in range(page_num + 1, last_page + 1):
+        response, _, end_dt = fetch_page(current_page)
+        last_end_dt = end_dt
         if not response or response.get('code') != 200:
             failed_pages.append(current_page)
-            current_page += 1
             continue
-
-        data = response.get('data') or {}
-        stations = data.get('stations') or []
-        if first_response is None:
-            first_response = response
-            try:
-                reported_total = int(data.get('total'))
-            except (TypeError, ValueError):
-                print_all_records_elapsed()
-                raise RuntimeError(f'接口返回的站点总数无效: {data.get("total")}')
-            if reported_total < 0:
-                print_all_records_elapsed()
-                raise RuntimeError(f'接口返回的站点总数不能为负数: {reported_total}')
-            total_page_count = max(1, (reported_total + page_size - 1) // page_size)
-            last_page = max(page_num, total_page_count)
-        all_stations.extend(stations)
-        current_page += 1
+        all_stations.extend((response.get('data') or {}).get('stations') or [])
 
     if failed_pages:
         print_all_records_elapsed()
@@ -295,14 +334,15 @@ def run_all_tests():
     """运行北斗设备状态模块的所有测试"""
     client = APIClient(config.host, config.app_key, config.app_secret, config.timeout)
 
-    # 测试1: 获取模块概览
-    test_get_overview(client)
+    with _nationwide_config():
+        # 测试1: 获取模块概览
+        test_get_overview(client)
 
-    # 测试2: 获取站点列表
-    test_get_stations(client)
+        # 测试2: 获取站点列表
+        test_get_stations(client)
 
-    # # 卫星模块: 单站实时数据 /api/v1/gnss-device/stations/{code}/realtime
-    # test_get_station_realtime(client)
+        # # 卫星模块: 单站实时数据 /api/v1/gnss-device/stations/{code}/realtime
+        # test_get_station_realtime(client)
 
 
 if __name__ == '__main__':
