@@ -120,6 +120,72 @@ def test_get_stations(client: APIClient, page_num: int = 1, page_size: int = 20)
     
     return response
 
+def test_get_nation_stations(client, page_size=100):
+    """
+    卫星模块: 测试获取站点列表
+    GET /api/v1/gnss-device/stations
+    """
+    title = '卫星模块: 站点列表及状态'
+    path = '/api/v1/gnss-device/stations'
+    minLng, maxLng, minLat, maxLat = loc_list['全国']
+    params = {
+        'pageNum': 1,
+        'pageSize': page_size,
+        'minLng': minLng,
+        'maxLng': maxLng,
+        'minLat': minLat,
+        'maxLat': maxLat,
+    }
+    all_stations = []
+    total_pages = 1
+    successful_elapsed = 0.0
+    page = 1
+    while page <= total_pages:
+        params['pageNum'] = page
+        start_dt = datetime.now()
+        response = client.request('GET', path, params=params)
+        end_dt = datetime.now()
+        elapsed = (end_dt - start_dt).total_seconds()
+        if response and response.get('code') == 200:
+            successful_elapsed += elapsed
+            data = response.get('data') or {}
+            if page == 1:
+                total = int(data['total'])
+                total_pages = max(1, (total + page_size - 1) // page_size)
+            all_stations.extend(data.get('stations') or [])
+
+        title_page = title + f'_第{page}页' + f"_pageSize={page_size}"
+        print_response(
+            title_page,
+            'GET',
+            path,
+            response,
+            config.verbose,
+            number='',
+            title=title_page,
+            elapsed_seconds=elapsed,
+        )
+        if config.save_response and response and response.get('code') == 200:
+            save_response_to_file(
+                title_page,
+                response,
+                path,
+                params,
+                config.response_dir,
+                number='',
+                title=title_page,
+                start_time=start_dt,
+                end_time=end_dt,
+            )
+
+
+        page += 1
+
+
+
+    print(f'抓取全国所有站点总时长: {successful_elapsed:.3f} 秒')
+
+    return 
 
 def test_get_station_realtime(client: APIClient, code: str = "BJ001"):
     """
@@ -183,10 +249,16 @@ def run_all_tests():
     test_get_overview(client)
 
     # 卫星模块: 站点列表及状态 /api/v1/gnss-device/stations
-    test_get_stations(client)
+    # test_get_stations(client)
+
+    # 卫星模块: 获取全国站点列表及状态 /api/v1/gnss-device/stations
+    # test_get_nation_stations(client)
+
+    # 卫星模块: 获取全国站点列表及状态 /api/v1/gnss-device/stations
+    test_get_nation_stations(client, page_size=3500)
 
     # 卫星模块: 单站实时数据 /api/v1/gnss-device/stations/{code}/realtime
-    test_get_station_realtime(client)
+    # test_get_station_realtime(client)
 
 
 if __name__ == '__main__':

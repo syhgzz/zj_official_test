@@ -7,12 +7,7 @@ loc_list = {
     '天津':[116.919, 117.831, 38.695, 39.525], # 天津
     '全国':[83.353, 126.196, 21.928, 47.096], # 全国
 }
-#根据测试需求切换默认值
 
 minLng_global, maxLng_global, minLat_global, maxLat_global = loc_list['重庆']
 startTime_global = int(datetime(2026,5,5,0,0,0).timestamp()) * 1000    
 endTime_global = int(datetime(2026,6,5,23,59,59).timestamp()) * 1000
-
-# minLng_global, maxLng_global, minLat_global, maxLat_global = loc_list['全国']
-# startTime_global = int(datetime(2026,5,5,0,0,0).timestamp()) * 1000    
-# endTime_global = int(datetime(2026,8,19,23,59,59).timestamp()) * 1000
