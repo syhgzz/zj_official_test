@@ -122,7 +122,7 @@ def test_get_stations(client: APIClient, page_num: int = 1, page_size: int = 20)
 
 def test_get_nation_stations(client, page_size=100):
     """
-    卫星模块: 测试获取站点列表
+    卫星模块: 测试获取全国站点列表
     GET /api/v1/gnss-device/stations
     """
     title = '卫星模块: 站点列表及状态'

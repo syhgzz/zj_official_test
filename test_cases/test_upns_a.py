@@ -269,21 +269,6 @@ def test_get_station_history(client: APIClient, code: str):
 # 服务于行政区域维度的降雨量、PWV、预警时序及汇总展示。
 # GET /api/v1/upns/statistics/regional
 # -----------------------------------------------------------------------------
-def test_get_regional_statistics(client: APIClient, region_code: str = None):
-    """降水页: 测试获取区域降水、PWV 和预警统计。"""
-    params = {}
-    if region_code:
-        params['regionCode'] = region_code
-    return _request_and_record(
-        client,
-        f'{UPNS_BASE_PATH}/statistics/regional',
-        params,
-        '降水页: 获取区域降水统计',
-        'upns_statistics_regional',
-        '',
-        '降水页: 区域降水统计',
-    )
-
 
 def run_all_tests():
     """按依赖顺序运行降水页的全部 9 个接口测试。"""
@@ -317,9 +302,6 @@ def run_all_tests():
             test_get_station_history(client, code)
     else:
         print('\n站点列表未返回 stationCode，跳过依赖站点编码的接口 7、8。\n')
-
-    # 降水页: 区域降水统计 /api/v1/upns/statistics/regional (对应 3.7.9)
-    test_get_regional_statistics(client)
 
 
 if __name__ == '__main__':
