@@ -39,14 +39,10 @@ DEFAULT_APP_SECRET = "test-app-secret-123456"
 
 # 任务指定的默认请求参数
 DEFAULT_PARAMS = {
-    # "minLng": 105.782,
-    # "maxLng": 108.345,
-    # "minLat": 28.999,
-    # "maxLat": 30.147,
-    "minLng": 112.975,
-    "maxLng": 114.115,
-    "minLat": 26.038,
-    "maxLat": 28.021,
+    "minLng": 105.782,
+    "maxLng": 108.345,
+    "minLat": 28.999,
+    "maxLat": 30.147,
     # "issue": "20200222",
     "issue": "20250203",
     "dataType": "subsidence",
