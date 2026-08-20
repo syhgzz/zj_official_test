@@ -17,64 +17,14 @@ except ImportError:
     from common import *
 
 
-# startTime_file = startTime_global
-# endTime_file = endTime_global
-startTime_file = int(datetime(2025,1,1,0,0,0).timestamp()) * 1000    
-endTime_file = int(datetime(2025,2,28,23,59,59).timestamp()) * 1000
-minLng_file = minLng_global
-maxLng_file = maxLng_global
-minLat_file = minLat_global
-maxLat_file = maxLat_global
 point_set = set()
 issue_list = []
 
-def run_all_tests():
-    """运行沉降页模块的所有测试"""
-    client = APIClient(config.host, config.app_key, config.app_secret, config.timeout)
-
-    # 沉降页: 模块概览 /api/v1/upss/overview
-    # test_get_overview(client) # 3.4.1
-    # 沉降页: 沉降期列表 /api/v1/upss/periods
-    test_get_periods(client) # 3.4.2
-    # 沉降页: 期次汇总 /api/v1/upss/periods/{issue}/summary
-    # test_get_period_summary(client) # 3.4.3
-    # 沉降页: 沉降地图（热力图） /api/v1/upss/statistics/regional
-    # for issue in issue_list:
-    #     for pg in range(1, 100):
-    #         test_get_regional_statistics(client, issue=issue, pageNum=pg) # 3.4.5
-    # 沉降页: 沉降速率 /api/v1/upss/statistics/gridRate
-    #     test_get_grid_rate(client, issue=issue) # 3.4.6
-    # 沉降页: 沉降速率梯度 /api/v1/upss/statistics/gridGradient
-    #     test_get_grid_gradient(client, issue=issue) # 3.4.7
-    # 沉降页: 预警信息 /api/v1/upss/visualization/warning/issue
-    test_get_warning_issue(client) # 3.4.8
-    # 沉降页: 最大沉降点时序统计 /api/v1/upss/visualization/max-subsidence/timeseries
-    test_get_max_subsidence_timeseries(client) # 3.4.10
-    # 沉降页: 前五沉降梯度值位置统计 /api/v1/upss/visualization/top-gradient
-    test_get_top_gradient(client) # 3.4.11
-    # 沉降页: 风险评估 /api/v1/upss/risk
-    # test_get_risk(client) # 3.4.12
-    
-    # 成都接口更改，不通过pointcode获取单点历史数据
-    # 沉降页: 单点沉降历史 /api/v1/upss/points/{code}/history
-    # point_set.add('1305')  # 添加一个默认点位，确保有数据可测
-    # for pc in point_set:
-    #     test_get_point_history(client, pointcode=pc) # 3.4.4
-
-    # 沉降页: 沉降态势统计 /api/v1/upss/visualization/statistics/issue
-    test_get_statistics_issue(client) # 3.4.9 暂时不测
-
-def test_get_overview(client: APIClient):
+def test_get_overview(client: APIClient, startTime, endTime, minLng, maxLng, minLat, maxLat):
     """沉降页: 测试获取模块概览"""
     number = '3.4.1'
     title = '沉降页: 模块概览'
     path = '/api/v1/upss/overview'
-    startTime = startTime_file
-    endTime = endTime_file
-    minLng = minLng_file
-    maxLng = maxLng_file
-    minLat = minLat_file
-    maxLat = maxLat_file
     params = {
         'startTime': startTime,
         'endTime': endTime,
@@ -103,17 +53,11 @@ def test_get_overview(client: APIClient):
     return response
 
 
-def test_get_periods(client: APIClient):
+def test_get_periods(client: APIClient, startTime, endTime, minLng, maxLng, minLat, maxLat):
     """沉降页: 测试获取沉降期次列表"""
     number = '3.4.2'
     title = '沉降页: 沉降期列表'
     path = '/api/v1/upss/periods'
-    startTime = startTime_file
-    endTime = endTime_file
-    minLng = minLng_file
-    maxLng = maxLng_file
-    minLat = minLat_file
-    maxLat = maxLat_file
     params = {
         # 'pageNum': 1,
         # 'pageSize': 20,
@@ -149,18 +93,12 @@ def test_get_periods(client: APIClient):
     return response
 
 
-def test_get_period_summary(client: APIClient, issue: str = "20221220"):
+def test_get_period_summary(client: APIClient, startTime, endTime, minLng, maxLng, minLat, maxLat, issue: str = "20221220"):
     """沉降页: 测试获取期次汇总统计"""
     number = '3.4.3'
     title = '沉降页: 期次汇总'
     issue = "20220424"
     path = f'/api/v1/upss/periods/{issue}/summary'
-    startTime = startTime_file
-    endTime = endTime_file
-    minLng = minLng_file
-    maxLng = maxLng_file
-    minLat = minLat_file
-    maxLat = maxLat_file
     params = {
         'startTime': startTime,
         'endTime': endTime,
@@ -189,18 +127,12 @@ def test_get_period_summary(client: APIClient, issue: str = "20221220"):
     return response
 
 
-def test_get_point_history(client: APIClient, pointcode: str):
+def test_get_point_history(client: APIClient, startTime, endTime, minLng, maxLng, minLat, maxLat, pointcode: str):
     """沉降页: 测试获取单点沉降历史"""
     number = '3.4.4'
     title = '沉降页: 单点沉降历史'
     code = pointcode
     path = f'/api/v1/upss/points/{code}/history'
-    startTime = startTime_file
-    endTime = endTime_file
-    minLng = minLng_file
-    maxLng = maxLng_file
-    minLat = minLat_file
-    maxLat = maxLat_file
     params = {
         # 'startIssue': '20180120',
         # 'endIssue': '20240101',
@@ -231,17 +163,11 @@ def test_get_point_history(client: APIClient, pointcode: str):
     return response
 
 
-def test_get_regional_statistics(client: APIClient, issue: str = None, pageNum: int = 1):
+def test_get_regional_statistics(client: APIClient, startTime, endTime, minLng, maxLng, minLat, maxLat, issue: str = None, pageNum: int = 1):
     """沉降页: 测试获取区域沉降统计"""
     number = '3.4.5'
     title = '沉降页: 沉降地图（热力图）'
     path = '/api/v1/upss/statistics/regional'
-    startTime = startTime_file
-    endTime = endTime_file
-    minLng = minLng_file
-    maxLng = maxLng_file
-    minLat = minLat_file
-    maxLat = maxLat_file
     params = {
         'issue': issue if issue else '20250203',
         'dimension': 'admin',
@@ -277,17 +203,11 @@ def test_get_regional_statistics(client: APIClient, issue: str = None, pageNum: 
     return response
 
 
-def test_get_grid_rate(client: APIClient, issue: str = None):
+def test_get_grid_rate(client: APIClient, startTime, endTime, minLng, maxLng, minLat, maxLat, issue: str = None):
     """沉降页: 测试获取网格沉降速率"""
     number = '3.4.6'
     title = '沉降页: 沉降速率'
     path = '/api/v1/upss/statistics/gridRate'
-    startTime = startTime_file
-    endTime = endTime_file
-    minLng = minLng_file
-    maxLng = maxLng_file
-    minLat = minLat_file
-    maxLat = maxLat_file
     params = {
         'issue': issue if issue else '20250203',
         'minLng': minLng,
@@ -320,17 +240,11 @@ def test_get_grid_rate(client: APIClient, issue: str = None):
     return response
 
 
-def test_get_grid_gradient(client: APIClient, issue: str = None):
+def test_get_grid_gradient(client: APIClient, startTime, endTime, minLng, maxLng, minLat, maxLat, issue: str = None):
     """沉降页: 测试获取网格沉降梯度"""
     number = '3.4.7'
     title = '沉降页: 沉降速率梯度'
     path = '/api/v1/upss/statistics/gridGradient'
-    startTime = startTime_file
-    endTime = endTime_file
-    minLng = minLng_file
-    maxLng = maxLng_file
-    minLat = minLat_file
-    maxLat = maxLat_file
     params = {
         'issue': issue if issue else '20250203',
         'minLng': minLng,
@@ -363,17 +277,11 @@ def test_get_grid_gradient(client: APIClient, issue: str = None):
     return response
 
 
-def test_get_warning_issue(client: APIClient):
+def test_get_warning_issue(client: APIClient, startTime, endTime, minLng, maxLng, minLat, maxLat):
     """沉降页: 测试获取沉降预警信息"""
     number = '3.4.8'
     title = '沉降页: 预警信息'
     path = '/api/v1/upss/visualization/warning/issue'
-    startTime = startTime_file
-    endTime = endTime_file
-    minLng = minLng_file
-    maxLng = maxLng_file
-    minLat = minLat_file
-    maxLat = maxLat_file
     params = {
         # 'issue': '20220424',
         'startTime': startTime,
@@ -408,17 +316,11 @@ def test_get_warning_issue(client: APIClient):
     return response
 
 
-def test_get_statistics_issue(client: APIClient):
+def test_get_statistics_issue(client: APIClient, startTime, endTime, minLng, maxLng, minLat, maxLat):
     """沉降页: 测试获取沉降态势统计"""
     number = '3.4.9'
     title = '沉降页: 沉降态势统计'
     path = '/api/v1/upss/visualization/statistics/issue'
-    startTime = startTime_file
-    endTime = endTime_file
-    minLng = minLng_file
-    maxLng = maxLng_file
-    minLat = minLat_file
-    maxLat = maxLat_file
     params = {
         # 'issue': '20250203',
         'startTime': startTime,
@@ -448,17 +350,11 @@ def test_get_statistics_issue(client: APIClient):
     return response
 
 
-def test_get_max_subsidence_timeseries(client: APIClient):
+def test_get_max_subsidence_timeseries(client: APIClient, startTime, endTime, minLng, maxLng, minLat, maxLat):
     """沉降页: 测试获取最大沉降点时序"""
     number = '3.4.10'
     title = '沉降页: 最大沉降点时序统计'
     path = '/api/v1/upss/visualization/max-subsidence/timeseries'
-    startTime = startTime_file
-    endTime = endTime_file
-    minLng = minLng_file
-    maxLng = maxLng_file
-    minLat = minLat_file
-    maxLat = maxLat_file
     params = {
         'startTime': startTime,
         'endTime': endTime,
@@ -492,17 +388,11 @@ def test_get_max_subsidence_timeseries(client: APIClient):
     return response
 
 
-def test_get_top_gradient(client: APIClient):
+def test_get_top_gradient(client: APIClient, startTime, endTime, minLng, maxLng, minLat, maxLat):
     """沉降页: 测试获取Top5沉降梯度"""
     number = '3.4.11'
     title = '沉降页: 前五沉降梯度值位置统计'
     path = '/api/v1/upss/visualization/top-gradient'
-    startTime = startTime_file
-    endTime = endTime_file
-    minLng = minLng_file
-    maxLng = maxLng_file
-    minLat = minLat_file
-    maxLat = maxLat_file
     params = {
         # 'startIssue': '20230723',
         # 'endIssue': '20250203',
@@ -538,17 +428,11 @@ def test_get_top_gradient(client: APIClient):
     return response
 
 
-def test_get_risk(client: APIClient):
+def test_get_risk(client: APIClient, startTime, endTime, minLng, maxLng, minLat, maxLat):
     """沉降页: 测试获取风险评估"""
     number = '3.4.12'
     title = '沉降页: 风险评估'
     path = '/api/v1/upss/risk'
-    startTime = startTime_file
-    endTime = endTime_file
-    minLng = minLng_file
-    maxLng = maxLng_file
-    minLat = minLat_file
-    maxLat = maxLat_file
     params = {
         'startTime': startTime,
         'endTime': endTime,
@@ -568,9 +452,42 @@ def test_get_risk(client: APIClient):
     return response
 
 
-
-
-
-
 if __name__ == '__main__':
-    run_all_tests()
+    client = APIClient(config.host, config.app_key, config.app_secret, config.timeout)
+
+    # 测试时间范围与地理范围（仅从 common.py 的 loc_list 获取经纬度）
+    startTime = int(datetime(2025, 1, 1, 0, 0, 0).timestamp()) * 1000
+    endTime = int(datetime(2025, 2, 28, 23, 59, 59).timestamp()) * 1000
+    minLng, maxLng, minLat, maxLat = loc_list['重庆']
+
+    # 沉降页: 模块概览 /api/v1/upss/overview
+    # test_get_overview(client, startTime, endTime, minLng, maxLng, minLat, maxLat) # 3.4.1
+    # 沉降页: 沉降期列表 /api/v1/upss/periods
+    test_get_periods(client, startTime, endTime, minLng, maxLng, minLat, maxLat) # 3.4.2
+    # 沉降页: 期次汇总 /api/v1/upss/periods/{issue}/summary
+    # test_get_period_summary(client, startTime, endTime, minLng, maxLng, minLat, maxLat) # 3.4.3
+    # 沉降页: 沉降地图（热力图） /api/v1/upss/statistics/regional
+    # for issue in issue_list:
+    #     for pg in range(1, 100):
+    #         test_get_regional_statistics(client, startTime, endTime, minLng, maxLng, minLat, maxLat, issue=issue, pageNum=pg) # 3.4.5
+    # 沉降页: 沉降速率 /api/v1/upss/statistics/gridRate
+    #     test_get_grid_rate(client, startTime, endTime, minLng, maxLng, minLat, maxLat, issue=issue) # 3.4.6
+    # 沉降页: 沉降速率梯度 /api/v1/upss/statistics/gridGradient
+    #     test_get_grid_gradient(client, startTime, endTime, minLng, maxLng, minLat, maxLat, issue=issue) # 3.4.7
+    # 沉降页: 预警信息 /api/v1/upss/visualization/warning/issue
+    test_get_warning_issue(client, startTime, endTime, minLng, maxLng, minLat, maxLat) # 3.4.8
+    # 沉降页: 最大沉降点时序统计 /api/v1/upss/visualization/max-subsidence/timeseries
+    test_get_max_subsidence_timeseries(client, startTime, endTime, minLng, maxLng, minLat, maxLat) # 3.4.10
+    # 沉降页: 前五沉降梯度值位置统计 /api/v1/upss/visualization/top-gradient
+    test_get_top_gradient(client, startTime, endTime, minLng, maxLng, minLat, maxLat) # 3.4.11
+    # 沉降页: 风险评估 /api/v1/upss/risk
+    # test_get_risk(client, startTime, endTime, minLng, maxLng, minLat, maxLat) # 3.4.12
+
+    # 成都接口更改，不通过pointcode获取单点历史数据
+    # 沉降页: 单点沉降历史 /api/v1/upss/points/{code}/history
+    # point_set.add('1305')  # 添加一个默认点位，确保有数据可测
+    # for pc in point_set:
+    #     test_get_point_history(client, startTime, endTime, minLng, maxLng, minLat, maxLat, pointcode=pc) # 3.4.4
+
+    # 沉降页: 沉降态势统计 /api/v1/upss/visualization/statistics/issue
+    test_get_statistics_issue(client, startTime, endTime, minLng, maxLng, minLat, maxLat) # 3.4.9 暂时不测

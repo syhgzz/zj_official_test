@@ -189,15 +189,10 @@ def fetch_issues(startTime, endTime, min_lng=None, max_lng=None, min_lat=None, m
     from lib.api_client import APIClient
     from config.config import config as app_config
 
-    # 注入起止时间与 bbox，供 test_get_periods 使用
-    upss_mod.startTime_file = startTime
-    upss_mod.endTime_file = endTime
-    upss_mod.minLng_file, upss_mod.maxLng_file = min_lng, max_lng
-    upss_mod.minLat_file, upss_mod.maxLat_file = min_lat, max_lat
     upss_mod.issue_list = []
 
     client = APIClient(app_config.host, app_config.app_key, app_config.app_secret, app_config.timeout)
-    upss_mod.test_get_periods(client)  # 3.4.2 沉降期列表
+    upss_mod.test_get_periods(client, startTime, endTime, min_lng, max_lng, min_lat, max_lat)  # 3.4.2 沉降期列表
 
     issues = list(upss_mod.issue_list)  # 复制到 issues 变量
     print(f"获取到 {len(issues)} 个 issue: {issues}")
