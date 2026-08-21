@@ -18,15 +18,6 @@ try:
 except ImportError:
     from common import *
 
-# 2026-08-13 03:00 至 03:40 是 4 个观测图层的共同有效时间窗口，
-# 既能确保各图层命中数据，又能避免一次返回数千个格网矩阵。
-# datetime.timestamp() 先转为 Unix 秒，再乘 1000 转为接口要求的毫秒。
-startTime_file = int(datetime(2026,8,13,3,0,0).timestamp()) * 1000
-endTime_file = int(datetime(2026,8,13,3,40,0).timestamp()) * 1000
-minLng_file = minLng_global
-maxLng_file = maxLng_global
-minLat_file = minLat_global
-maxLat_file = maxLat_global
 
 # 可选的裁剪区域组名；None 表示不限定组。
 groupName_file = None
@@ -56,6 +47,12 @@ LAYER_NAMES.update({layer: layer_name for layer, layer_name, _ in FORECAST_LAYER
 
 def test_get_precipitation_layers(
     client: APIClient,
+    startTime,
+    endTime,
+    minLng,
+    maxLng,
+    minLat,
+    maxLat,
     layer: str = 'XTSKJSXS',
     forecast_offset_minutes: int = None,
     group_name: str = None,
@@ -84,12 +81,6 @@ def test_get_precipitation_layers(
     else:
         raise ValueError(f'不支持的图层编码：{layer}')
 
-    startTime = startTime_file
-    endTime = endTime_file
-    minLng = minLng_file
-    maxLng = maxLng_file
-    minLat = minLat_file
-    maxLat = maxLat_file
     path = '/api/v1/upns/precipitation/layers'
 
     params = {
@@ -118,6 +109,8 @@ def test_get_precipitation_layers(
     end_dt = datetime.now()
     elapsed = (end_dt - start_dt).total_seconds()
 
+    title = title + f'_{layer.lower()}_{file_suffix}_' + f'{start_dt.strftime("%Y%m%d_%H%M%S")}'
+
     print_response(
         f'获取降雨图层格网数据（{layer}，{mode_name}）',
         'GET',
@@ -140,10 +133,11 @@ def test_get_precipitation_layers(
             'elapsed_seconds': round(elapsed, 3),
             'response': response,
         })
-    elif config.save_response and response:
-        file_name = f'upns_precipitation_layers_{layer.lower()}_{file_suffix}'
+
+    if config.save_response and response:
+        # 每个图层/模式单独保存一份，文件名带 layer、模式与时间戳后缀，避免互相覆盖
         save_response_to_file(
-            file_name,
+            title,
             response,
             path,
             params,
@@ -157,12 +151,17 @@ def test_get_precipitation_layers(
     return response
 
 
-def run_all_tests():
+if __name__ == '__main__':
     """运行 7 个有效图层/预测时间组合，并统一保存响应。"""
     client = APIClient(config.host, config.app_key, config.app_secret, config.timeout)
     path = '/api/v1/upns/precipitation/layers'
     response_records = []
     batch_start_dt = datetime.now()
+
+    # 测试时间范围与地理范围（仅从 common.py 的 loc_list 获取经纬度）
+    startTime = int(datetime(2026, 8, 13, 3, 0, 0).timestamp()) * 1000
+    endTime = int(datetime(2026, 8, 13, 3, 40, 0).timestamp()) * 1000
+    minLng, maxLng, minLat, maxLat = loc_list['重庆']
 
     # 降水页: 降雨图层格网数据 /api/v1/upns/precipitation/layers
     # 4 个实时观测图层使用区间模式。
@@ -170,6 +169,12 @@ def run_all_tests():
         print(f'\n正在测试观测图层：{layer_name}（{layer}）')
         test_get_precipitation_layers(
             client,
+            startTime,
+            endTime,
+            minLng,
+            maxLng,
+            minLat,
+            maxLat,
             layer=layer,
             group_name=groupName_file,
             response_records=response_records,
@@ -184,6 +189,12 @@ def run_all_tests():
         )
         test_get_precipitation_layers(
             client,
+            startTime,
+            endTime,
+            minLng,
+            maxLng,
+            minLat,
+            maxLat,
             layer=layer,
             forecast_offset_minutes=forecast_offset_minutes,
             group_name=groupName_file,
@@ -191,31 +202,4 @@ def run_all_tests():
         )
 
     batch_end_dt = datetime.now()
-    if config.save_response:
-        save_response_to_file(
-            'upns_precipitation_layers_all',
-            {
-                'request_count': len(response_records),
-                'items': response_records,
-            },
-            path,
-            {
-                'layers': list(LAYER_NAMES),
-                'forecastOffsetMinutesOptions': {
-                    layer: list(offsets)
-                    for layer, offsets in FORECAST_OFFSETS_BY_LAYER.items()
-                },
-                'startTime': startTime_file,
-                'endTime': endTime_file,
-                'groupName': groupName_file,
-            },
-            config.response_dir,
-            number='',
-            title='降水页: 降雨图层格网数据',
-            start_time=batch_start_dt,
-            end_time=batch_end_dt,
-        )
 
-
-if __name__ == '__main__':
-    run_all_tests()

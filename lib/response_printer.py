@@ -379,9 +379,9 @@ def print_response(
 ):
     """
     输出单接口测试结果（标准流简洁行 + 文件日志）
-
+    文件名名是由调用方传入的 number/title/path 生成，与api_name无关
     Args:
-        api_name: API名称
+        api_name: API名称 
         method: HTTP方法
         path: API路径
         response: 响应数据

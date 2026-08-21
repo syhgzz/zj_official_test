@@ -16,15 +16,7 @@ except ImportError:
     from common import *
 
 
-startTime_file = startTime_global
-endTime_file = endTime_global
-minLng_file = minLng_global
-maxLng_file = maxLng_global
-minLat_file = minLat_global
-maxLat_file = maxLat_global
-
-
-def test_get_overview(client: APIClient):
+def test_get_overview(client: APIClient, startTime, endTime, minLng, maxLng, minLat, maxLat):
     """
     卫星模块: 测试获取模块概览
     GET /api/v1/gnss-device/overview
@@ -32,12 +24,6 @@ def test_get_overview(client: APIClient):
     number = '3.6.1'
     title = '卫星模块: 模块概览'
     path = '/api/v1/gnss-device/overview'
-    startTime = startTime_file
-    endTime = endTime_file
-    minLng = minLng_file
-    maxLng = maxLng_file
-    minLat = minLat_file
-    maxLat = maxLat_file
     params = {
         'minLng': minLng,
         'maxLng': maxLng,
@@ -68,7 +54,7 @@ def test_get_overview(client: APIClient):
 # 站点编码列表
 station_codes = []
 
-def test_get_stations(client: APIClient, page_num: int = 1, page_size: int = 20):
+def test_get_stations(client: APIClient, startTime, endTime, minLng, maxLng, minLat, maxLat, page_num: int = 1, page_size: int = 20):
     """
     卫星模块: 测试获取站点列表
     GET /api/v1/gnss-device/stations
@@ -76,12 +62,6 @@ def test_get_stations(client: APIClient, page_num: int = 1, page_size: int = 20)
     number = '3.6.2'
     title = '卫星模块: 站点列表及状态'
     path = '/api/v1/gnss-device/stations'
-    startTime = startTime_file
-    endTime = endTime_file
-    minLng = minLng_file
-    maxLng = maxLng_file
-    minLat = minLat_file
-    maxLat = maxLat_file
     params = {
         'pageNum': page_num,
         'pageSize': page_size,
@@ -121,7 +101,7 @@ def test_get_stations(client: APIClient, page_num: int = 1, page_size: int = 20)
     return response
 
 
-def test_get_station_realtime(client: APIClient, code: str = "BJ001"):
+def test_get_station_realtime(client: APIClient, startTime, endTime, minLng, maxLng, minLat, maxLat, code: str = "BJ001"):
     """
     卫星模块: 测试获取站点实时数据
     GET /api/v1/gnss-device/stations/{code}/realtime
@@ -129,12 +109,6 @@ def test_get_station_realtime(client: APIClient, code: str = "BJ001"):
     number = '3.6.3'
     title = '卫星模块: 单站实时数据'
     path = f'/api/v1/gnss-device/stations/{code}/realtime'
-    startTime = startTime_file
-    endTime = endTime_file
-    minLng = minLng_file
-    maxLng = maxLng_file
-    minLat = minLat_file
-    maxLat = maxLat_file
     params = {
         'minLng': minLng,
         'maxLng': maxLng,
@@ -175,19 +149,19 @@ def test_get_station_realtime(client: APIClient, code: str = "BJ001"):
     return response
 
 
-def run_all_tests():
-    """运行卫星模块的所有测试"""
+if __name__ == '__main__':
     client = APIClient(config.host, config.app_key, config.app_secret, config.timeout)
 
+    # 测试时间范围与地理范围（仅从 common.py 的 loc_list 获取经纬度）
+    startTime = int(datetime(2026, 5, 5, 0, 0, 0).timestamp()) * 1000
+    endTime = int(datetime(2026, 6, 5, 23, 59, 59).timestamp()) * 1000
+    minLng, maxLng, minLat, maxLat = loc_list['重庆']
+
     # 卫星模块: 模块概览 /api/v1/gnss-device/overview
-    test_get_overview(client)
+    test_get_overview(client, startTime, endTime, minLng, maxLng, minLat, maxLat)
 
     # 卫星模块: 站点列表及状态 /api/v1/gnss-device/stations
-    test_get_stations(client)
+    test_get_stations(client, startTime, endTime, minLng, maxLng, minLat, maxLat)
 
     # 卫星模块: 单站实时数据 /api/v1/gnss-device/stations/{code}/realtime
-    test_get_station_realtime(client)
-
-
-if __name__ == '__main__':
-    run_all_tests()
+    test_get_station_realtime(client, startTime, endTime, minLng, maxLng, minLat, maxLat)

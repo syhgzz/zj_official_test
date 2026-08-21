@@ -19,13 +19,6 @@ except ImportError:
     from common import *
 
 
-startTime_file = startTime_global
-endTime_file = endTime_global
-minLng_file = minLng_global
-maxLng_file = maxLng_global
-minLat_file = minLat_global
-maxLat_file = maxLat_global
-
 UPNS_BASE_PATH = '/api/v1/upns'
 
 
@@ -113,15 +106,15 @@ def test_get_risk(client: APIClient, region_code: str = None):
 # 服务于地图站点和站点下拉框；返回的 stationCode 继续服务接口 7、8。
 # GET /api/v1/upns/stations
 # -----------------------------------------------------------------------------
-def test_get_stations(client: APIClient, page_num: int = 1, page_size: int = 20):
+def test_get_stations(client: APIClient, minLng, maxLng, minLat, maxLat, page_num: int = 1, page_size: int = 20):
     """降水页: 测试获取监测站点列表，并返回响应及站点编码列表。"""
     params = {
         'pageNum': page_num,
         'pageSize': page_size,
-        'minLng': minLng_file,
-        'maxLat': maxLat_file,
-        'maxLng': maxLng_file,
-        'minLat': minLat_file,
+        'minLng': minLng,
+        'maxLat': maxLat,
+        'maxLng': maxLng,
+        'minLat': minLat,
     }
     response = _request_and_record(
         client,
@@ -149,15 +142,15 @@ def test_get_stations(client: APIClient, page_num: int = 1, page_size: int = 20)
 # 服务于大屏左上角“预警信息”，必须传入 BBOX 和起止时间。
 # GET /api/v1/upns/warnings
 # -----------------------------------------------------------------------------
-def test_get_warnings(client: APIClient):
+def test_get_warnings(client: APIClient, startTime, endTime, minLng, maxLng, minLat, maxLat):
     """降水页: 测试按地理范围和时间范围获取降水预警列表。"""
     params = {
-        'minLng': minLng_file,
-        'maxLat': maxLat_file,
-        'maxLng': maxLng_file,
-        'minLat': minLat_file,
-        'startTime': startTime_file,
-        'endTime': endTime_file,
+        'minLng': minLng,
+        'maxLat': maxLat,
+        'maxLng': maxLng,
+        'minLat': minLat,
+        'startTime': startTime,
+        'endTime': endTime,
     }
     return _request_and_record(
         client,
@@ -175,13 +168,13 @@ def test_get_warnings(client: APIClient):
 # 服务于大屏“过去1小时内降水量最大前五/前十”排名图表。
 # GET /api/v1/upns/statistics/rain/now
 # -----------------------------------------------------------------------------
-def test_get_rain_statistics_now(client: APIClient):
+def test_get_rain_statistics_now(client: APIClient, minLng, maxLng, minLat, maxLat):
     """降水页: 测试获取过去一小时降雨量排名统计。"""
     params = {
-        'minLng': minLng_file,
-        'maxLat': maxLat_file,
-        'maxLng': maxLng_file,
-        'minLat': minLat_file,
+        'minLng': minLng,
+        'maxLat': maxLat,
+        'maxLng': maxLng,
+        'minLat': minLat,
     }
     return _request_and_record(
         client,
@@ -199,13 +192,13 @@ def test_get_rain_statistics_now(client: APIClient):
 # 服务于大屏“当前大气可降水量最大前五/前十”排名图表。
 # GET /api/v1/upns/statistics/pwv/now
 # -----------------------------------------------------------------------------
-def test_get_pwv_statistics_now(client: APIClient):
+def test_get_pwv_statistics_now(client: APIClient, minLng, maxLng, minLat, maxLat):
     """降水页: 测试获取当前大气可降水量排名统计。"""
     params = {
-        'minLng': minLng_file,
-        'maxLat': maxLat_file,
-        'maxLng': maxLng_file,
-        'minLat': minLat_file,
+        'minLng': minLng,
+        'maxLat': maxLat,
+        'maxLng': maxLng,
+        'minLat': minLat,
     }
     return _request_and_record(
         client,
@@ -244,14 +237,14 @@ def test_get_station_realtime(client: APIClient, code: str):
 # 依赖接口 3 返回的 stationCode。
 # GET /api/v1/upns/stations/{code}/history
 # -----------------------------------------------------------------------------
-def test_get_station_history(client: APIClient, code: str):
+def test_get_station_history(client: APIClient, startTime, endTime, code: str):
     """降水页: 测试获取指定站点在公共时间范围内的多指标历史趋势。"""
     path = f'{UPNS_BASE_PATH}/stations/{code}/history'
     params = {
         'metrics': 'temperature,humidity,rain,windSpeed,windDirection,pressure,pwv',
         'interval': '1h',
-        'startTime': startTime_file,
-        'endTime': endTime_file,
+        'startTime': startTime,
+        'endTime': endTime,
     }
     return _request_and_record(
         client,
@@ -285,9 +278,14 @@ def test_get_regional_statistics(client: APIClient, region_code: str = None):
     )
 
 
-def run_all_tests():
+if __name__ == '__main__':
     """按依赖顺序运行降水页的全部 9 个接口测试。"""
     client = APIClient(config.host, config.app_key, config.app_secret, config.timeout)
+
+    # 测试时间范围与地理范围（仅从 common.py 的 loc_list 获取经纬度）
+    startTime = int(datetime(2026, 5, 5, 0, 0, 0).timestamp()) * 1000
+    endTime = int(datetime(2026, 6, 5, 23, 59, 59).timestamp()) * 1000
+    minLng, maxLng, minLat, maxLat = loc_list['重庆']
 
     # 降水页: 模块概览 /api/v1/upns/overview (对应 3.7.1)
     test_get_overview(client)
@@ -296,16 +294,16 @@ def run_all_tests():
     test_get_risk(client)
 
     # 降水页: 监测站点列表 /api/v1/upns/stations (对应 3.7.3)；站点编码服务于测试 7、8。
-    _, station_codes = test_get_stations(client)
+    _, station_codes = test_get_stations(client, minLng, maxLng, minLat, maxLat)
 
     # 降水页: 预警信息列表 /api/v1/upns/warnings (对应 3.7.4)
-    test_get_warnings(client)
+    test_get_warnings(client, startTime, endTime, minLng, maxLng, minLat, maxLat)
 
     # 降水页: 过去一小时降雨量统计 /api/v1/upns/statistics/rain/now (对应 3.7.5)
-    test_get_rain_statistics_now(client)
+    test_get_rain_statistics_now(client, minLng, maxLng, minLat, maxLat)
 
     # 降水页: 当前大气可降水量统计 /api/v1/upns/statistics/pwv/now (对应 3.7.6)
-    test_get_pwv_statistics_now(client)
+    test_get_pwv_statistics_now(client, minLng, maxLng, minLat, maxLat)
 
     # 降水页: 单站实时数据 /api/v1/upns/stations/{code}/realtime、
     # 降水页: 单站历史趋势 /api/v1/upns/stations/{code}/history (对应 3.7.7、3.7.8)
@@ -314,13 +312,9 @@ def run_all_tests():
         for code in station_codes:
             print(f'正在测试降水监测站：{code}')
             test_get_station_realtime(client, code)
-            test_get_station_history(client, code)
+            test_get_station_history(client, startTime, endTime, code)
     else:
         print('\n站点列表未返回 stationCode，跳过依赖站点编码的接口 7、8。\n')
 
     # 降水页: 区域降水统计 /api/v1/upns/statistics/regional (对应 3.7.9)
     test_get_regional_statistics(client)
-
-
-if __name__ == '__main__':
-    run_all_tests()

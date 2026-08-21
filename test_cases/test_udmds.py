@@ -18,27 +18,11 @@ except ImportError:
     from common import *
 
 
-# startTime_file = startTime_global
-# endTime_file = endTime_global
-startTime_file = int(datetime(2026,5,5,0,0,0).timestamp()) * 1000    
-endTime_file = int(datetime(2026,6,5,23,59,59).timestamp()) * 1000
-minLng_file = minLng_global
-maxLng_file = maxLng_global
-minLat_file = minLat_global
-maxLat_file = maxLat_global
-
-
-def test_get_overview(client: APIClient):
+def test_get_overview(client: APIClient, startTime, endTime, minLng, maxLng, minLat, maxLat):
     """形变页: 测试获取模块概览"""
     number = '3.2.1'
     title = '形变页: 模块概览'
     path = '/api/v1/udmds/overview'
-    startTime = startTime_file
-    endTime = endTime_file
-    minLng = minLng_file
-    maxLng = maxLng_file
-    minLat = minLat_file
-    maxLat = maxLat_file
     params = {
         'minLng': minLng,
         'maxLng': maxLng,
@@ -65,17 +49,11 @@ def test_get_overview(client: APIClient):
     return response
 
 
-def test_get_projects(client: APIClient):
+def test_get_projects(client: APIClient, startTime, endTime, minLng, maxLng, minLat, maxLat):
     """形变页: 测试获取监测工程列表"""
     number = '3.2.2'
     title = '形变页: 工程列表'
     path = '/api/v1/udmds/projects'
-    startTime = startTime_file
-    endTime = endTime_file
-    minLng = minLng_file
-    maxLng = maxLng_file
-    minLat = minLat_file
-    maxLat = maxLat_file
     params = {
         'pageNum': 1,
         'pageSize': 20,
@@ -106,17 +84,11 @@ def test_get_projects(client: APIClient):
     return response
 
 
-def test_get_points(client: APIClient):
+def test_get_points(client: APIClient, startTime, endTime, minLng, maxLng, minLat, maxLat):
     """形变页: 测试获取监测点列表"""
     number = '3.2.3'
     title = '形变页: 监测点列表'
     path = '/api/v1/udmds/points'
-    startTime = startTime_file
-    endTime = endTime_file
-    minLng = minLng_file
-    maxLng = maxLng_file
-    minLat = minLat_file
-    maxLat = maxLat_file
     params = {
         'startTime': startTime,
         'endTime': endTime,
@@ -148,17 +120,11 @@ def test_get_points(client: APIClient):
     return response, pointcode_list
 
 
-def test_get_point_realtime(client: APIClient, code: str = "PD001"):
+def test_get_point_realtime(client: APIClient, startTime, endTime, minLng, maxLng, minLat, maxLat, code: str = "PD001"):
     """形变页: 测试获取监测点实时数据"""
     number = '3.2.4'
     title = '形变页: 单点实时数据'
     path = f'/api/v1/udmds/points/{code}/realtime'
-    startTime = startTime_file
-    endTime = endTime_file
-    minLng = minLng_file
-    maxLng = maxLng_file
-    minLat = minLat_file
-    maxLat = maxLat_file
     params = {
 
     }
@@ -185,17 +151,11 @@ def test_get_point_realtime(client: APIClient, code: str = "PD001"):
 # accelerometer: 加速度计
 # inclinometer: 倾角计
 # fissures: 裂缝计
-def test_get_point_history(client: APIClient, code: str = "PD001"):
+def test_get_point_history(client: APIClient, startTime, endTime, minLng, maxLng, minLat, maxLat, code: str = "PD001"):
     """形变页: 测试获取监测点历史数据"""
     number = '3.2.5'
     title = '形变页: 单点历史趋势'
     path = f'/api/v1/udmds/points/{code}/history'
-    startTime = startTime_file
-    endTime = endTime_file
-    minLng = minLng_file
-    maxLng = maxLng_file
-    minLat = minLat_file
-    maxLat = maxLat_file
     params = {
         # 'deviceType': 'accelerometer',
         'interval': '1h',
@@ -226,17 +186,11 @@ def test_get_point_history(client: APIClient, code: str = "PD001"):
     return response
 
 
-def test_get_project_statistics(client: APIClient):
+def test_get_project_statistics(client: APIClient, startTime, endTime, minLng, maxLng, minLat, maxLat):
     """形变页: 测试获取工程统计"""
     number = '3.2.6'
     title = '形变页: 工程统计'
     path = '/api/v1/udmds/statistics/project'
-    startTime = startTime_file
-    endTime = endTime_file
-    minLng = minLng_file
-    maxLng = maxLng_file
-    minLat = minLat_file
-    maxLat = maxLat_file
     params = {
         'interval': '1d',
         'startTime': startTime,
@@ -266,17 +220,11 @@ def test_get_project_statistics(client: APIClient):
     return response
 
 
-def test_get_alerts_summary(client: APIClient):
+def test_get_alerts_summary(client: APIClient, startTime, endTime, minLng, maxLng, minLat, maxLat):
     """形变页: 测试获取形变告警汇总"""
     number = '3.2.7'
     title = '形变页: 告警汇总'
     path = '/api/v1/udmds/alerts/summary'
-    startTime = startTime_file
-    endTime = endTime_file
-    minLng = minLng_file
-    maxLng = maxLng_file
-    minLat = minLat_file
-    maxLat = maxLat_file
     params = {
         'startTime': startTime,
         'endTime': endTime,
@@ -306,17 +254,11 @@ def test_get_alerts_summary(client: APIClient):
     return response
 
 
-def test_get_risk(client: APIClient):
+def test_get_risk(client: APIClient, startTime, endTime, minLng, maxLng, minLat, maxLat):
     """形变页: 测试获取风险评估"""
     number = '3.2.8'
     title = '形变页: 风险评估'
     path = '/api/v1/udmds/risk'
-    startTime = startTime_file
-    endTime = endTime_file
-    minLng = minLng_file
-    maxLng = maxLng_file
-    minLat = minLat_file
-    maxLat = maxLat_file
     params = {
         'startTime': startTime,
         'endTime': endTime,
@@ -336,31 +278,32 @@ def test_get_risk(client: APIClient):
     return response
 
 
-def run_all_tests():
-    """运行形变页模块的所有测试, 用到的接口 1 2 3 4 5 7"""
+if __name__ == '__main__':
     client = APIClient(config.host, config.app_key, config.app_secret, config.timeout)
+
+    # 测试时间范围与地理范围（仅从 common.py 的 loc_list 获取经纬度）
+    startTime = int(datetime(2026, 5, 5, 0, 0, 0).timestamp()) * 1000
+    endTime = int(datetime(2026, 6, 5, 23, 59, 59).timestamp()) * 1000
+    minLng, maxLng, minLat, maxLat = loc_list['重庆']
+
     # 形变页: 告警汇总 /api/v1/udmds/alerts/summary
-    test_get_alerts_summary(client) # 3.2.7
+    test_get_alerts_summary(client, startTime, endTime, minLng, maxLng, minLat, maxLat) # 3.2.7
     # 形变页: 模块概览 /api/v1/udmds/overview
-    test_get_overview(client) # 3.2.1
+    test_get_overview(client, startTime, endTime, minLng, maxLng, minLat, maxLat) # 3.2.1
     # 形变页: 工程列表 /api/v1/udmds/projects
-    test_get_projects(client) # 3.2.2
+    test_get_projects(client, startTime, endTime, minLng, maxLng, minLat, maxLat) # 3.2.2
     # 形变页: 监测点列表 /api/v1/udmds/points
-    _, pointcode_list = test_get_points(client) # 3.2.3
+    _, pointcode_list = test_get_points(client, startTime, endTime, minLng, maxLng, minLat, maxLat) # 3.2.3
 
     print(f"\n共获取到 {len(pointcode_list)} 个监测点, 开始循环测试实时数据和历史趋势...\n")
     for code in pointcode_list:
         print(f"正在测试监测点: {code}")
         # 形变页: 单点实时数据 /api/v1/udmds/points/{code}/realtime
-        test_get_point_realtime(client, code) # 3.2.4
+        test_get_point_realtime(client, startTime, endTime, minLng, maxLng, minLat, maxLat, code=code) # 3.2.4
         # 形变页: 单点历史趋势 /api/v1/udmds/points/{code}/history
-        test_get_point_history(client, code) # 3.2.5
+        test_get_point_history(client, startTime, endTime, minLng, maxLng, minLat, maxLat, code=code) # 3.2.5
     # 形变页: 工程统计 /api/v1/udmds/statistics/project
-    # test_get_project_statistics(client)
+    # test_get_project_statistics(client, startTime, endTime, minLng, maxLng, minLat, maxLat)
     
     # 形变页: 风险评估 /api/v1/udmds/risk
-    # test_get_risk(client)
-
-
-if __name__ == '__main__':
-    run_all_tests()
+    # test_get_risk(client, startTime, endTime, minLng, maxLng, minLat, maxLat)

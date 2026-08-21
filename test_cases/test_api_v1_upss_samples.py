@@ -14,14 +14,17 @@
       (protobuf 运行时由本目录 subsidence_pb2.py 携带)
 """
 
-import argparse
+
 import base64
 import hashlib
 import hmac
 import sys
 import time
-from pathlib import Path
-
+from pathlib import Path 
+try:
+    from test_cases.common import *
+except ImportError:
+    from common import *
 try:
     import requests
 except ImportError:
@@ -37,16 +40,8 @@ DEFAULT_HOST = "http://175.155.229.220:19000"
 DEFAULT_APP_KEY = "test-app-key"            # 见 application.yml: app.auth.credentials
 DEFAULT_APP_SECRET = "test-app-secret-123456"
 
-# 任务指定的默认请求参数
-DEFAULT_PARAMS = {
-    "minLng": 105.782,
-    "maxLng": 108.345,
-    "minLat": 28.999,
-    "maxLat": 30.147,
-    # "issue": "20200222",
-    "issue": "20250203",
-    "dataType": "subsidence",
-}
+
+
 
 # dataType -> val 的物理含义(用于输出标注)
 VAL_LABEL = {
@@ -124,36 +119,18 @@ def save_csv(stream, path):
     print(f"已保存 CSV: {path} ({len(stream.lng)} 行)")
 
 
-# ---------- main ----------
-def build_arg_parser():
-    ap = argparse.ArgumentParser(description="请求 /api/v1/upss/samples 并解析 protobuf 响应")
-    ap.add_argument("--host", default=DEFAULT_HOST, help=f"服务地址，默认 {DEFAULT_HOST}")
-    ap.add_argument("--app-key", default=DEFAULT_APP_KEY)
-    ap.add_argument("--app-secret", default=DEFAULT_APP_SECRET)
-    ap.add_argument("--issue", default=DEFAULT_PARAMS["issue"], help="期次 yyyyMMdd")
-    ap.add_argument("--min-lng", type=float, default=DEFAULT_PARAMS["minLng"])
-    ap.add_argument("--max-lng", type=float, default=DEFAULT_PARAMS["maxLng"])
-    ap.add_argument("--min-lat", type=float, default=DEFAULT_PARAMS["minLat"])
-    ap.add_argument("--max-lat", type=float, default=DEFAULT_PARAMS["maxLat"])
-    ap.add_argument("--data-type", default=DEFAULT_PARAMS["dataType"],
-                    choices=["subsidence", "gradient", "velocity"])
-    ap.add_argument("--limit", type=int, default=100, help="预览样本条数")
-    ap.add_argument("--csv", type=str, default="./responses/stream.csv", help="将解析结果保存为 CSV 的路径")
-    ap.add_argument("--raw", type=str, default="./responses/stream.bin", help="将原始 protobuf 二进制保存到该路径(便于调试)")
-    ap.add_argument("--timeout", type=int, default=10, help="请求超时秒数，默认 10")
-    return ap
 
 
 def test_api_v1_upss_samples(
     host=DEFAULT_HOST,
     app_key=DEFAULT_APP_KEY,
     app_secret=DEFAULT_APP_SECRET,
-    issue=DEFAULT_PARAMS["issue"],
-    min_lng=DEFAULT_PARAMS["minLng"],
-    max_lng=DEFAULT_PARAMS["maxLng"],
-    min_lat=DEFAULT_PARAMS["minLat"],
-    max_lat=DEFAULT_PARAMS["maxLat"],
-    data_type=DEFAULT_PARAMS["dataType"],
+    issue=None,
+    min_lng=None,
+    max_lng=None,
+    min_lat=None,
+    max_lat=None,
+    data_type=None,
     limit=100,
     csv="./responses/stream.csv",
     raw="./responses/stream.bin",
@@ -198,13 +175,67 @@ def test_api_v1_upss_samples(
         save_csv(stream, csv)
 
 
+def fetch_issues(startTime, endTime, min_lng=None, max_lng=None, min_lat=None, max_lat=None):
+    """给定起止时间，通过 test_get_periods (/api/v1/upss/periods) 获取该时间范围内所有 issue 列表"""
+    # 将项目根目录加入 sys.path，保证能 import test_upss / lib / config
+    ROOT = str(Path(__file__).resolve().parent.parent)
+    if ROOT not in sys.path:
+        sys.path.insert(0, ROOT)
+
+    try:
+        import test_cases.test_upss as upss_mod
+    except ImportError:
+        import test_upss as upss_mod
+    from lib.api_client import APIClient
+    from config.config import config as app_config
+
+    upss_mod.issue_list = []
+
+    client = APIClient(app_config.host, app_config.app_key, app_config.app_secret, app_config.timeout)
+    upss_mod.test_get_periods(client, startTime, endTime, min_lng, max_lng, min_lat, max_lat)  # 3.4.2 沉降期列表
+
+    issues = list(upss_mod.issue_list)  # 复制到 issues 变量
+    print(f"获取到 {len(issues)} 个 issue: {issues}")
+    return issues
+
+
 if __name__ == "__main__":
-    issues = ["20250203", "20250110"]
+
+    city = '重庆'
+    minLng, maxLng, minLat, maxLat = loc_list[city]
+
+    # 给定起止时间，自动获取所有 issue 列表
+    startTime = int(datetime(2025, 1, 1, 0, 0, 0).timestamp()) * 1000
+    endTime = int(datetime(2025, 2, 28, 23, 59, 59).timestamp()) * 1000
+    issues = fetch_issues(startTime, endTime, minLng, maxLng, minLat, maxLat)
+
     data_types = ["subsidence", "gradient", "velocity"]
 
     for issue in issues:
         for data_type in data_types:
-            suffix = f"{issue}_{data_type}"
+            suffix = f"{city}_{issue}_{data_type}"
+            csv_path = f"./responses/samples_{suffix}.csv"
+            raw_path = f"./responses/samples_{suffix}.bin"
+            print(f"\n{'=' * 60}")
+            print(f"测试: issue={issue}, dataType={data_type}")
+            print(f"{'=' * 60}")
+            test_api_v1_upss_samples(issue=issue,
+                                     min_lng=minLng,
+                                     max_lng=maxLng,
+                                     min_lat=minLat,
+                                     max_lat=maxLat,
+                                     data_type=data_type, csv=csv_path, raw=raw_path)
+
+    city="株洲"
+    minLng, maxLng, minLat, maxLat = loc_list[city]
+    startTime = int(datetime(2022, 1, 1, 0, 0, 0).timestamp()) * 1000
+    endTime = int(datetime(2022, 12, 31, 23, 59, 59).timestamp()) * 1000
+    issues = fetch_issues(startTime, endTime, minLng, maxLng, minLat, maxLat)
+    data_types = ["subsidence", "gradient", "velocity"]
+
+    for issue in issues:
+        for data_type in data_types:
+            suffix = f"{city}_{issue}_{data_type}"
             csv_path = f"./responses/samples_{suffix}.csv"
             raw_path = f"./responses/samples_{suffix}.bin"
             print(f"\n{'=' * 60}")
