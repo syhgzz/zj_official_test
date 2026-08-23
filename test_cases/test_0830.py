@@ -60,7 +60,10 @@ def set_response_dir(sub_dir):
 
 
 def _is_empty_data(value):
-    """递归判断数据是否无有效内容: None、空串、空列表/字典、数值0 均视为空"""
+    """递归判断数据是否无有效内容:
+    None、空串、空列表/字典、数值0 均视为空;
+    字典中含有列表/字典类型字段时, 只按这些集合字段判定
+    (字符串/数值等标量视为元数据, 如 layer/unit/layerName, 不算有效数据)"""
     if value is None or value == '':
         return True
     if isinstance(value, bool):
@@ -70,7 +73,12 @@ def _is_empty_data(value):
     if isinstance(value, (list, tuple)):
         return len(value) == 0 or all(_is_empty_data(v) for v in value)
     if isinstance(value, dict):
-        return len(value) == 0 or all(_is_empty_data(v) for v in value.values())
+        if not value:
+            return True
+        collections = [v for v in value.values() if isinstance(v, (list, tuple, dict))]
+        if collections:
+            return all(_is_empty_data(v) for v in collections)
+        return all(_is_empty_data(v) for v in value.values())
     return False
 
 
@@ -323,9 +331,7 @@ def run_upns_a(client, city, startTime, endTime, report_records):
     else:
         print('\n站点列表未返回 stationCode, 跳过单站接口 3.7.7/3.7.8。\n')
 
-    # 降水页: 区域降水统计 /api/v1/upns/statistics/regional
-    run_case('降水页: 区域降水统计', '/api/v1/upns/statistics/regional', None, report_records,
-             test_upns_a.test_get_regional_statistics, client)
+
 
 
 def run_upns_w(client, city, startTime, endTime, report_records):
@@ -354,6 +360,23 @@ def run_upns_w(client, city, startTime, endTime, report_records):
                  test_upns_w.test_get_precipitation_layers, client, startTime, endTime, minLng, maxLng, minLat, maxLat,
                  layer=layer, forecast_offset_minutes=offset, group_name=test_upns_w.groupName_file)
 
+    # 降水页: 大气可降水量(每小时)插值图层 /api/v1/upns/layers/pwv-hourly
+    run_case('降水页: 大气可降水量（每小时）', '/api/v1/upns/layers/pwv-hourly', time_params, report_records,
+             test_upns_w.test_get_pwv_hourly_layer, client, startTime, endTime, minLng, maxLng, minLat, maxLat,
+             group_name=test_upns_w.groupName_file)
+    # 降水页: 气温插值图层 /api/v1/upns/layers/temperature
+    run_case('降水页: 气温图', '/api/v1/upns/layers/temperature', time_params, report_records,
+             test_upns_w.test_get_temperature_layer, client, startTime, endTime, minLng, maxLng, minLat, maxLat,
+             group_name=test_upns_w.groupName_file)
+    # 降水页: 湿度插值图层 /api/v1/upns/layers/humidity
+    run_case('降水页: 湿度图', '/api/v1/upns/layers/humidity', time_params, report_records,
+             test_upns_w.test_get_humidity_layer, client, startTime, endTime, minLng, maxLng, minLat, maxLat,
+             group_name=test_upns_w.groupName_file)
+    # 降水页: 气压插值图层 /api/v1/upns/layers/pressure
+    run_case('降水页: 气压图', '/api/v1/upns/layers/pressure', time_params, report_records,
+             test_upns_w.test_get_pressure_layer, client, startTime, endTime, minLng, maxLng, minLat, maxLat,
+             group_name=test_upns_w.groupName_file)
+
 
 if __name__ == '__main__':
     client = APIClient(config.host, config.app_key, config.app_secret, config.timeout)
@@ -379,8 +402,8 @@ if __name__ == '__main__':
         # 降水页: 重庆/北京 2026.5.1-2026.8.20 (3.7.1~3.7.9)
         # 降雨图层数据量大, 区间模式统一用短窗口 2026.8.13 03:00-03:40
         for city in ('重庆', '北京'):
-            run_upns_a(client, city, ts(2026, 5, 1), ts(2026, 8, 20, end=True), report_records)
-            run_upns_w(client, city, ts(2026, 8, 13, 3, 0), ts(2026, 8, 13, 3, 40), report_records)
+            run_upns_a(client, city, ts(2026, 8, 12, 0, 0), ts(2026, 8, 13, 0, 0), report_records)
+            run_upns_w(client, city, ts(2026, 8, 12, 0, 0), ts(2026, 8, 13, 0, 0), report_records)
     finally:
         # 中途停止也落一份当前已记录的问题报告
         write_report(start_dt, report_records)

@@ -23,10 +23,10 @@ except ImportError:
 groupName_file = None
 
 OBSERVATION_LAYERS = (
-    ('XTSKPWV', '大气可降水量（10分钟）'),
-    ('XTSKJSXS', '小时降水量'),
-    ('XTSKJSXS10Min', '10分钟降水量'),
-    ('XTSKJSFZ', '分钟降水量'),
+    ('XTSKPWV', '可降水量(10分钟)'),
+    ('XTSKJSXS', '降水量(小时)'),
+    ('XTSKJSXS10Min', '降水量(10分钟)'),
+    ('XTSKJSFZ', '降水量(分钟)'),
 )
 
 FORECAST_LAYERS = {
@@ -85,7 +85,7 @@ def _request_meteorological_layer(
 ):
     """执行气象要素插值图层请求，并按项目统一格式打印和保存响应。"""
     number = ''
-    title = f'降水页: {layer_name}'
+    title = f'降水页: {layer_name}_{layer}'
     path = f'/api/v1/upns/layers/{endpoint}'
     params = _optional_layer_params(
         startTime,
@@ -155,7 +155,8 @@ def test_get_precipitation_layers(
     GET /api/v1/upns/precipitation/layers
     """
     number = ''
-    title = '降水页: 降雨图层格网数据'
+    layer_name = LAYER_NAMES[layer]
+    title = f'降水页: 降雨图层格网数据_{layer_name}_{layer}'
 
     if layer in OBSERVATION_LAYER_CODES:
         if forecast_offset_minutes is not None:
@@ -183,25 +184,19 @@ def test_get_precipitation_layers(
         if endTime is not None:
             params['endTime'] = endTime
         if startTime is None and endTime is None:
-            mode_name = '最新时刻'
-            file_suffix = 'latest'
-        else:
-            mode_name = '区间'
-            file_suffix = 'interval'
+            raise ValueError('必须传入 startTime 或 endTime')
     else:
         params['forecastOffsetMinutes'] = forecast_offset_minutes
-        mode_name = f'预测{forecast_offset_minutes}分钟'
-        file_suffix = f'forecast_{forecast_offset_minutes}min'
 
     start_dt = datetime.now()
     response = client.request('GET', path, params=params)
     end_dt = datetime.now()
     elapsed = (end_dt - start_dt).total_seconds()
 
-    title = title + f'_{layer.lower()}_{file_suffix}_' + f'{start_dt.strftime("%Y%m%d_%H%M%S")}'
+    title = title + f'_{start_dt.strftime("%Y%m%d_%H%M%S")}'
 
     print_response(
-        f'获取降雨图层格网数据（{layer}，{mode_name}）',
+        title,
         'GET',
         path,
         response,
