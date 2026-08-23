@@ -490,4 +490,4 @@ if __name__ == '__main__':
     #     test_get_point_history(client, startTime, endTime, minLng, maxLng, minLat, maxLat, pointcode=pc) # 3.4.4
 
     # 沉降页: 沉降态势统计 /api/v1/upss/visualization/statistics/issue
-    test_get_statistics_issue(client, startTime, endTime, minLng, maxLng, minLat, maxLat) # 3.4.9 暂时不测
+    # test_get_statistics_issue(client, startTime, endTime, minLng, maxLng, minLat, maxLat) # 3.4.9 暂时不测
