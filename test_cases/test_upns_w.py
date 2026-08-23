@@ -29,9 +29,9 @@ OBSERVATION_LAYERS = (
     ('XTSKJSFZ', '分钟降水量'),
 )
 
-FORECAST_OFFSETS_BY_LAYER = {
-    'LSTMXSJS': (60,),
-    'CONVLSTMXSJS': (60, 120),
+FORECAST_LAYERS = {
+    'LSTMXSJS': '时序预测模型',
+    'CONVLSTMXSJS': '卷积预测模型',
 }
 
 FORECAST_LAYER_CASES = (
@@ -42,17 +42,106 @@ FORECAST_LAYER_CASES = (
 
 OBSERVATION_LAYER_CODES = {layer for layer, _ in OBSERVATION_LAYERS}
 LAYER_NAMES = dict(OBSERVATION_LAYERS)
-LAYER_NAMES.update({layer: layer_name for layer, layer_name, _ in FORECAST_LAYER_CASES})
+LAYER_NAMES.update(FORECAST_LAYERS)
+
+def _optional_layer_params(
+    startTime=None,
+    endTime=None,
+    minLng=None,
+    maxLng=None,
+    minLat=None,
+    maxLat=None,
+    group_name: str = None,
+):
+    """仅把已传入的公共图层查询参数放入请求。"""
+    params = {}
+    optional_params = {
+        'startTime': startTime,
+        'endTime': endTime,
+        'minLng': minLng,
+        'maxLng': maxLng,
+        'minLat': minLat,
+        'maxLat': maxLat,
+        'groupName': group_name,
+    }
+    for name, value in optional_params.items():
+        if value is not None and (name != 'groupName' or value):
+            params[name] = value
+    return params
 
 
+def _request_meteorological_layer(
+    client: APIClient,
+    endpoint: str,
+    layer: str,
+    layer_name: str,
+    startTime=None,
+    endTime=None,
+    minLng=None,
+    maxLng=None,
+    minLat=None,
+    maxLat=None,
+    group_name: str = None,
+):
+    """执行气象要素插值图层请求，并按项目统一格式打印和保存响应。"""
+    number = ''
+    title = f'降水页: {layer_name}'
+    path = f'/api/v1/upns/layers/{endpoint}'
+    params = _optional_layer_params(
+        startTime,
+        endTime,
+        minLng,
+        maxLng,
+        minLat,
+        maxLat,
+        group_name,
+    )
+
+    start_dt = datetime.now()
+    response = client.request('GET', path, params=params)
+    end_dt = datetime.now()
+    elapsed = (end_dt - start_dt).total_seconds()
+
+    print_response(
+        f'获取气象要素插值图层（{layer_name}，{layer}）',
+        'GET',
+        path,
+        response,
+        config.verbose,
+        number=number,
+        title=title,
+        elapsed_seconds=elapsed,
+    )
+
+    if config.save_response and response:
+        save_response_to_file(
+            f'upns_layer_{endpoint.replace("-", "_")}',
+            response,
+            path,
+            params,
+            config.response_dir,
+            number=number,
+            title=title,
+            start_time=start_dt,
+            end_time=end_dt,
+        )
+
+    return response
+
+
+# -----------------------------------------------------------------------------
+# 接口 10：降雨图层格网数据
+# 返回降雨图层多时刻规则二维矩阵；通过 forecastOffsetMinutes 切换区间/预测模式。
+# GET /api/v1/upns/precipitation/layers
+# -----------------------------------------------------------------------------
 def test_get_precipitation_layers(
     client: APIClient,
-    startTime,
-    endTime,
-    minLng,
-    maxLng,
-    minLat,
-    maxLat,
+    startTime=None,
+    endTime=None,
+    minLng=None,
+    maxLng=None,
+    minLat=None,
+    maxLat=None,
     layer: str = 'XTSKJSXS',
     forecast_offset_minutes: int = None,
     group_name: str = None,
@@ -71,38 +160,38 @@ def test_get_precipitation_layers(
     if layer in OBSERVATION_LAYER_CODES:
         if forecast_offset_minutes is not None:
             raise ValueError(f'观测图层 {layer} 不能传 forecastOffsetMinutes')
-    elif layer in FORECAST_OFFSETS_BY_LAYER:
-        allowed_offsets = FORECAST_OFFSETS_BY_LAYER[layer]
-        if forecast_offset_minutes not in allowed_offsets:
-            raise ValueError(
-                f'预测图层 {layer} 的 forecastOffsetMinutes '
-                f'只能为 {allowed_offsets}'
-            )
+    elif layer in FORECAST_LAYERS:
+        if forecast_offset_minutes is not None and forecast_offset_minutes < 0:
+            raise ValueError('forecastOffsetMinutes 不能为负数')
     else:
         raise ValueError(f'不支持的图层编码：{layer}')
 
     path = '/api/v1/upns/precipitation/layers'
 
-    params = {
-        'layer': layer,
-        'minLng': minLng,
-        'maxLng': maxLng,
-        'minLat': minLat,
-        'maxLat': maxLat,
-    }
+    params = _optional_layer_params(
+        minLng=minLng,
+        maxLng=maxLng,
+        minLat=minLat,
+        maxLat=maxLat,
+        group_name=group_name,
+    )
+    params['layer'] = layer
 
     if forecast_offset_minutes is None:
-        params['startTime'] = startTime
-        params['endTime'] = endTime
-        mode_name = '区间'
-        file_suffix = 'interval'
+        if startTime is not None:
+            params['startTime'] = startTime
+        if endTime is not None:
+            params['endTime'] = endTime
+        if startTime is None and endTime is None:
+            mode_name = '最新时刻'
+            file_suffix = 'latest'
+        else:
+            mode_name = '区间'
+            file_suffix = 'interval'
     else:
         params['forecastOffsetMinutes'] = forecast_offset_minutes
         mode_name = f'预测{forecast_offset_minutes}分钟'
         file_suffix = f'forecast_{forecast_offset_minutes}min'
-
-    if group_name:
-        params['groupName'] = group_name
 
     start_dt = datetime.now()
     response = client.request('GET', path, params=params)
@@ -151,12 +240,110 @@ def test_get_precipitation_layers(
     return response
 
 
+# -----------------------------------------------------------------------------
+# 接口 11：大气可降水量（每小时）插值图层
+# 将站点自然小时内的 PWV 平均值通过 IDW 插值为规则二维矩阵。
+# GET /api/v1/upns/layers/pwv-hourly
+# -----------------------------------------------------------------------------
+def test_get_pwv_hourly_layer(
+    client: APIClient,
+    startTime=None,
+    endTime=None,
+    minLng=None,
+    maxLng=None,
+    minLat=None,
+    maxLat=None,
+    group_name: str = None,
+):
+    """
+    降水页: 测试获取大气可降水量（每小时）插值图层。
+    GET /api/v1/upns/layers/pwv-hourly
+    """
+    return _request_meteorological_layer(
+        client, 'pwv-hourly', 'PWVHOURLY', '大气可降水量（每小时）',
+        startTime, endTime, minLng, maxLng, minLat, maxLat, group_name,
+    )
+
+
+# -----------------------------------------------------------------------------
+# 接口 12：气温插值图层
+# 将站点自然小时内最新一条气温观测通过 IDW 插值为规则二维矩阵。
+# GET /api/v1/upns/layers/temperature
+# -----------------------------------------------------------------------------
+def test_get_temperature_layer(
+    client: APIClient,
+    startTime=None,
+    endTime=None,
+    minLng=None,
+    maxLng=None,
+    minLat=None,
+    maxLat=None,
+    group_name: str = None,
+):
+    """
+    降水页: 测试获取气温插值图层。
+    GET /api/v1/upns/layers/temperature
+    """
+    return _request_meteorological_layer(
+        client, 'temperature', 'TEMPERATURE', '气温图',
+        startTime, endTime, minLng, maxLng, minLat, maxLat, group_name,
+    )
+
+
+# -----------------------------------------------------------------------------
+# 接口 13：湿度插值图层
+# 将站点自然小时内最新一条湿度观测通过 IDW 插值为规则二维矩阵。
+# GET /api/v1/upns/layers/humidity
+# -----------------------------------------------------------------------------
+def test_get_humidity_layer(
+    client: APIClient,
+    startTime=None,
+    endTime=None,
+    minLng=None,
+    maxLng=None,
+    minLat=None,
+    maxLat=None,
+    group_name: str = None,
+):
+    """
+    降水页: 测试获取湿度插值图层。
+    GET /api/v1/upns/layers/humidity
+    """
+    return _request_meteorological_layer(
+        client, 'humidity', 'HUMIDITY', '湿度图',
+        startTime, endTime, minLng, maxLng, minLat, maxLat, group_name,
+    )
+
+
+# -----------------------------------------------------------------------------
+# 接口 14：气压插值图层
+# 将站点自然小时内最新一条气压观测通过 IDW 插值为规则二维矩阵。
+# GET /api/v1/upns/layers/pressure
+# -----------------------------------------------------------------------------
+def test_get_pressure_layer(
+    client: APIClient,
+    startTime=None,
+    endTime=None,
+    minLng=None,
+    maxLng=None,
+    minLat=None,
+    maxLat=None,
+    group_name: str = None,
+):
+    """
+    降水页: 测试获取气压插值图层。
+    GET /api/v1/upns/layers/pressure
+    """
+    return _request_meteorological_layer(
+        client, 'pressure', 'PRESSURE', '气压图',
+        startTime, endTime, minLng, maxLng, minLat, maxLat, group_name,
+    )
+
+
 if __name__ == '__main__':
-    """运行 7 个有效图层/预测时间组合，并统一保存响应。"""
+    """运行降雨图层与气象要素插值图层接口测试。"""
     client = APIClient(config.host, config.app_key, config.app_secret, config.timeout)
-    path = '/api/v1/upns/precipitation/layers'
     response_records = []
-    batch_start_dt = datetime.now()
 
     # 测试时间范围与地理范围（仅从 common.py 的 loc_list 获取经纬度）
     startTime = int(datetime(2026, 8, 13, 3, 0, 0).timestamp()) * 1000
@@ -201,5 +388,23 @@ if __name__ == '__main__':
             response_records=response_records,
         )
 
-    batch_end_dt = datetime.now()
+    # 降水页: 大气可降水量（每小时）插值图层 /api/v1/upns/layers/pwv-hourly
+    test_get_pwv_hourly_layer(
+        client, startTime, endTime, minLng, maxLng, minLat, maxLat, groupName_file,
+    )
+
+    # 降水页: 气温插值图层 /api/v1/upns/layers/temperature
+    test_get_temperature_layer(
+        client, startTime, endTime, minLng, maxLng, minLat, maxLat, groupName_file,
+    )
+
+    # 降水页: 湿度插值图层 /api/v1/upns/layers/humidity
+    test_get_humidity_layer(
+        client, startTime, endTime, minLng, maxLng, minLat, maxLat, groupName_file,
+    )
+
+    # 降水页: 气压插值图层 /api/v1/upns/layers/pressure
+    test_get_pressure_layer(
+        client, startTime, endTime, minLng, maxLng, minLat, maxLat, groupName_file,
+    )
 
