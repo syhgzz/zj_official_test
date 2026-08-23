@@ -29,6 +29,9 @@ import os
 import signal
 import sys
 from datetime import datetime
+from pathlib import Path
+
+import requests
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
@@ -38,9 +41,11 @@ from lib.api_client import APIClient
 try:
     from test_cases.common import loc_list
     from test_cases import test_udmds, test_unga, test_upss, test_upns_a, test_upns_w
+    from test_cases import test_api_v1_upss_samples as upss_samples
 except ImportError:
     from common import loc_list
     import test_udmds, test_unga, test_upss, test_upns_a, test_upns_w
+    import test_api_v1_upss_samples as upss_samples
 
 # 本次测试响应输出根目录
 RESPONSE_ROOT = 'responses_0830'
@@ -270,9 +275,11 @@ def run_upss(client, city, startTime, endTime, report_records):
     bbox_params = {'minLng': minLng, 'maxLng': maxLng, 'minLat': minLat, 'maxLat': maxLat}
     time_params = {'startTime': startTime, 'endTime': endTime, **bbox_params}
 
-    # 沉降页: 沉降期列表 /api/v1/upss/periods
+    # 沉降页: 沉降期列表 /api/v1/upss/periods (issue 写入模块全局 issue_list, 供抽样点接口循环使用)
+    test_upss.issue_list.clear()  # issue_list 是 append 模式, 先清空避免混入其他城市组
     run_case('沉降页: 沉降期列表', '/api/v1/upss/periods', time_params, report_records,
              test_upss.test_get_periods, client, startTime, endTime, minLng, maxLng, minLat, maxLat)
+    issues = list(test_upss.issue_list)  # 本城市组的期次快照
     # 沉降页: 预警信息 /api/v1/upss/visualization/warning/issue
     run_case('沉降页: 预警信息', '/api/v1/upss/visualization/warning/issue', time_params, report_records,
              test_upss.test_get_warning_issue, client, startTime, endTime, minLng, maxLng, minLat, maxLat)
@@ -282,6 +289,59 @@ def run_upss(client, city, startTime, endTime, report_records):
     # 沉降页: 前五沉降梯度值位置统计 /api/v1/upss/visualization/top-gradient
     run_case('沉降页: 前五沉降梯度值位置统计', '/api/v1/upss/visualization/top-gradient', time_params, report_records,
              test_upss.test_get_top_gradient, client, startTime, endTime, minLng, maxLng, minLat, maxLat)
+
+    # 沉降页: 抽样点数据(protobuf) /api/v1/upss/samples, 循环 issue × dataType
+    run_upss_samples(city, minLng, maxLng, minLat, maxLat, issues, report_records)
+
+
+def run_upss_samples(city, minLng, maxLng, minLat, maxLat, issues, report_records):
+    """沉降页: 抽样点数据 /api/v1/upss/samples (protobuf), 循环 issue × dataType
+
+    响应为二进制 protobuf(SubsidencePointStream, lng/lat/val 等长数组), 解析后按抽样点数判空;
+    val 全为 0 也视为无有效数据(服务端空值填 0)。原始 bin 和解析 csv 保存到当前响应目录。
+    """
+    tag = '沉降页: 抽样点数据'  # 该接口所在模块无内部 title 字符串
+    path = '/api/v1/upss/samples'
+    print(f'\n共获取到 {len(issues)} 个期次, 开始循环测试抽样点数据(issue × 3种dataType)...\n')
+    for issue in issues:
+        for data_type in ('subsidence', 'gradient', 'velocity'):
+            params = {'minLng': minLng, 'maxLng': maxLng, 'minLat': minLat, 'maxLat': maxLat,
+                      'issue': issue, 'dataType': data_type}
+
+            # 1. 请求(该接口用 requests 直连, 错误抛异常, 这里分类捕获)
+            try:
+                body = upss_samples.fetch_samples(config.host, params, config.app_key, config.app_secret, timeout=config.timeout)
+                reason = ''
+            except requests.exceptions.Timeout:
+                reason = f'请求超时(超过{config.timeout}s)'
+            except requests.exceptions.ConnectionError:
+                reason = '调用失败(无响应: 连接失败或HTTP状态码非200)'
+            except RuntimeError as e:  # fetch_samples 对 HTTP 非200 抛 RuntimeError
+                reason = f'调用失败({str(e)[:200]})'
+            if reason:
+                print(f'[FAILED] {tag} | GET {path} | issue={issue} dataType={data_type} | 原因: {reason}')
+                report_records.append({'method': 'GET', 'tag': tag, 'path': path, 'params': params, 'reason': reason})
+                continue
+
+            # 2. 解析 protobuf
+            try:
+                stream = upss_samples.parse(body)
+            except Exception as e:
+                reason = f'protobuf 解析失败({str(e)[:200]})'
+                print(f'[FAILED] {tag} | GET {path} | issue={issue} dataType={data_type} | 原因: {reason}')
+                report_records.append({'method': 'GET', 'tag': tag, 'path': path, 'params': params, 'reason': reason})
+                continue
+
+            # 3. 空数据判定: 抽样点数为0, 或 val 全为0(服务端空值填0)
+            n = len(stream.lng)
+            print(f'[SUCCESS] {tag} | GET {path} | issue={issue} dataType={data_type} | 抽样点数: {n}')
+            if n == 0 or all(v == 0.0 for v in stream.val):
+                print(f'[空数据提示] {tag}: issue={issue} dataType={data_type} 返回数据为空或为0, 请确认该期次是否有数据')
+                report_records.append({'method': 'GET', 'tag': tag, 'path': path, 'params': params, 'reason': '返回数据为空或为0'})
+
+            # 4. 保存原始二进制和解析后的 csv 到当前响应目录(沉降_<城市>_<时间段>/)
+            Path(os.path.join(config.response_dir, f'samples_{issue}_{data_type}.bin')).write_bytes(body)
+            upss_samples.save_csv(stream, os.path.join(config.response_dir, f'samples_{issue}_{data_type}.csv'))
 
 
 def run_upns_a(client, city, startTime, endTime, report_records):
