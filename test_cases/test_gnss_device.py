@@ -164,4 +164,4 @@ if __name__ == '__main__':
     test_get_stations(client, startTime, endTime, minLng, maxLng, minLat, maxLat)
 
     # 卫星模块: 单站实时数据 /api/v1/gnss-device/stations/{code}/realtime
-    test_get_station_realtime(client, startTime, endTime, minLng, maxLng, minLat, maxLat)
+    # test_get_station_realtime(client, startTime, endTime, minLng, maxLng, minLat, maxLat)

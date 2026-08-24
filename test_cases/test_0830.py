@@ -289,6 +289,12 @@ def run_upss(client, city, startTime, endTime, report_records):
     # 沉降页: 前五沉降梯度值位置统计 /api/v1/upss/visualization/top-gradient
     run_case('沉降页: 前五沉降梯度值位置统计', '/api/v1/upss/visualization/top-gradient', time_params, report_records,
              test_upss.test_get_top_gradient, client, startTime, endTime, minLng, maxLng, minLat, maxLat)
+    # 沉降页: 沉降图层 /api/v1/upss/issue_layer
+    run_case('沉降页: 沉降图层', '/api/v1/upss/issue_layer', None, report_records,
+             test_upss.test_get_issue_layer, client)
+    # 沉降页: 沉降图期次列表 /api/v1/upss/issue-list
+    run_case('沉降页: 沉降图期次列表', '/api/v1/upss/issue-list', None, report_records,
+             test_upss.test_get_issue_list, client)
 
     # 沉降页: 抽样点数据(protobuf) /api/v1/upss/samples, 循环 issue × dataType
     run_upss_samples(city, minLng, maxLng, minLat, maxLat, issues, report_records)
@@ -370,6 +376,12 @@ def run_upns_a(client, city, startTime, endTime, report_records):
     # 降水页: 当前大气可降水量统计 /api/v1/upns/statistics/pwv/now
     run_case('降水页: 当前大气可降水量统计', '/api/v1/upns/statistics/pwv/now', bbox_params, report_records,
              test_upns_a.test_get_pwv_statistics_now, client, minLng, maxLng, minLat, maxLat)
+    # 降水页: 过去1小时降水量前五地区 /api/v1/upns/last1hour_rain_top5
+    run_case('降水页: 过去1小时降水量前五地区', '/api/v1/upns/last1hour_rain_top5', bbox_params, report_records,
+             test_upns_a.test_get_last1hour_rain_top5, client, minLng, maxLng, minLat, maxLat)
+    # 降水页: 当前大气可降水量前五地区 /api/v1/upns/last1hour_pwv_top5
+    run_case('降水页: 当前大气可降水量前五地区', '/api/v1/upns/last1hour_pwv_top5', bbox_params, report_records,
+             test_upns_a.test_get_last1hour_pwv_top5, client, minLng, maxLng, minLat, maxLat)
 
     # 循环每个站点: 单站实时数据 + 单站历史趋势
     if station_codes:
@@ -448,22 +460,26 @@ if __name__ == '__main__':
 
     try:
         # 形变页: 重庆 2026.5.1-2026.8.20
-        run_udmds(client, '重庆', ts(2026, 5, 1), ts(2026, 8, 20, end=True), report_records)
+        # run_udmds(client, '重庆', ts(2026, 7, 1), ts(2026, 8, 20, end=True), report_records)
 
         # 燃气页: 重庆 2019.9.1-2019.9.30 / 北京 2026.5.1-2026.5.30 / 株洲 2026.5.1-2026.5.30
-        run_unga(client, '重庆', ts(2019, 9, 1), ts(2019, 9, 30, end=True), report_records)
-        run_unga(client, '北京', ts(2026, 5, 1), ts(2026, 5, 30, end=True), report_records)
-        run_unga(client, '株洲', ts(2026, 5, 1), ts(2026, 5, 30, end=True), report_records)
+        # run_unga(client, '重庆', ts(2019, 9, 1), ts(2019, 9, 30, end=True), report_records)
+        # run_unga(client, '北京', ts(2026, 5, 1), ts(2026, 5, 30, end=True), report_records)
+        # for year in range(2026, 2017, -1):
+        #     for month in range(12, 0, -1):
+        #         run_unga(client, '株洲', ts(year, month, 1), ts(year, month, 28, end=True), report_records)
 
         # 沉降页: 重庆 2018.1.1-2025.12.31 / 株洲 2022.1.1-2025.12.31
-        run_upss(client, '重庆', ts(2018, 1, 1), ts(2025, 12, 31, end=True), report_records)
-        run_upss(client, '株洲', ts(2022, 1, 1), ts(2025, 12, 31, end=True), report_records)
+        for year in range(2026, 2017, -1):
+            for month in range(12, 0, -1):
+                run_upss(client, '重庆', ts(year, month, 1), ts(year, month, 28, end=True), report_records)
+        # run_upss(client, '株洲', ts(2022, 1, 1), ts(2025, 12, 31, end=True), report_records)
 
-        # 降水页: 重庆/北京 2026.5.1-2026.8.20 (3.7.1~3.7.9)
-        # 降雨图层数据量大, 区间模式统一用短窗口 2026.8.13 03:00-03:40
-        for city in ('重庆', '北京'):
-            run_upns_a(client, city, ts(2026, 8, 12, 0, 0), ts(2026, 8, 13, 0, 0), report_records)
-            run_upns_w(client, city, ts(2026, 8, 12, 0, 0), ts(2026, 8, 13, 0, 0), report_records)
+        # # 降水页: 重庆/北京 2026.5.1-2026.8.20 (3.7.1~3.7.9)
+        # # 降雨图层数据量大, 区间模式统一用短窗口 2026.8.13 03:00-03:40
+        # for city in ('重庆', '北京'):
+        #     run_upns_a(client, city, ts(2026, 8, 12, 0, 0), ts(2026, 8, 13, 0, 0), report_records)
+        #     run_upns_w(client, city, ts(2026, 8, 12, 0, 0), ts(2026, 8, 13, 0, 0), report_records)
     finally:
         # 中途停止也落一份当前已记录的问题报告
         write_report(start_dt, report_records)

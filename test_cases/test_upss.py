@@ -452,6 +452,40 @@ def test_get_risk(client: APIClient, startTime, endTime, minLng, maxLng, minLat,
     return response
 
 
+def test_get_issue_layer(client: APIClient):
+    """沉降页: 测试获取沉降图层(已生成WMTS数据的期次列表与图层地址)"""
+    number = ''
+    title = '沉降页: 沉降图层'
+    path = '/api/v1/upss/issue_layer'
+    params = {}
+    start_dt = datetime.now()
+    response = client.request('GET', path, params=params)
+    end_dt = datetime.now()
+    elapsed = (end_dt - start_dt).total_seconds()
+
+    print_response(title, 'GET', path, response, config.verbose, number=number, title=title, elapsed_seconds=elapsed)
+    if config.save_response and response:
+        save_response_to_file('upss_issue_layer', response, path, params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
+    return response
+
+
+def test_get_issue_list(client: APIClient):
+    """沉降页: 测试获取沉降图固定显示的8个期次"""
+    number = ''
+    title = '沉降页: 沉降图期次列表'
+    path = '/api/v1/upss/issue-list'
+    params = {}
+    start_dt = datetime.now()
+    response = client.request('GET', path, params=params)
+    end_dt = datetime.now()
+    elapsed = (end_dt - start_dt).total_seconds()
+
+    print_response(title, 'GET', path, response, config.verbose, number=number, title=title, elapsed_seconds=elapsed)
+    if config.save_response and response:
+        save_response_to_file('upss_issue_list', response, path, params, config.response_dir, number=number, title=title, start_time=start_dt, end_time=end_dt)
+    return response
+
+
 if __name__ == '__main__':
     client = APIClient(config.host, config.app_key, config.app_secret, config.timeout)
 
@@ -491,3 +525,10 @@ if __name__ == '__main__':
 
     # 沉降页: 沉降态势统计 /api/v1/upss/visualization/statistics/issue
     # test_get_statistics_issue(client, startTime, endTime, minLng, maxLng, minLat, maxLat) # 3.4.9 暂时不测
+
+    # 沉降页: 沉降图期次列表 /api/v1/upss/issue-list
+    test_get_issue_list(client) 
+    # 沉降页: 沉降图层 /api/v1/upss/issue_layer
+    test_get_issue_layer(client) 
+
+    
