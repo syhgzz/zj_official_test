@@ -23,10 +23,14 @@ except ImportError:
 groupName_file = None
 
 OBSERVATION_LAYERS = (
-    ('XTSKPWV', '可降水量(10分钟)'),
     ('XTSKJSXS', '降水量(小时)'),
     ('XTSKJSXS10Min', '降水量(10分钟)'),
     ('XTSKJSFZ', '降水量(分钟)'),
+    ('XTSKPWV1H', '可降水量(小时)'),
+    ('XTSKPWV', '可降水量(10分钟)'),
+    ('XTSKQW', '气温'),
+    ('XTSKSD', '湿度'),
+    ('XTSKQY', '气压'),
 )
 
 FORECAST_LAYERS = {
@@ -235,104 +239,6 @@ def test_get_precipitation_layers(
     return response
 
 
-# -----------------------------------------------------------------------------
-# 接口 11：大气可降水量（每小时）插值图层
-# 将站点自然小时内的 PWV 平均值通过 IDW 插值为规则二维矩阵。
-# GET /api/v1/upns/layers/pwv-hourly
-# -----------------------------------------------------------------------------
-def test_get_pwv_hourly_layer(
-    client: APIClient,
-    startTime=None,
-    endTime=None,
-    minLng=None,
-    maxLng=None,
-    minLat=None,
-    maxLat=None,
-    group_name: str = None,
-):
-    """
-    降水页: 测试获取大气可降水量（每小时）插值图层。
-    GET /api/v1/upns/layers/pwv-hourly
-    """
-    return _request_meteorological_layer(
-        client, 'pwv-hourly', 'PWVHOURLY', '大气可降水量（每小时）',
-        startTime, endTime, minLng, maxLng, minLat, maxLat, group_name,
-    )
-
-
-# -----------------------------------------------------------------------------
-# 接口 12：气温插值图层
-# 将站点自然小时内最新一条气温观测通过 IDW 插值为规则二维矩阵。
-# GET /api/v1/upns/layers/temperature
-# -----------------------------------------------------------------------------
-def test_get_temperature_layer(
-    client: APIClient,
-    startTime=None,
-    endTime=None,
-    minLng=None,
-    maxLng=None,
-    minLat=None,
-    maxLat=None,
-    group_name: str = None,
-):
-    """
-    降水页: 测试获取气温插值图层。
-    GET /api/v1/upns/layers/temperature
-    """
-    return _request_meteorological_layer(
-        client, 'temperature', 'TEMPERATURE', '气温图',
-        startTime, endTime, minLng, maxLng, minLat, maxLat, group_name,
-    )
-
-
-# -----------------------------------------------------------------------------
-# 接口 13：湿度插值图层
-# 将站点自然小时内最新一条湿度观测通过 IDW 插值为规则二维矩阵。
-# GET /api/v1/upns/layers/humidity
-# -----------------------------------------------------------------------------
-def test_get_humidity_layer(
-    client: APIClient,
-    startTime=None,
-    endTime=None,
-    minLng=None,
-    maxLng=None,
-    minLat=None,
-    maxLat=None,
-    group_name: str = None,
-):
-    """
-    降水页: 测试获取湿度插值图层。
-    GET /api/v1/upns/layers/humidity
-    """
-    return _request_meteorological_layer(
-        client, 'humidity', 'HUMIDITY', '湿度图',
-        startTime, endTime, minLng, maxLng, minLat, maxLat, group_name,
-    )
-
-
-# -----------------------------------------------------------------------------
-# 接口 14：气压插值图层
-# 将站点自然小时内最新一条气压观测通过 IDW 插值为规则二维矩阵。
-# GET /api/v1/upns/layers/pressure
-# -----------------------------------------------------------------------------
-def test_get_pressure_layer(
-    client: APIClient,
-    startTime=None,
-    endTime=None,
-    minLng=None,
-    maxLng=None,
-    minLat=None,
-    maxLat=None,
-    group_name: str = None,
-):
-    """
-    降水页: 测试获取气压插值图层。
-    GET /api/v1/upns/layers/pressure
-    """
-    return _request_meteorological_layer(
-        client, 'pressure', 'PRESSURE', '气压图',
-        startTime, endTime, minLng, maxLng, minLat, maxLat, group_name,
-    )
 
 
 if __name__ == '__main__':
@@ -341,9 +247,9 @@ if __name__ == '__main__':
     response_records = []
 
     # 测试时间范围与地理范围（仅从 common.py 的 loc_list 获取经纬度）
-    startTime = int(datetime(2026, 8, 13, 3, 0, 0).timestamp()) * 1000
-    endTime = int(datetime(2026, 8, 13, 3, 40, 0).timestamp()) * 1000
-    minLng, maxLng, minLat, maxLat = loc_list['重庆']
+    startTime = int(datetime(2026, 7, 3, 0, 0, 0).timestamp()) * 1000
+    endTime = int(datetime(2026, 7, 3, 23, 59, 59).timestamp()) * 1000
+    minLng, maxLng, minLat, maxLat = loc_list['北京']
 
     # 降水页: 降雨图层格网数据 /api/v1/upns/precipitation/layers
     # 4 个实时观测图层使用区间模式。
@@ -383,23 +289,4 @@ if __name__ == '__main__':
             response_records=response_records,
         )
 
-    # 降水页: 大气可降水量（每小时）插值图层 /api/v1/upns/layers/pwv-hourly
-    test_get_pwv_hourly_layer(
-        client, startTime, endTime, minLng, maxLng, minLat, maxLat, groupName_file,
-    )
-
-    # 降水页: 气温插值图层 /api/v1/upns/layers/temperature
-    test_get_temperature_layer(
-        client, startTime, endTime, minLng, maxLng, minLat, maxLat, groupName_file,
-    )
-
-    # 降水页: 湿度插值图层 /api/v1/upns/layers/humidity
-    test_get_humidity_layer(
-        client, startTime, endTime, minLng, maxLng, minLat, maxLat, groupName_file,
-    )
-
-    # 降水页: 气压插值图层 /api/v1/upns/layers/pressure
-    test_get_pressure_layer(
-        client, startTime, endTime, minLng, maxLng, minLat, maxLat, groupName_file,
-    )
 
