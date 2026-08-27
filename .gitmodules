@@ -1,0 +1,3 @@
+[submodule "zhongjian"]
+	path = zhongjian
+	url = git@gitee.com:markooyuan/zhongjian.git

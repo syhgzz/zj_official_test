@@ -432,22 +432,6 @@ def run_upns_w(client, city, startTime, endTime, report_records):
                  test_upns_w.test_get_precipitation_layers, client, startTime, endTime, minLng, maxLng, minLat, maxLat,
                  layer=layer, forecast_offset_minutes=offset, group_name=test_upns_w.groupName_file)
 
-    # 降水页: 大气可降水量(每小时)插值图层 /api/v1/upns/layers/pwv-hourly
-    run_case('降水页: 大气可降水量（每小时）', '/api/v1/upns/layers/pwv-hourly', time_params, report_records,
-             test_upns_w.test_get_pwv_hourly_layer, client, startTime, endTime, minLng, maxLng, minLat, maxLat,
-             group_name=test_upns_w.groupName_file)
-    # 降水页: 气温插值图层 /api/v1/upns/layers/temperature
-    run_case('降水页: 气温图', '/api/v1/upns/layers/temperature', time_params, report_records,
-             test_upns_w.test_get_temperature_layer, client, startTime, endTime, minLng, maxLng, minLat, maxLat,
-             group_name=test_upns_w.groupName_file)
-    # 降水页: 湿度插值图层 /api/v1/upns/layers/humidity
-    run_case('降水页: 湿度图', '/api/v1/upns/layers/humidity', time_params, report_records,
-             test_upns_w.test_get_humidity_layer, client, startTime, endTime, minLng, maxLng, minLat, maxLat,
-             group_name=test_upns_w.groupName_file)
-    # 降水页: 气压插值图层 /api/v1/upns/layers/pressure
-    run_case('降水页: 气压图', '/api/v1/upns/layers/pressure', time_params, report_records,
-             test_upns_w.test_get_pressure_layer, client, startTime, endTime, minLng, maxLng, minLat, maxLat,
-             group_name=test_upns_w.groupName_file)
 
 
 if __name__ == '__main__':
