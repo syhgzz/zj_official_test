@@ -450,7 +450,7 @@ if __name__ == '__main__':
         run_unga(client, '重庆', ts(2019, 9, 1), ts(2019, 9, 30, end=True), report_records)
         run_unga(client, '北京', ts(2026, 5, 1), ts(2026, 5, 30, end=True), report_records)
 
-        沉降页: 重庆 2018.1.1-2025.12.31 / 株洲 2022.1.1-2025.12.31
+        # 沉降页: 重庆 2018.1.1-2025.12.31 / 株洲 2022.1.1-2025.12.31
         for year in range(2025, 2026):
             for month in range(1, 12):
                 run_upss(client, '重庆', ts(year, month, 1), ts(year, month, 28, end=True), report_records)
