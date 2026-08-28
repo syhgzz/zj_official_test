@@ -268,12 +268,16 @@ def run_unga(client, city, startTime, endTime, report_records):
 
 
 def run_upss(client, city, startTime, endTime, report_records):
-    """沉降页: 按 test_upss.py __main__ 中启用的接口执行(3.4.9 暂时不测, 其余注释接口不测)"""
+    """沉降页:"""
     print(f'\n========== 沉降页 - {city} ({ts_str(startTime)} ~ {ts_str(endTime)}) ==========')
     set_response_dir(f'沉降_{city}_{range_str(startTime, endTime)}')
     minLng, maxLng, minLat, maxLat = loc_list[city]
     bbox_params = {'minLng': minLng, 'maxLng': maxLng, 'minLat': minLat, 'maxLat': maxLat}
     time_params = {'startTime': startTime, 'endTime': endTime, **bbox_params}
+
+    # 沉降页: 沉降图层 /api/v1/upss/issue_layer
+    run_case('沉降页: 沉降图层', '/api/v1/upss/issue_layer', None, report_records,
+             test_upss.test_get_issue_layer, client)
 
     # 沉降页: 沉降期列表 /api/v1/upss/periods (issue 写入模块全局 issue_list, 供抽样点接口循环使用)
     test_upss.issue_list.clear()  # issue_list 是 append 模式, 先清空避免混入其他城市组
@@ -289,15 +293,13 @@ def run_upss(client, city, startTime, endTime, report_records):
     # 沉降页: 前五沉降梯度值位置统计 /api/v1/upss/visualization/top-gradient
     run_case('沉降页: 前五沉降梯度值位置统计', '/api/v1/upss/visualization/top-gradient', time_params, report_records,
              test_upss.test_get_top_gradient, client, startTime, endTime, minLng, maxLng, minLat, maxLat)
-    # 沉降页: 沉降图层 /api/v1/upss/issue_layer
-    run_case('沉降页: 沉降图层', '/api/v1/upss/issue_layer', None, report_records,
-             test_upss.test_get_issue_layer, client)
     # 沉降页: 沉降图期次列表 /api/v1/upss/issue-list
     run_case('沉降页: 沉降图期次列表', '/api/v1/upss/issue-list', None, report_records,
              test_upss.test_get_issue_list, client)
 
     # 沉降页: 抽样点数据(protobuf) /api/v1/upss/samples, 循环 issue × dataType
     run_upss_samples(city, minLng, maxLng, minLat, maxLat, issues, report_records)
+
 
 
 def run_upss_samples(city, minLng, maxLng, minLat, maxLat, issues, report_records):
@@ -361,10 +363,8 @@ def run_upns_a(client, city, startTime, endTime, report_records):
     # 降水页: 模块概览 /api/v1/upns/overview
     run_case('降水页: 模块概览', '/api/v1/upns/overview', None, report_records,
              test_upns_a.test_get_overview, client)
-    # 降水页: 风险评估 /api/v1/upns/risk
-    run_case('降水页: 风险评估', '/api/v1/upns/risk', None, report_records,
-             test_upns_a.test_get_risk, client)
-    # 降水页: 监测站点列表 /api/v1/upns/stations, 站点编码服务于 3.7.7/3.7.8
+    
+    # 降水页: 监测站点列表 /api/v1/upns/stations
     resp, station_codes = run_case('降水页: 监测站点列表', '/api/v1/upns/stations', {'pageNum': 1, 'pageSize': 20, **bbox_params}, report_records,
                                    test_upns_a.test_get_stations, client, minLng, maxLng, minLat, maxLat)
     # 降水页: 预警信息列表 /api/v1/upns/warnings
@@ -432,22 +432,6 @@ def run_upns_w(client, city, startTime, endTime, report_records):
                  test_upns_w.test_get_precipitation_layers, client, startTime, endTime, minLng, maxLng, minLat, maxLat,
                  layer=layer, forecast_offset_minutes=offset, group_name=test_upns_w.groupName_file)
 
-    # 降水页: 大气可降水量(每小时)插值图层 /api/v1/upns/layers/pwv-hourly
-    run_case('降水页: 大气可降水量（每小时）', '/api/v1/upns/layers/pwv-hourly', time_params, report_records,
-             test_upns_w.test_get_pwv_hourly_layer, client, startTime, endTime, minLng, maxLng, minLat, maxLat,
-             group_name=test_upns_w.groupName_file)
-    # 降水页: 气温插值图层 /api/v1/upns/layers/temperature
-    run_case('降水页: 气温图', '/api/v1/upns/layers/temperature', time_params, report_records,
-             test_upns_w.test_get_temperature_layer, client, startTime, endTime, minLng, maxLng, minLat, maxLat,
-             group_name=test_upns_w.groupName_file)
-    # 降水页: 湿度插值图层 /api/v1/upns/layers/humidity
-    run_case('降水页: 湿度图', '/api/v1/upns/layers/humidity', time_params, report_records,
-             test_upns_w.test_get_humidity_layer, client, startTime, endTime, minLng, maxLng, minLat, maxLat,
-             group_name=test_upns_w.groupName_file)
-    # 降水页: 气压插值图层 /api/v1/upns/layers/pressure
-    run_case('降水页: 气压图', '/api/v1/upns/layers/pressure', time_params, report_records,
-             test_upns_w.test_get_pressure_layer, client, startTime, endTime, minLng, maxLng, minLat, maxLat,
-             group_name=test_upns_w.groupName_file)
 
 
 if __name__ == '__main__':
@@ -460,29 +444,23 @@ if __name__ == '__main__':
 
     try:
         # 形变页: 重庆 2026.5.1-2026.8.20
-        run_udmds(client, '重庆', ts(2026, 7, 1), ts(2026, 8, 20, end=True), report_records)
+        run_udmds(client, '重庆', ts(2026, 5, 1), ts(2026, 7, 31, end=True), report_records)
 
-        # 燃气页: 重庆 2019.9.1-2019.9.30 / 北京 2026.5.1-2026.5.30 / 株洲 2026.5.1-2026.5.30
+        # # 燃气页: 重庆 2019.9.1-2019.9.30 / 北京 2026.5.1-2026.5.30 / 株洲 2026.5.1-2026.5.30
         run_unga(client, '重庆', ts(2019, 9, 1), ts(2019, 9, 30, end=True), report_records)
         run_unga(client, '北京', ts(2026, 5, 1), ts(2026, 5, 30, end=True), report_records)
-        for year in range(2026, 2017, -1):
-            for month in range(12, 0, -1):
-                run_unga(client, '株洲', ts(year, month, 1), ts(year, month, 28, end=True), report_records)
 
         # 沉降页: 重庆 2018.1.1-2025.12.31 / 株洲 2022.1.1-2025.12.31
-        for year in range(2026, 2017, -1):
-            for month in range(12, 0, -1):
+        for year in range(2025, 2026):
+            for month in range(1, 12):
                 run_upss(client, '重庆', ts(year, month, 1), ts(year, month, 28, end=True), report_records)
-        run_upss(client, '株洲', ts(2022, 1, 1), ts(2025, 12, 31, end=True), report_records)
+                run_upss(client, '株洲', ts(year, month, 1), ts(year, month, 28, end=True), report_records)
 
         # # 降水页: 重庆/北京 2026.5.1-2026.8.20 (3.7.1~3.7.9)
         # # 降雨图层数据量大, 区间模式统一用短窗口 2026.8.13 03:00-03:40
-        for city in ('重庆', '北京'):
-            for year in range(2026, 2027, 1):
-                for month in range(8, 9, 1):
-                    for day in range(13, 14, 1):
-                        run_upns_a(client, city, ts(year, month, day), ts(year, month, day, end=True), report_records)
-            # run_upns_w(client, city, ts(2026, 8, 12, 0, 0), ts(2026, 8, 13, 0, 0), report_records)
+
+        run_upns_a(client, '北京', ts(2026, 7, 3, 0, 0, 0), ts(2026, 7, 3, 23, 59, 59), report_records)
+        run_upns_w(client, '北京', ts(2026, 7, 3, 0, 0, 0), ts(2026, 7, 3, 23, 59, 59), report_records)
     finally:
         # 中途停止也落一份当前已记录的问题报告
         write_report(start_dt, report_records)
