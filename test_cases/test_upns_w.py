@@ -25,8 +25,8 @@ groupName_file = None
 OBSERVATION_LAYERS = (
     ('XTSKJSXS', '降水量(小时)'),
     ('XTSKJSXS10Min', '降水量(10分钟)'),
-    ('XTSKJSFZ', '降水量(分钟)'),
-    ('XTSKPWV1H', '可降水量(小时)'),
+    # ('XTSKJSFZ', '降水量(分钟)'),
+    ('XTSKPWVXS', '可降水量(小时)'),
     ('XTSKPWV', '可降水量(10分钟)'),
     ('XTSKQW', '气温'),
     ('XTSKSD', '湿度'),
@@ -34,12 +34,12 @@ OBSERVATION_LAYERS = (
 )
 
 FORECAST_LAYERS = {
-    'LSTMXSJS': '时序预测模型',
+    # 'LSTMXSJS': '时序预测模型',
     'CONVLSTMXSJS': '卷积预测模型',
 }
 
 FORECAST_LAYER_CASES = (
-    ('LSTMXSJS', '时序预测模型', 60),
+    # ('LSTMXSJS', '时序预测模型', 60),
     ('CONVLSTMXSJS', '卷积预测模型', 60),
     ('CONVLSTMXSJS', '卷积预测模型', 120),
 )
