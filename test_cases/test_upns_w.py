@@ -253,20 +253,20 @@ if __name__ == '__main__':
 
     # 降水页: 降雨图层格网数据 /api/v1/upns/precipitation/layers
     # 4 个实时观测图层使用区间模式。
-    for layer, layer_name in OBSERVATION_LAYERS:
-        print(f'\n正在测试观测图层：{layer_name}（{layer}）')
-        test_get_precipitation_layers(
-            client,
-            startTime,
-            endTime,
-            minLng,
-            maxLng,
-            minLat,
-            maxLat,
-            layer=layer,
-            group_name=groupName_file,
-            response_records=response_records,
-        )
+    # for layer, layer_name in OBSERVATION_LAYERS:
+    #     print(f'\n正在测试观测图层：{layer_name}（{layer}）')
+    #     test_get_precipitation_layers(
+    #         client,
+    #         startTime,
+    #         endTime,
+    #         minLng,
+    #         maxLng,
+    #         minLat,
+    #         maxLat,
+    #         layer=layer,
+    #         group_name=groupName_file,
+    #         response_records=response_records,
+    #     )
 
     # 降水页: 降雨图层格网数据 /api/v1/upns/precipitation/layers
     # LSTM 测试 1 小时；CONVLSTM 分别测试 1 小时和 2 小时。

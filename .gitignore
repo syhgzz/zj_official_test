@@ -1,4 +1,4 @@
-# Byte-compiled / optimized / DLL files
+git pull --recurse-submodules# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
 *$py.class
