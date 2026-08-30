@@ -443,22 +443,20 @@ if __name__ == '__main__':
     signal.signal(signal.SIGTERM, lambda *_: sys.exit(1))
 
     try:
-        # 形变页: 重庆 2026.5.1-2026.8.20
+        # 形变页: 
         run_udmds(client, '重庆', ts(2026, 7, 1), ts(2026, 7, 31, end=True), report_records)
 
-        # # # 燃气页: 重庆 2019.9.1-2019.9.30 / 北京 2026.5.1-2026.5.30 / 株洲 2026.5.1-2026.5.30
+        # # # 燃气页: 
         run_unga(client, '重庆', ts(2019, 9, 1), ts(2019, 9, 30, end=True), report_records)
         run_unga(client, '北京', ts(2026, 5, 1), ts(2026, 5, 30, end=True), report_records)
 
-        # 沉降页: 重庆 2018.1.1-2025.12.31 / 株洲 2022.1.1-2025.12.31
+        # 沉降页: 
         for year in range(2025, 2026):
             for month in range(1, 12):
                 run_upss(client, '重庆', ts(year, month, 1), ts(year, month, 28, end=True), report_records)
                 run_upss(client, '株洲', ts(year, month, 1), ts(year, month, 28, end=True), report_records)
 
-        # 降水页: 重庆/北京 2026.5.1-2026.8.20 (3.7.1~3.7.9)
-        # 降雨图层数据量大, 区间模式统一用短窗口 2026.8.13 03:00-03:40
-
+        # 降水页: 
         run_upns_a(client, '北京', ts(2026, 7, 3, 0, 0, 0), ts(2026, 7, 3, 23, 59, 59), report_records)
         run_upns_w_history(client, '北京', ts(2026, 7, 3, 0, 0, 0), ts(2026, 7, 3, 20, 00, 00), report_records)
         run_upns_w_forecast(client, '北京', ts(2026, 7, 3, 20, 0, 0), report_records)
