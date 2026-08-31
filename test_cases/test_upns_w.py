@@ -160,7 +160,7 @@ def test_get_precipitation_layers(
     """
     number = ''
     layer_name = LAYER_NAMES[layer]
-    title = f'降水页: 降雨图层格网数据_{layer_name}_{layer}'
+    title = f'降水页: 降雨图层格网数据_{layer_name}_{layer}_{forecast_offset_minutes}'
 
     if layer in OBSERVATION_LAYER_CODES:
         if forecast_offset_minutes is not None:
@@ -172,6 +172,8 @@ def test_get_precipitation_layers(
         raise ValueError(f'不支持的图层编码：{layer}')
 
     path = '/api/v1/upns/precipitation/layers'
+
+
 
     params = _optional_layer_params(
         minLng=minLng,
@@ -191,7 +193,8 @@ def test_get_precipitation_layers(
             raise ValueError('必须传入 startTime 或 endTime')
     else:
         params['forecastOffsetMinutes'] = forecast_offset_minutes
-
+        params['startTime'] = startTime
+        
     start_dt = datetime.now()
     response = client.request('GET', path, params=params)
     end_dt = datetime.now()
@@ -248,7 +251,7 @@ if __name__ == '__main__':
 
     # 测试时间范围与地理范围（仅从 common.py 的 loc_list 获取经纬度）
     startTime = int(datetime(2026, 7, 3, 0, 0, 0).timestamp()) * 1000
-    endTime = int(datetime(2026, 7, 3, 23, 59, 59).timestamp()) * 1000
+    endTime = int(datetime(2026, 7, 3, 20, 0, 0).timestamp()) * 1000
     minLng, maxLng, minLat, maxLat = loc_list['北京']
 
     # 降水页: 降雨图层格网数据 /api/v1/upns/precipitation/layers
@@ -268,6 +271,8 @@ if __name__ == '__main__':
     #         response_records=response_records,
     #     )
 
+    startTime = int(datetime(2026, 7, 3, 20, 0, 0).timestamp()) * 1000
+
     # 降水页: 降雨图层格网数据 /api/v1/upns/precipitation/layers
     # LSTM 测试 1 小时；CONVLSTM 分别测试 1 小时和 2 小时。
     for layer, layer_name, forecast_offset_minutes in FORECAST_LAYER_CASES:
@@ -277,12 +282,11 @@ if __name__ == '__main__':
         )
         test_get_precipitation_layers(
             client,
-            startTime,
-            endTime,
-            minLng,
-            maxLng,
-            minLat,
-            maxLat,
+            startTime=startTime,
+            minLng=minLng,
+            maxLng=maxLng,
+            minLat=minLat,
+            maxLat=maxLat,
             layer=layer,
             forecast_offset_minutes=forecast_offset_minutes,
             group_name=groupName_file,

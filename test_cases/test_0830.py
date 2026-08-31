@@ -1,16 +1,6 @@
 '''
 甲方需要8.30展示的部分，进行接口测试. 各个模块页面的测试时间段和城市如下表所示，测试时请注意：
 
-    |    页面|    城市|    时间段    
-
-    |    形变|    重庆|    26.5.1-26.8.20
-    |    燃气|    重庆|    19.9.1-19.9.30
-    |    燃气|    北京|    26.5.1-26.5.30
-    |    燃气|    株洲|    任意有数据时间段
-    |    沉降|    重庆|    18.1.1-25.12.31
-    |    沉降|    株洲|    22.1.1-25.12.31
-    |    降水|    重庆|    26.5.1-26.8.20
-    |    降水|    北京|    26.5.1-26.8.20
 
 '''
 # 测试范围: 各模块测试文件 __main__ 中启用的接口(注释掉的不测; 3.4.9 暂时不测; 3.5.8 写接口不测)
@@ -406,7 +396,7 @@ def run_upns_a(client, city, startTime, endTime, report_records):
 
 
 
-def run_upns_w(client, city, startTime, endTime, report_records):
+def run_upns_w_history(client, city, startTime, endTime, report_records):
     """降水页: 降雨图层格网数据 /api/v1/upns/precipitation/layers
 
     数据量大, 区间模式(观测图层)用短时间窗口; 预测模式不消耗时间区间。
@@ -424,14 +414,24 @@ def run_upns_w(client, city, startTime, endTime, report_records):
                  test_upns_w.test_get_precipitation_layers, client, startTime, endTime, minLng, maxLng, minLat, maxLat,
                  layer=layer, group_name=test_upns_w.groupName_file)
 
+def run_upns_w_forecast(client, city, startTime, report_records):
+    """降水页: 降雨图层格网数据 /api/v1/upns/precipitation/layers
+
+    数据量大, 区间模式(观测图层)用短时间窗口; 预测模式不消耗时间区间。
+    """
+    print(f'\n========== 降水页(降雨图层) - {city} ({ts_str(startTime)} ) ==========')
+    set_response_dir(f'降水图层_{city}_{ts_str(startTime)}')
+    minLng, maxLng, minLat, maxLat = loc_list[city]
+    bbox_params = {'minLng': minLng, 'maxLng': maxLng, 'minLat': minLat, 'maxLat': maxLat}
+    time_params = {'startTime': startTime, **bbox_params}
+
     # LSTM 测试 1 小时; CONVLSTM 分别测试 1 小时和 2 小时
     for layer, layer_name, offset in test_upns_w.FORECAST_LAYER_CASES:
         print(f'\n正在测试预测图层: {layer_name}({layer}), {offset}分钟后')
         run_case('降水页: 降雨图层格网数据', '/api/v1/upns/precipitation/layers',
                  {'layer': layer, 'forecastOffsetMinutes': offset, **bbox_params}, report_records,
-                 test_upns_w.test_get_precipitation_layers, client, startTime, endTime, minLng, maxLng, minLat, maxLat,
+                 test_upns_w.test_get_precipitation_layers, client, startTime, minLng, maxLng, minLat, maxLat,
                  layer=layer, forecast_offset_minutes=offset, group_name=test_upns_w.groupName_file)
-
 
 
 if __name__ == '__main__':
@@ -443,24 +443,24 @@ if __name__ == '__main__':
     signal.signal(signal.SIGTERM, lambda *_: sys.exit(1))
 
     try:
-        # 形变页: 重庆 2026.5.1-2026.8.20
+        # 形变页: 
         run_udmds(client, '重庆', ts(2026, 7, 1), ts(2026, 7, 31, end=True), report_records)
 
-        # # # 燃气页: 重庆 2019.9.1-2019.9.30 / 北京 2026.5.1-2026.5.30 / 株洲 2026.5.1-2026.5.30
+        # # # 燃气页: 
         run_unga(client, '重庆', ts(2019, 9, 1), ts(2019, 9, 30, end=True), report_records)
         run_unga(client, '北京', ts(2026, 5, 1), ts(2026, 5, 30, end=True), report_records)
 
-        # 沉降页: 重庆 2018.1.1-2025.12.31 / 株洲 2022.1.1-2025.12.31
+        # 沉降页: 
         for year in range(2025, 2026):
             for month in range(1, 12):
                 run_upss(client, '重庆', ts(year, month, 1), ts(year, month, 28, end=True), report_records)
                 run_upss(client, '株洲', ts(year, month, 1), ts(year, month, 28, end=True), report_records)
 
-        # 降水页: 重庆/北京 2026.5.1-2026.8.20 (3.7.1~3.7.9)
-        # 降雨图层数据量大, 区间模式统一用短窗口 2026.8.13 03:00-03:40
-
+        # 降水页: 
         run_upns_a(client, '北京', ts(2026, 7, 3, 0, 0, 0), ts(2026, 7, 3, 23, 59, 59), report_records)
-        run_upns_w(client, '北京', ts(2026, 7, 3, 0, 0, 0), ts(2026, 7, 3, 23, 59, 59), report_records)
+        run_upns_w_history(client, '北京', ts(2026, 7, 3, 0, 0, 0), ts(2026, 7, 3, 20, 00, 00), report_records)
+        run_upns_w_forecast(client, '北京', ts(2026, 7, 3, 20, 0, 0), report_records)
+
     finally:
         # 中途停止也落一份当前已记录的问题报告
         write_report(start_dt, report_records)

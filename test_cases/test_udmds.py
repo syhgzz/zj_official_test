@@ -282,8 +282,8 @@ if __name__ == '__main__':
     client = APIClient(config.host, config.app_key, config.app_secret, config.timeout)
 
     # 测试时间范围与地理范围（仅从 common.py 的 loc_list 获取经纬度）
-    startTime = int(datetime(2026, 5, 5, 0, 0, 0).timestamp()) * 1000
-    endTime = int(datetime(2026, 6, 5, 23, 59, 59).timestamp()) * 1000
+    startTime = int(datetime(2026, 7, 1, 0, 0, 0).timestamp()) * 1000
+    endTime = int(datetime(2026, 7, 31, 23, 59, 59).timestamp()) * 1000
     minLng, maxLng, minLat, maxLat = loc_list['重庆']
 
     # 形变页: 告警汇总 /api/v1/udmds/alerts/summary
