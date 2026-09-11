@@ -24,24 +24,24 @@ groupName_file = None
 
 OBSERVATION_LAYERS = (
     ('XTSKJSXS', '降水量(小时)'),
-    ('XTSKJSXS10Min', '降水量(10分钟)'),
-    ('XTSKJSFZ', '降水量(分钟)'),
-    ('XTSKPWV1H', '可降水量(小时)'),
-    ('XTSKPWV', '可降水量(10分钟)'),
-    ('XTSKQW', '气温'),
-    ('XTSKSD', '湿度'),
-    ('XTSKQY', '气压'),
+    # ('XTSKJSXS10Min', '降水量(10分钟)'),
+    # ('XTSKJSFZ', '降水量(分钟)'),
+    # ('XTSKPWV1H', '可降水量(小时)'),
+    # ('XTSKPWV', '可降水量(10分钟)'),
+    # ('XTSKQW', '气温'),
+    # ('XTSKSD', '湿度'),
+    # ('XTSKQY', '气压'),
 )
 
 FORECAST_LAYERS = {
     # 'LSTMXSJS': '时序预测模型',
-    'CONVLSTMXSJS': '卷积预测模型',
+    # 'CONVLSTMXSJS': '卷积预测模型',
 }
 
 FORECAST_LAYER_CASES = (
     # ('LSTMXSJS', '时序预测模型', 60),
-    ('CONVLSTMXSJS', '卷积预测模型', 60),
-    ('CONVLSTMXSJS', '卷积预测模型', 120),
+    # ('CONVLSTMXSJS', '卷积预测模型', 60),
+    # ('CONVLSTMXSJS', '卷积预测模型', 120),
 )
 
 OBSERVATION_LAYER_CODES = {layer for layer, _ in OBSERVATION_LAYERS}
@@ -250,8 +250,8 @@ if __name__ == '__main__':
     response_records = []
 
     # 测试时间范围与地理范围（仅从 common.py 的 loc_list 获取经纬度）
-    startTime = int(datetime(2026, 7, 3, 0, 0, 0).timestamp()) * 1000
-    endTime = int(datetime(2026, 7, 3, 20, 0, 0).timestamp()) * 1000
+    startTime = int(datetime(2026, 8, 28, 11, 0, 0).timestamp()) * 1000
+    endTime = int(datetime(2026, 8, 28, 12, 0, 0).timestamp()) * 1000
     minLng, maxLng, minLat, maxLat = loc_list['北京']
 
     # 降水页: 降雨图层格网数据 /api/v1/upns/precipitation/layers

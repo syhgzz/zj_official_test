@@ -1,0 +1,110 @@
+[
+ {
+  "name": "case01_plane_5x5",
+  "m": 5,
+  "n": 5,
+  "nc": 4,
+  "undef": -9999.0,
+  "note": "no undef, regular ramp",
+  "input": "E:\\deepseek_harness_workspace\\testmap\\_scratch\\cases\\case01_plane_5x5.txt"
+ },
+ {
+  "name": "case02_radial_40x40",
+  "m": 40,
+  "n": 40,
+  "nc": 4,
+  "undef": -9999.0,
+  "note": "closed contours, no undef",
+  "input": "E:\\deepseek_harness_workspace\\testmap\\_scratch\\cases\\case02_radial_40x40.txt"
+ },
+ {
+  "name": "case03_undef_hole",
+  "m": 30,
+  "n": 30,
+  "nc": 4,
+  "undef": -9999.0,
+  "note": "square undef hole",
+  "input": "E:\\deepseek_harness_workspace\\testmap\\_scratch\\cases\\case03_undef_hole.txt"
+ },
+ {
+  "name": "case04_undef_ring",
+  "m": 36,
+  "n": 36,
+  "nc": 4,
+  "undef": -9999.0,
+  "note": "undef at peak -> Ring branch",
+  "input": "E:\\deepseek_harness_workspace\\testmap\\_scratch\\cases\\case04_undef_ring.txt"
+ },
+ {
+  "name": "case05_two_hills_undef",
+  "m": 40,
+  "n": 40,
+  "nc": 5,
+  "undef": -9999.0,
+  "note": "two centres + 3 undef patches",
+  "input": "E:\\deepseek_harness_workspace\\testmap\\_scratch\\cases\\case05_two_hills_undef.txt"
+ },
+ {
+  "name": "case06_undef_band",
+  "m": 30,
+  "n": 40,
+  "nc": 3,
+  "undef": -9999.0,
+  "note": "undef band splits domain in two",
+  "input": "E:\\deepseek_harness_workspace\\testmap\\_scratch\\cases\\case06_undef_band.txt"
+ },
+ {
+  "name": "case07_constant",
+  "m": 12,
+  "n": 12,
+  "nc": 4,
+  "undef": -9999.0,
+  "note": "constant field, heavy ties",
+  "input": "E:\\deepseek_harness_workspace\\testmap\\_scratch\\cases\\case07_constant.txt"
+ },
+ {
+  "name": "case08_exact_levels",
+  "m": 10,
+  "n": 10,
+  "nc": 4,
+  "undef": -9999.0,
+  "note": "many values exactly equal to levels",
+  "input": "E:\\deepseek_harness_workspace\\testmap\\_scratch\\cases\\case08_exact_levels.txt"
+ },
+ {
+  "name": "case09_undef_ring_frame",
+  "m": 40,
+  "n": 40,
+  "nc": 3,
+  "undef": -9999.0,
+  "note": "donut-shaped valid area",
+  "input": "E:\\deepseek_harness_workspace\\testmap\\_scratch\\cases\\case09_undef_ring_frame.txt"
+ },
+ {
+  "name": "case10_real_jsxs_1200",
+  "m": 192,
+  "n": 198,
+  "nc": 7,
+  "undef": -9999.0,
+  "note": "interface XTSKJSXS 2026-08-28 12:00, no undef",
+  "input": "E:\\deepseek_harness_workspace\\testmap\\_scratch\\cases\\case10_real_jsxs_1200.txt"
+ },
+ {
+  "name": "case11_real_jsxs_1200_clip",
+  "m": 192,
+  "n": 198,
+  "nc": 7,
+  "undef": -9999.0,
+  "note": "interface 12:00 clipped to beijing (12249 undef cells)",
+  "input": "E:\\deepseek_harness_workspace\\testmap\\_scratch\\cases\\case11_real_jsxs_1200_clip.txt"
+ },
+ {
+  "name": "case12_real_pwv_1200",
+  "m": 192,
+  "n": 198,
+  "nc": 12,
+  "undef": -9999.0,
+  "note": "interface XTSKPWV last frame (12:00)",
+  "input": "E:\\deepseek_harness_workspace\\testmap\\_scratch\\cases\\case12_real_pwv_1200.txt"
+ }
+]
