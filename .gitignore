@@ -218,3 +218,10 @@ __marimo__/
 responses*/
 
 .DS_Store
+
+# 迅腾算法复现包：_scratch 下的本地 JDK（~523 MB，含 temurin21.zip 195MB / lib/modules 134MB）
+# 超过 GitHub 单文件 100MB 硬上限，禁止入库
+testmap/_scratch/jdk/
+
+# 迅腾算法复现包：testmap/ 的本地依赖（~107 MB，含 data/raw 原始接口返回与 output/ 生成物），不入库
+precipitation_xunteng/

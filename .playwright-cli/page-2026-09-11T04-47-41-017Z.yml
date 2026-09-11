@@ -1,0 +1,91 @@
+- generic [ref=e1]:
+  - banner [ref=e2]:
+    - heading "小时降水量 · 地图视图" [level=1] [ref=e3]
+    - generic [ref=e4]: XTSKJSXS · 小时降水量
+    - generic [ref=e5]: wContour 1.6.1 逐行移植（与原始 Java 5 阶段按位一致）
+    - generic [ref=e6]: 高德底图 · 已就绪
+    - generic [ref=e7]: 降水页_降雨图层格网数据_降水量(小时)_XTSKJSXS_None_20260910_153138_api_v1_upns_precipitation_layers.json
+  - main [ref=e8]:
+    - generic [ref=e9]:
+      - generic [ref=e10]:
+        - iframe [ref=e11]
+        - generic [ref=e15]: © 2026 AutoNavi - GS(2025)5996号
+      - generic [ref=e16]: 小时降水量 · 2026-08-28 12:00 · 198×192 格网 · 17 个等值面
+    - complementary [ref=e17]:
+      - generic [ref=e18]:
+        - heading "时刻" [level=2] [ref=e19]
+        - generic [ref=e20]:
+          - generic [ref=e21]: 12:00
+          - generic [ref=e22]: 2026-08-28（mm）
+          - slider [ref=e23]: "1"
+          - generic [ref=e24]:
+            - generic [ref=e25]: 11:00
+            - generic [ref=e26]: 12:00
+          - generic [ref=e27]:
+            - button "← 前一帧" [ref=e28] [cursor=pointer]
+            - button "后一帧 →" [active] [ref=e29] [cursor=pointer]
+          - button "缩放至图层范围" [ref=e31] [cursor=pointer]
+      - generic [ref=e32]:
+        - heading "色阶（layer_config.py）" [level=2] [ref=e33]
+        - generic [ref=e34]:
+          - generic [ref=e35]:
+            - generic [ref=e37]: 0 ~ 0.1
+            - generic [ref=e38]: 零至小雨
+          - generic [ref=e39]:
+            - generic [ref=e41]: 0.1 ~ 1.6
+            - generic [ref=e42]: 小雨
+          - generic [ref=e43]:
+            - generic [ref=e45]: 1.6 ~ 7
+            - generic [ref=e46]: 中雨
+          - generic [ref=e47]:
+            - generic [ref=e49]: 7 ~ 15
+            - generic [ref=e50]: 大雨
+          - generic [ref=e51]:
+            - generic [ref=e53]: 15 ~ 40
+            - generic [ref=e54]: 暴雨
+          - generic [ref=e55]:
+            - generic [ref=e57]: 40 ~ 50
+            - generic [ref=e58]: 大暴雨
+          - generic [ref=e59]:
+            - generic [ref=e61]: ≥ 50
+            - generic [ref=e62]: 特大暴雨
+        - generic [ref=e63]:
+          - checkbox "把 0~0.1 档显示为白色" [ref=e64] [cursor=pointer]
+          - generic [ref=e65]: 把 0~0.1 档显示为白色
+      - generic [ref=e66]:
+        - heading "本帧" [level=2] [ref=e67]
+        - generic [ref=e68]:
+          - generic [ref=e69]: 网格
+          - generic [ref=e70]: 198 × 192
+        - generic [ref=e71]:
+          - generic [ref=e72]: 数值范围
+          - generic [ref=e73]: 0.00 ~ 6.74 mm
+        - generic [ref=e74]:
+          - generic [ref=e75]: 均值
+          - generic [ref=e76]: 0.065 mm
+        - generic [ref=e77]:
+          - generic [ref=e78]: 等值面多边形
+          - generic [ref=e79]: "17"
+        - generic [ref=e80]:
+          - generic [ref=e81]: 已填色
+          - generic [ref=e82]: "17"
+        - generic [ref=e83]:
+          - generic [ref=e84]: 范围 bbox
+          - generic [ref=e85]: 115.328, 39.376, 117.624, 41.098
+      - generic [ref=e86]:
+        - heading "显示" [level=2] [ref=e87]
+        - generic [ref=e88]:
+          - checkbox "高德底图" [checked] [ref=e89] [cursor=pointer]
+          - generic [ref=e90]: 高德底图
+        - generic [ref=e91]:
+          - generic [ref=e92]: 底图透明度
+          - slider [ref=e93]: "100"
+          - generic [ref=e94]: 100%
+        - generic [ref=e95]:
+          - checkbox "降水覆盖层" [checked] [ref=e96] [cursor=pointer]
+          - generic [ref=e97]: 降水覆盖层
+        - generic [ref=e98]:
+          - generic [ref=e99]: 覆盖层透明度
+          - slider [ref=e100]: "85"
+          - generic [ref=e101]: 85%
+  - contentinfo [ref=e102]: 数据：降水页_降雨图层格网数据_降水量(小时)_XTSKJSXS_None_20260910_153138_api_v1_upns_precipitation_layers.json · 等值面追踪 → 区间填色 → 渲染（段 B） · 底图：高德
