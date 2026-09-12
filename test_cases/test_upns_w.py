@@ -250,8 +250,8 @@ if __name__ == '__main__':
     response_records = []
 
     # 测试时间范围与地理范围（仅从 common.py 的 loc_list 获取经纬度）
-    startTime = int(datetime(2026, 7, 3, 0, 0, 0).timestamp()) * 1000
-    endTime = int(datetime(2026, 7, 3, 20, 0, 0).timestamp()) * 1000
+    startTime = int(datetime(2026, 9, 12, 12, 0, 0).timestamp()) * 1000
+    endTime = int(datetime(2026, 9, 12, 16, 0, 0).timestamp()) * 1000
     minLng, maxLng, minLat, maxLat = loc_list['北京']
 
     # 降水页: 降雨图层格网数据 /api/v1/upns/precipitation/layers
@@ -271,7 +271,7 @@ if __name__ == '__main__':
             response_records=response_records,
         )
 
-    startTime = int(datetime(2026, 7, 3, 20, 0, 0).timestamp()) * 1000
+    startTime = int(datetime(2026, 9, 12, 12, 0, 0).timestamp()) * 1000
 
     # 降水页: 降雨图层格网数据 /api/v1/upns/precipitation/layers
     # LSTM 测试 1 小时；CONVLSTM 分别测试 1 小时和 2 小时。

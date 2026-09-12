@@ -289,8 +289,8 @@ if __name__ == '__main__':
     client = APIClient(config.host, config.app_key, config.app_secret, config.timeout)
 
     # 测试时间范围与地理范围（仅从 common.py 的 loc_list 获取经纬度）
-    startTime = int(datetime(2026, 8, 28, 12, 0, 0).timestamp()) * 1000
-    endTime = int(datetime(2026, 8, 28, 16, 0, 0).timestamp()) * 1000
+    startTime = int(datetime(2026, 9, 12, 12, 0, 0).timestamp()) * 1000
+    endTime = int(datetime(2026, 9, 12, 16, 0, 0).timestamp()) * 1000
     minLng, maxLng, minLat, maxLat = loc_list['北京']
 
     # top5 接口只用行政区划编码与查询时刻：取北京的 regionCode，按整点遍历 00:00–12:00 共 13 个时刻
