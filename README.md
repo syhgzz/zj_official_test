@@ -165,6 +165,22 @@ loc_list = {
 
 切换地点：将 `loc_list['重庆']` 改为 `loc_list['北京']` 等。
 
+行政区划编码（来源 `regionCodeList.xlsx`，键与 `loc_list` 城市名一致）同样在 `test_cases/common.py` 中维护，
+供只接受 `regionCode`、不支持 bbox 的接口使用：
+
+```python
+region_code_list = {
+    '重庆': '500100',
+    '株洲': '430200',
+    '北京': '110100',
+    # ... 共 20 个城市，详见 common.py
+}
+```
+
+降水页的 `last1hour_rain_top5` 与 `last1hour_pwv_top5` 两个接口只接受 `regionCode` + `timestamp`
+（`timestamp` 为查询时刻的 epoch 毫秒，与签名请求头 `timestamp` 相互独立；传入时按该时刻所在整点及之前最近的统计批次返回）。
+`test_upns_a.py` 的入口以 `region_code_list['北京']`（`110100`）在 2026-09-12 00:00–12:00 之间按整点逐批查询。
+
 ---
 
 ### 数据抓取
