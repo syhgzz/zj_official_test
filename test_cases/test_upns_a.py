@@ -241,40 +241,46 @@ def test_get_regional_statistics(client: APIClient, region_code: str = None):
 # -----------------------------------------------------------------------------
 # 接口 10：过去1小时内降水量最大前五
 # 服务于大屏"过去1小时内降水量最大前五"排名展示。
+# 仅传 regionCode（行政区划编码，与 bbox 互斥且优先，传入后 bbox 忽略）
+# 与 timestamp（查询时刻，epoch 毫秒；不传为当前时刻）。
 # GET /api/v1/upns/last1hour_rain_top5
 # -----------------------------------------------------------------------------
-def test_get_last1hour_rain_top5(client: APIClient, minLng, maxLng, minLat, maxLat):
-    """降水页: 测试获取过去1小时内降水量最大前五地区"""
+def test_get_last1hour_rain_top5(client: APIClient, region_code: str, timestamp: int):
+    """降水页: 按行政区划编码与查询时刻，测试获取过去1小时内降水量最大前五地区"""
     path = '/api/v1/upns/last1hour_rain_top5'
+    # 查询时刻按整点折算批次号（yyyyMMddHH），用于区分同一区划不同批次的响应文件
+    stat_hour = datetime.fromtimestamp(timestamp / 1000).strftime('%Y%m%d%H')
     params = {
-        'minLng': minLng,
-        'maxLat': maxLat,
-        'maxLng': maxLng,
-        'minLat': minLat,
+        'regionCode': region_code,
+        # 与签名请求头 timestamp 相互独立，仅表示查询时刻
+        'timestamp': timestamp,
     }
-    file_name = 'upns_last1hour_rain_top5'
+    file_name = f'upns_last1hour_rain_top5_{region_code}'
     number = ''
-    title = '降水页: 过去1小时降水量前五地区'
+    title = f'降水页: 过去1小时降水量前五地区_{region_code}_{stat_hour}'
     return _request_and_record(client, path=path, params=params, display_name=title, file_name=file_name, number=number, title=title)
 
 
 # -----------------------------------------------------------------------------
 # 接口 11：当前大气可降水量最大前五
 # 服务于大屏"当前大气可降水量最大前五"排名展示。
+# 仅传 regionCode（行政区划编码，与 bbox 互斥且优先，传入后 bbox 忽略）
+# 与 timestamp（查询时刻，epoch 毫秒；不传为当前时刻）。
 # GET /api/v1/upns/last1hour_pwv_top5
 # -----------------------------------------------------------------------------
-def test_get_last1hour_pwv_top5(client: APIClient, minLng, maxLng, minLat, maxLat):
-    """降水页: 测试获取当前大气可降水量最大前五地区"""
+def test_get_last1hour_pwv_top5(client: APIClient, region_code: str, timestamp: int):
+    """降水页: 按行政区划编码与查询时刻，测试获取当前大气可降水量最大前五地区"""
     path = '/api/v1/upns/last1hour_pwv_top5'
+    # 查询时刻按整点折算批次号（yyyyMMddHH），用于区分同一区划不同批次的响应文件
+    stat_hour = datetime.fromtimestamp(timestamp / 1000).strftime('%Y%m%d%H')
     params = {
-        'minLng': minLng,
-        'maxLng': maxLng,
-        'minLat': minLat,
-        'maxLat': maxLat,
+        'regionCode': region_code,
+        # 与签名请求头 timestamp 相互独立，仅表示查询时刻
+        'timestamp': timestamp,
     }
-    file_name = 'upns_last1hour_pwv_top5'
+    file_name = f'upns_last1hour_pwv_top5_{region_code}'
     number = ''
-    title = '降水页: 当前大气可降水量前五地区'
+    title = f'降水页: 当前大气可降水量前五地区_{region_code}_{stat_hour}'
     return _request_and_record(client, path=path, params=params, display_name=title, file_name=file_name, number=number, title=title)
 
 
@@ -283,9 +289,16 @@ if __name__ == '__main__':
     client = APIClient(config.host, config.app_key, config.app_secret, config.timeout)
 
     # 测试时间范围与地理范围（仅从 common.py 的 loc_list 获取经纬度）
-    startTime = int(datetime(2026, 5, 5, 0, 0, 0).timestamp()) * 1000
-    endTime = int(datetime(2026, 6, 5, 23, 59, 59).timestamp()) * 1000
-    minLng, maxLng, minLat, maxLat = loc_list['重庆']
+    startTime = int(datetime(2026, 9, 12, 12, 0, 0).timestamp()) * 1000
+    endTime = int(datetime(2026, 9, 12, 16, 0, 0).timestamp()) * 1000
+    minLng, maxLng, minLat, maxLat = loc_list['北京']
+
+    # top5 接口只用行政区划编码与查询时刻：取北京的 regionCode，按整点遍历 00:00–12:00 共 13 个时刻
+    region_code = region_code_list['北京']
+    top5_timestamps = [
+        startTime + hour * 3600 * 1000
+        for hour in range((endTime - startTime) // (3600 * 1000) + 1)
+    ]
 
     # 降水页: 模块概览 /api/v1/upns/overview
     test_get_overview(client)
@@ -320,7 +333,13 @@ if __name__ == '__main__':
     test_get_regional_statistics(client)
 
     # 降水页: 过去1小时内降水量最大前五地区 /api/v1/upns/last1hour_rain_top5
-    test_get_last1hour_rain_top5(client, minLng, maxLng, minLat, maxLat)
+    # 仅传北京 regionCode + 查询时刻，按整点遍历测试窗口
+    for ts in top5_timestamps:
+        print(f"\n正在查询 {datetime.fromtimestamp(ts / 1000):%Y-%m-%d %H:%M} 的降水量前五地区（{region_code}）")
+        test_get_last1hour_rain_top5(client, region_code, ts)
 
     # 降水页: 当前大气可降水量最大前五地区 /api/v1/upns/last1hour_pwv_top5
-    test_get_last1hour_pwv_top5(client, minLng, maxLng, minLat, maxLat)
+    # 仅传北京 regionCode + 查询时刻，按整点遍历测试窗口
+    for ts in top5_timestamps:
+        print(f"\n正在查询 {datetime.fromtimestamp(ts / 1000):%Y-%m-%d %H:%M} 的大气可降水量前五地区（{region_code}）")
+        test_get_last1hour_pwv_top5(client, region_code, ts)
