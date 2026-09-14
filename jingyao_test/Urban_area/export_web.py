@@ -33,12 +33,12 @@ import numpy as np
 from config.config import config
 from lib.api_client import APIClient
 
-from Urban_area import eqs_algorithm as eqs
-from Urban_area.algo_compare import (load_scatter, load_stations,
+from jingyao_test.Urban_area import eqs_algorithm as eqs
+from jingyao_test.Urban_area.algo_compare import (load_scatter, load_stations,
                                                warm_station_series)
-from Urban_area.fetch_layers import fetch_layer
-from Urban_area.layer_config import DEFAULT_LAYERS, LAYERS, layer_clip
-from Urban_area.run_compare import (DATA_DIR, OUT_DIR, PACKAGE_DIR,
+from jingyao_test.Urban_area.fetch_layers import fetch_layer
+from jingyao_test.Urban_area.layer_config import DEFAULT_LAYERS, LAYERS, layer_clip
+from jingyao_test.Urban_area.run_compare import (DATA_DIR, OUT_DIR, PACKAGE_DIR,
                                                find_reference, load_cache)
 
 WEB_TEMPLATE_DIR = os.path.join(PACKAGE_DIR, 'web')

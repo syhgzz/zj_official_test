@@ -135,7 +135,7 @@ def load_payload(path):
 
 def real_cases(extra_inputs=()):
     """真实接口帧：结果文件夹里的 XTSKJSXS（含裁剪版）+ data/raw 里的 PWV。"""
-    from Urban_area.layer_config import LAYERS
+    from jingyao_test.Urban_area.layer_config import LAYERS
 
     out = []
     resp_files = [p for p in extra_inputs]

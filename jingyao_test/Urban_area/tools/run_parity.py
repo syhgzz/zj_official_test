@@ -127,7 +127,7 @@ def main(argv=None):
         return 2
 
     print('[3/4] 生成用例 ...')
-    import gen_cases
+    import jingyao_test.Urban_area.tools.gen_cases as gen_cases
     manifest = gen_cases.main(args.input or ())
 
     print('[4/4] 跑 Java 真值 + Python 比对 ...')
@@ -141,7 +141,7 @@ def main(argv=None):
             print(f"  !! Java 失败 {e['name']}: {err[:200]}")
     print(f'  Java 真值导出 {n_java_ok}/{len(manifest)} 个用例')
 
-    import compare
+    import jingyao_test.Urban_area.tools.compare as compare
     rc = compare.main(args.only or [], truth_dir=truth_dir)
     print(f'\n中间产物: {RUNDIR}')
     return rc

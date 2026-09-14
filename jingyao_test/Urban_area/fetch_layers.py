@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from config.config import config
 from lib.api_client import APIClient
 
-from Urban_area.layer_config import LAYERS
+from jingyao_test.Urban_area.layer_config import LAYERS
 
 RAW_DIR = os.path.join(os.path.dirname(__file__), 'data', 'raw')
 

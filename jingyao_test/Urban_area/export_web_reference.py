@@ -35,10 +35,10 @@ from datetime import datetime
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from Urban_area import eqs_algorithm as eqs                  # noqa: E402
-from Urban_area import xunteng_reference as xr                # noqa: E402
-from Urban_area.layer_config import LAYERS, layer_clip        # noqa: E402
-from Urban_area.run_compare import find_reference             # noqa: E402
+from jingyao_test.Urban_area import eqs_algorithm as eqs                  # noqa: E402
+from jingyao_test.Urban_area import xunteng_reference as xr                # noqa: E402
+from jingyao_test.Urban_area.layer_config import LAYERS, layer_clip        # noqa: E402
+from jingyao_test.Urban_area.run_compare import find_reference             # noqa: E402
 
 PACKAGE_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_DIR = os.path.dirname(PACKAGE_DIR)
@@ -287,7 +287,7 @@ def render_scatter_frame(layer, scatter_json, t, dt, out_dir, args):
 
 def load_scatter_json(client, layer, bbox, dt_ms, cache_dir, tol_minutes=30.0):
     """取该时刻站点散点，转成 txt 的 jsonArray 形状 [{'l','b','v'}, ...]。"""
-    from Urban_area.algo_compare import load_scatter, load_stations
+    from jingyao_test.Urban_area.algo_compare import load_scatter, load_stations
 
     stations = load_stations(client, bbox)
     arr, _skipped, src = load_scatter(client, stations, LAYERS[layer]['metric'],

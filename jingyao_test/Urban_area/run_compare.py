@@ -30,9 +30,9 @@ import numpy as np
 from config.config import config
 from lib.api_client import APIClient
 
-from Urban_area import eqs_algorithm as eqs
-from Urban_area.fetch_layers import fetch_layer, ms
-from Urban_area.layer_config import DEFAULT_LAYERS, LAYERS, layer_clip
+from jingyao_test.Urban_area import eqs_algorithm as eqs
+from jingyao_test.Urban_area.fetch_layers import fetch_layer, ms
+from jingyao_test.Urban_area.layer_config import DEFAULT_LAYERS, LAYERS, layer_clip
 
 PACKAGE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(PACKAGE_DIR, 'data')

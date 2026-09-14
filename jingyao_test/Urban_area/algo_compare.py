@@ -32,10 +32,10 @@ import numpy as np
 from config.config import config
 from lib.api_client import APIClient
 
-from Urban_area import eqs_algorithm as eqs
-from Urban_area.fetch_layers import fetch_layer, ms
-from Urban_area.layer_config import LAYERS
-from Urban_area.run_compare import (DATA_DIR, PACKAGE_DIR, load_cache,
+from jingyao_test.Urban_area import eqs_algorithm as eqs
+from jingyao_test.Urban_area.fetch_layers import fetch_layer, ms
+from jingyao_test.Urban_area.layer_config import LAYERS
+from jingyao_test.Urban_area.run_compare import (DATA_DIR, PACKAGE_DIR, load_cache,
                                                station_series)
 
 # 差值场色阶：[-∞,-5) 蓝 → 0 附近透明 → [5,∞) 红

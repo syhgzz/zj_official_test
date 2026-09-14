@@ -44,9 +44,9 @@ import time
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from Urban_area import eqs_algorithm as eqs                    # noqa: E402
-from Urban_area import xunteng_reference as xr                  # noqa: E402
-from Urban_area.layer_config import LAYERS                      # noqa: E402
+from jingyao_test.Urban_area import eqs_algorithm as eqs                    # noqa: E402
+from jingyao_test.Urban_area import xunteng_reference as xr                  # noqa: E402
+from jingyao_test.Urban_area.layer_config import LAYERS                      # noqa: E402
 
 PACKAGE_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_DIR = os.path.dirname(PACKAGE_DIR)

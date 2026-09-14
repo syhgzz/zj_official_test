@@ -26,10 +26,10 @@ TRUTH = os.path.join(RUNDIR, 'truth')
 if PROJECT_DIR not in sys.path:
     sys.path.insert(0, PROJECT_DIR)
 
-from Urban_area.wcontour import borders as wb            # noqa: E402
-from Urban_area.wcontour import contour_lines as wcl     # noqa: E402
-from Urban_area.wcontour import smoothing as wsm         # noqa: E402
-from Urban_area.wcontour import polygons as wp           # noqa: E402
+from jingyao_test.Urban_area.wcontour import borders as wb            # noqa: E402
+from jingyao_test.Urban_area.wcontour import contour_lines as wcl     # noqa: E402
+from jingyao_test.Urban_area.wcontour import smoothing as wsm         # noqa: E402
+from jingyao_test.Urban_area.wcontour import polygons as wp           # noqa: E402
 
 
 # --------------------------------------------------------------------- input
