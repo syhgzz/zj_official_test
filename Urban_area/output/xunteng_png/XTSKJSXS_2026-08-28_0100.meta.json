@@ -1,0 +1,37 @@
+{
+ "ok": true,
+ "layer": "XTSKJSXS",
+ "layerName": "小时降水量",
+ "unit": "mm",
+ "time": "2026-08-28 01:00",
+ "target_ms": 1787850000000,
+ "cols": 198,
+ "rows": 192,
+ "bbox": [
+  115.328154013575,
+  39.37649512177754,
+  117.62405180611998,
+  41.097765196719216
+ ],
+ "clip": false,
+ "n_nan_filled": 0,
+ "n_valid": 38016,
+ "vmin": 0.0,
+ "vmax": 3.7288090103074962,
+ "vmean": 0.14041815118001078,
+ "n_polygons": 18,
+ "n_drawn": 18,
+ "img": "E:\\work\\zj_official_test\\precipitation_xunteng\\output\\xunteng_png\\XTSKJSXS_2026-08-28_0100.png",
+ "elapsed": 3.602,
+ "breaks": [
+  0.0,
+  0.1,
+  1.6,
+  7.0,
+  15.0,
+  40.0,
+  50.0
+ ],
+ "notes": [],
+ "preview": "E:\\work\\zj_official_test\\precipitation_xunteng\\output\\xunteng_png\\XTSKJSXS_2026-08-28_0100_preview1024.png"
+}

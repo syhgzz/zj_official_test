@@ -1,0 +1,835 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>讯腾降水图 · 对照控制台</title>
+<style>
+  :root {
+    color-scheme: light;
+    font-family: Inter, "PingFang SC", "Microsoft YaHei", sans-serif;
+    color: #172033;
+    background: #dbe3ed;
+  }
+  * { box-sizing: border-box; }
+  html, body, #map { width: 100%; height: 100%; margin: 0; }
+  body { overflow: hidden; }
+  #map { background: #dbe3ed; }
+
+  /* ---------------- 通用卡片面板（与 wmts_demo 风格一致） ---------------- */
+  .panel {
+    position: fixed;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    width: min(400px, calc(100vw - 32px));
+    max-height: calc(100vh - 32px);
+    overflow: hidden;
+    border: 1px solid rgba(148, 163, 184, 0.38);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 16px 42px rgba(15, 23, 42, 0.16);
+    backdrop-filter: blur(12px);
+    transition: width 160ms ease;
+  }
+  #controlPanel { top: 16px; left: 16px; }
+  #refPanel { top: 16px; right: 16px; width: min(360px, calc(100vw - 32px)); }
+
+  .panel.collapsed { width: min(268px, calc(100vw - 32px)); }
+  .panel.collapsed .subtitle { display: none; }
+  .panel.collapsed .panel-body { display: none; }
+  .panel.collapsed h1 {
+    overflow: hidden; margin: 2px 0 0;
+    text-overflow: ellipsis; white-space: nowrap;
+  }
+
+  .panel-header {
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+    flex: 0 0 auto; padding: 14px 14px 12px 16px;
+    cursor: grab; touch-action: none; user-select: none;
+  }
+  .panel-header:active { cursor: grabbing; }
+  .panel-title { min-width: 0; }
+  h1 { margin: 0 0 4px; font-size: 17px; line-height: 1.35; }
+  .subtitle { margin: 0; color: #64748b; font-size: 12px; line-height: 1.6; }
+
+  .panel-collapse {
+    flex: 0 0 auto; min-width: 52px; padding: 6px 9px;
+    border: 1px solid #cbd5e1; border-radius: 9px;
+    color: #475569; background: rgba(248, 250, 252, 0.94);
+    font: inherit; font-size: 12px; font-weight: 700; cursor: pointer;
+  }
+  .panel-collapse:hover { color: #1d4ed8; border-color: #93c5fd; background: #eff6ff; }
+
+  .panel-body { min-height: 0; overflow-y: auto; padding: 0 16px 16px; }
+  body.panel-dragging, body.panel-dragging * { cursor: grabbing !important; user-select: none !important; }
+
+  /* 状态行 */
+  .status-row {
+    display: flex; align-items: center; gap: 9px;
+    margin-bottom: 13px; padding: 10px 12px; border-radius: 9px;
+    color: #92400e; background: #fffbeb; font-size: 13px; font-weight: 600;
+  }
+  .status-dot {
+    width: 9px; height: 9px; flex: 0 0 auto; border-radius: 50%;
+    background: #f59e0b; box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.14);
+  }
+  .status-row.ok { color: #166534; background: #f0fdf4; }
+  .status-row.ok .status-dot { background: #22c55e; box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.14); }
+  .status-row.err { color: #991b1b; background: #fef2f2; }
+  .status-row.err .status-dot { background: #ef4444; box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.14); }
+
+  /* 信息表 */
+  dl {
+    display: grid; grid-template-columns: 82px minmax(0, 1fr);
+    gap: 7px 10px; margin: 0 0 4px; font-size: 12px; line-height: 1.45;
+  }
+  dt { color: #64748b; }
+  dd { min-width: 0; margin: 0; color: #1e293b; font-weight: 600; overflow-wrap: anywhere; }
+
+  /* 分区 */
+  .section { margin-top: 14px; padding-top: 13px; border-top: 1px solid #e2e8f0; }
+  .section-title {
+    display: flex; justify-content: space-between; gap: 8px; margin-bottom: 9px;
+    color: #475569; font-size: 12px; font-weight: 700;
+  }
+  .section-title small { color: #94a3b8; font-weight: 500; }
+
+  .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+  .btn-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .btn-grid.three button {
+    padding: 8px 4px; font-size: 12px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  button {
+    padding: 9px 12px; border: 1px solid transparent; border-radius: 9px;
+    color: #fff; background: #2563eb; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
+  }
+  button:hover { background: #1d4ed8; }
+  button:disabled { cursor: not-allowed; opacity: 0.55; }
+  button.secondary {
+    color: #1d4ed8; border-color: #bfdbfe; background: #eff6ff;
+  }
+  button.secondary:hover { background: #dbeafe; }
+  button.secondary.layer-toggle.active {
+    color: #fff; border-color: #2563eb; background: #2563eb;
+  }
+  button.secondary.layer-toggle.active:hover { background: #1d4ed8; }
+
+  .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 14px; }
+
+  .field { display: grid; grid-template-columns: 82px minmax(0, 1fr); align-items: center; gap: 10px; margin-bottom: 9px; font-size: 12px; color: #475569; }
+  select, input[type="file"] {
+    width: 100%; padding: 7px 9px;
+    border: 1px solid #cbd5e1; border-radius: 9px;
+    background: #fff; color: #1e293b; font: inherit; font-size: 12px;
+  }
+
+  .slider-row {
+    display: grid; grid-template-columns: 96px minmax(0, 1fr) 52px;
+    align-items: center; gap: 8px; margin-bottom: 9px;
+    color: #475569; font-size: 12px;
+  }
+  .slider-row input[type="range"] { width: 100%; accent-color: #2563eb; }
+  .slider-row output { color: #1e293b; font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; }
+  .check-row {
+    display: flex; align-items: flex-start; gap: 8px; margin-top: 6px;
+    color: #475569; font-size: 12px; line-height: 1.5; cursor: pointer;
+  }
+  .check-row input { margin: 1px 0 0; accent-color: #2563eb; }
+  .check-row input:disabled + span { color: #94a3b8; }
+  .algo-note {
+    padding: 8px 10px; border-radius: 9px; background: #f8fafc; border: 1px solid #e2e8f0;
+    color: #475569; font-size: 12px; line-height: 1.7;
+  }
+
+  .warning {
+    display: none; margin-top: 11px; padding: 8px 10px; border-radius: 8px;
+    color: #92400e; background: #fffbeb; font-size: 12px; line-height: 1.5;
+  }
+
+  /* 参考截图卡片 */
+  #refImg { width: 100%; border-radius: 10px; border: 1px solid #e2e8f0; background: #f8fafc; display: none; }
+  .empty { color: #94a3b8; font-size: 12px; line-height: 1.8; }
+  .empty b { color: #475569; }
+  .thumbs { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .thumbs img { width: 100%; border-radius: 8px; border: 1px solid #e2e8f0; cursor: zoom-in; background: #fff; }
+
+  /* 地图上的浮层 */
+  .floating-card {
+    position: absolute; z-index: 900;
+    padding: 9px 11px; border-radius: 12px; font-size: 11px;
+    border: 1px solid rgba(148, 163, 184, 0.45);
+    background: rgba(255, 255, 255, 0.94);
+    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.14);
+  }
+  #legend { padding: 0; border: 0; background: none; box-shadow: none; position: static; max-height: none; }
+  #legend .row { display: flex; align-items: center; gap: 6px; margin-top: 3px; }
+  #legend .sw { width: 22px; height: 13px; border-radius: 2px; border: 1px solid rgba(0,0,0,.14); flex: 0 0 auto; }
+  #legend .title { font-weight: 800; color: #334155; }
+  #legend .legend-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 2px 10px; }
+  #legend .legend-list.legend-col { display: flex; flex-direction: column; gap: 3px; }
+  #legend .sw.sw-transparent {
+    border: 1px dashed #94a3b8;
+    background: repeating-linear-gradient(45deg, #e2e8f0 0 4px, #ffffff 4px 8px) !important;
+  }
+  #legend .legend-list .row span:last-child { white-space: nowrap; }
+  .map-badge { position: absolute; right: 16px; bottom: 18px; z-index: 900; pointer-events: none; color: #334155; }
+  #fallback {
+    position: absolute; inset: 0; display: none; align-items: center; justify-content: center;
+    background: #f1f5f9; z-index: 5; padding: 12px;
+  }
+  #fallback img { max-width: 100%; max-height: 100%; object-fit: contain; }
+
+  @media (max-width: 720px) {
+    #controlPanel, #refPanel { top: 10px; }
+    #controlPanel { left: 10px; }
+    #refPanel { right: 10px; left: auto; }
+  }
+</style>
+</head>
+<body>
+<div id="map" aria-label="讯腾降水图 · 高德底图对照">
+  <div id="fallback"><img id="fallbackImg" alt="叠加图" /></div>
+  <div class="floating-card map-badge">图层顺序：高德 → 天地图 → WMTS → 叠加图层</div>
+</div>
+
+<!-- ============ 控制面板 ============ -->
+<section id="controlPanel" class="panel">
+  <header class="panel-header" id="panelDragHandle" tabindex="0" title="拖动窗口">
+    <div class="panel-title">
+      <h1>讯腾降水图 · 对照控制台</h1>
+      <p class="subtitle">算法出图叠加在高德底图上，右侧参考截图逐张对比。</p>
+    </div>
+    <button id="panelCollapse" class="panel-collapse" type="button" aria-controls="panelBody" aria-expanded="true">收起</button>
+  </header>
+
+  <div id="panelBody" class="panel-body">
+    <div id="status" class="status-row"><span class="status-dot"></span><span id="statusText">正在初始化地图…</span></div>
+
+    <dl>
+      <dt>图层</dt><dd id="metaLayer">—</dd>
+      <dt>时刻</dt><dd id="metaTime">—</dd>
+      <dt>算法</dt><dd id="metaSource">迅腾算法</dd>
+      <dt>地图范围</dt><dd id="metaBbox">—</dd>
+      <dt>算法参数</dt><dd id="metaParams">—</dd>
+      <dt>叠加图</dt><dd id="metaPng">—</dd>
+      <dt>参考截图</dt><dd id="metaRef">—</dd>
+    </dl>
+
+    <div class="section">
+      <div class="section-title"><span>图层与时刻</span><small id="dateHint">—</small></div>
+      <div class="field">
+        <label for="layerSelect">要素图层</label>
+        <select id="layerSelect"></select>
+      </div>
+      <div class="slider-row">
+        <label for="timeRange">时刻</label>
+        <input id="timeRange" type="range" min="0" max="0" value="0" step="1" />
+        <output id="timeLabel">—</output>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><span>算法</span><small>迅腾算法</small></div>
+      <div class="algo-note" id="algoNote">
+        站点散点 → 包围盒外扩 0.07° → 1km 格网 → IDW(3 近邻) → 等值面填色 → PNG；
+        无站点散点的要素（如小时降水量）由接口格网直接进入等值面环节，同一套代码。
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><span>底图与透明度</span><small>支持同时显示</small></div>
+      <div class="btn-grid three">
+        <button id="amapToggle" class="secondary layer-toggle active" type="button" aria-pressed="true">高德</button>
+        <button id="tiandituToggle" class="secondary layer-toggle" type="button" aria-pressed="false">天地图</button>
+        <button id="wmtsToggle" class="secondary layer-toggle" type="button" aria-pressed="false">WMTS</button>
+      </div>
+      <div style="height:10px"></div>
+      <div class="slider-row">
+        <label for="amapOpacity">高德透明度</label>
+        <input id="amapOpacity" type="range" min="0" max="100" value="100" />
+        <output id="amapOpacityValue">100%</output>
+      </div>
+      <div class="slider-row">
+        <label for="tiandituOpacity">天地图透明度</label>
+        <input id="tiandituOpacity" type="range" min="0" max="100" value="70" />
+        <output id="tiandituOpacityValue">70%</output>
+      </div>
+      <div class="slider-row">
+        <label for="wmtsOpacity">WMTS 透明度</label>
+        <input id="wmtsOpacity" type="range" min="0" max="100" value="80" />
+        <output id="wmtsOpacityValue">80%</output>
+      </div>
+      <div class="slider-row">
+        <label for="overlayOpacity">叠加层透明度</label>
+        <input id="overlayOpacity" type="range" min="10" max="100" value="90" />
+        <output id="overlayOpacityValue">90%</output>
+      </div>
+      <label class="check-row" for="whiteBandChk">
+        <input id="whiteBandChk" type="checkbox" />
+        <span>显示 0~0.1 白色档（零至小雨；不勾选=透明隐藏）</span>
+      </label>
+    </div>
+
+    <div class="actions">
+      <button id="reloadBtn" type="button">重新加载</button>
+      <button id="openOverlayBtn" class="secondary" type="button">打开叠加图</button>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><span>色阶图例</span><small id="legendHint">—</small></div>
+      <div id="legend"><div class="title">色阶</div></div>
+    </div>
+
+    <div id="warning" class="warning"></div>
+  </div>
+</section>
+
+<!-- ============ 参考截图面板 ============ -->
+<section id="refPanel" class="panel">
+  <header class="panel-header" id="refDragHandle" tabindex="0" title="拖动窗口">
+    <div class="panel-title">
+      <h1>参考截图</h1>
+      <p class="subtitle">与左侧叠加图逐张比对</p>
+    </div>
+    <button id="refCollapse" class="panel-collapse" type="button" aria-controls="refBody" aria-expanded="true">收起</button>
+  </header>
+
+  <div id="refBody" class="panel-body">
+    <div class="field">
+      <label for="refSelect">已匹配</label>
+      <select id="refSelect"></select>
+    </div>
+    <div class="btn-grid">
+      <button id="refPickBtn" class="secondary" type="button">本地选择…</button>
+      <button id="openRef" class="secondary" type="button">新窗口打开</button>
+    </div>
+    <input id="refFile" type="file" accept="image/*" hidden />
+
+    <div style="height:10px"></div>
+    <img id="refImg" alt="参考截图" />
+    <div id="refEmpty" class="empty">
+      还没有参考截图。<br>
+      把讯腾平台截图放进 <b>precipitation_xunteng/references/</b>
+      （文件名含关键字即可自动匹配，如 <b>PWV.png</b>、<b>小时降水量.png</b>），
+      重跑 <b>export_web.py</b>；或点「本地选择…」直接挑一张图。
+    </div>
+
+    <div class="section">
+      <div class="section-title"><span>静态并排对比图</span><small>run_compare 生成</small></div>
+      <div class="thumbs" id="compareThumbs"></div>
+      <div class="empty" id="thumbsEmpty">暂无（把截图放进 references/ 后运行 run_compare）</div>
+    </div>
+  </div>
+</section>
+
+<script src="./wmts_map_config.js"></script>
+<script src="./precip_layers.js"></script>
+<script>
+/* =========================================================================
+ * 讯腾降水图对照控制台
+ *   地图：高德 / 天地图 / WMTS（与 wmts_demo 同一套 API）
+ *   叠加：① 算法(IDW)：散点 → 外扩 0.07° → 1km 格网 → IDW(3 近邻) → 等值面
+ *         ② 平台格网：接口返回的服务端实时场，同色阶渲染
+ *   右侧：参考截图（references/ 自动匹配 或 本地选择）
+ * ====================================================================== */
+
+const WMTS_CAPABILITIES_URL =
+  'http://114.255.16.109:7010/sj_raster/v6/wmts/service/system/10001701/1?ak=sf3ebb7eb413fb01aab003391e3e0a27fa';
+const WMTS_NS = 'http://www.opengis.net/wmts/1.0';
+const OWS_NS = 'http://www.opengis.net/ows/1.1';
+const TILE_SIZE = 256;
+const Z_INDEX = { amap: 10, tianditu: 20, tiandituLabel: 21, wmts: 40, overlay: 60 };
+
+const DATA = window.PRECIP_DATA || { layers: {}, refs: [] };
+const ui = Object.fromEntries(
+  ['status', 'statusText', 'layerSelect', 'timeRange', 'timeLabel', 'dateHint',
+    'amapToggle', 'tiandituToggle', 'wmtsToggle',
+    'amapOpacity', 'amapOpacityValue', 'tiandituOpacity', 'tiandituOpacityValue',
+    'wmtsOpacity', 'wmtsOpacityValue', 'overlayOpacity', 'overlayOpacityValue',
+    'reloadBtn', 'openOverlayBtn', 'warning', 'legend', 'legendHint', 'fallback', 'fallbackImg',
+    'whiteBandChk',
+    'metaLayer', 'metaTime', 'metaSource', 'metaBbox', 'metaParams', 'metaPng', 'metaRef',
+    'refSelect', 'refPickBtn', 'refFile', 'refImg', 'refEmpty', 'openRef',
+    'compareThumbs', 'thumbsEmpty', 'panelCollapse', 'panelBody', 'panelDragHandle',
+    'refPanel', 'refBody', 'refCollapse', 'refDragHandle']
+    .map((id) => [id, document.getElementById(id)])
+);
+
+let map, AMapNS, overlayLayer, amapLayer, tiandituVec, tiandituCva;
+let wmtsLayer, wmtsConfig, wmtsReady = false;
+let currentFrames = [];
+let showWhiteBand = false;      // 是否显示被隐藏的最低档（如 0~0.1 零至小雨）
+let state = { amap: true, tianditu: false, wmts: false };
+let amapPromise;
+
+/* ---------------- 状态 / 信息 ---------------- */
+function setStatus(text, kind) {
+  ui.status.className = `status-row${kind ? ` ${kind}` : ''}`;
+  ui.statusText.textContent = text;
+}
+function setText(id, value) { ui[id].textContent = value; }
+function currentLayerMeta() { return DATA.layers[ui.layerSelect.value] || null; }
+function currentFrame() { return currentFrames[Number(ui.timeRange.value) || 0] || null; }
+function currentItem() {
+  const frame = currentFrame();
+  if (!frame) return null;
+  if (!frame.items) return frame;
+  const items = frame.items;
+  if (showWhiteBand && items.xtWhite) return items.xtWhite;
+  return items.xt || null;
+}
+function layerHasWhiteBand() {
+  const frame = currentFrames[0];
+  return !!(frame?.items?.xtWhite);
+}
+function algoInfo() {
+  const frame = currentFrame();
+  if (!frame) return '迅腾算法';
+  return frame.inputMode === 'grid'
+    ? '迅腾算法（输入：接口格网 → 等值面）'
+    : '迅腾算法（输入：站点散点 → IDW → 等值面）';
+}
+function sourceLabel() {
+  return algoInfo();
+}
+
+/* ---------------- 面板：折叠 / 拖动 ---------------- */
+let dragState;
+function startDrag(event, panel) {
+  if (event.pointerType === 'mouse' && event.button !== 0) return;
+  if (event.target.closest?.('button')) return;
+  const rect = panel.getBoundingClientRect();
+  dragState = {
+    panel, pointerId: event.pointerId,
+    offsetX: event.clientX - rect.left, offsetY: event.clientY - rect.top
+  };
+  event.currentTarget.setPointerCapture?.(event.pointerId);
+  document.body.classList.add('panel-dragging');
+  event.preventDefault();
+}
+function moveDrag(event) {
+  if (!dragState || event.pointerId !== dragState.pointerId) return;
+  const pad = 10;
+  const { panel } = dragState;
+  const maxLeft = Math.max(pad, window.innerWidth - panel.offsetWidth - pad);
+  const maxTop = Math.max(pad, window.innerHeight - panel.offsetHeight - pad);
+  panel.style.left = `${Math.min(maxLeft, Math.max(pad, event.clientX - dragState.offsetX))}px`;
+  panel.style.top = `${Math.min(maxTop, Math.max(pad, event.clientY - dragState.offsetY))}px`;
+  panel.style.right = 'auto';
+}
+function stopDrag(event) {
+  if (!dragState || (event.pointerId != null && event.pointerId !== dragState.pointerId)) return;
+  dragState = undefined;
+  document.body.classList.remove('panel-dragging');
+}
+function bindPanelDrag(handle, panel) {
+  handle.addEventListener('pointerdown', (e) => startDrag(e, panel));
+  handle.addEventListener('pointermove', moveDrag);
+  handle.addEventListener('pointerup', stopDrag);
+  handle.addEventListener('pointercancel', stopDrag);
+}
+function toggleCollapse(panel, button, body) {
+  const collapsed = panel.classList.toggle('collapsed');
+  button.textContent = collapsed ? '展开' : '收起';
+  button.setAttribute('aria-expanded', String(!collapsed));
+  if (body) body.style.display = collapsed ? 'none' : '';
+}
+
+/* ---------------- 地图 ---------------- */
+function project(lon, lat, zoom) {
+  const scale = TILE_SIZE * 2 ** zoom;
+  const la = Math.max(-85.05112878, Math.min(85.05112878, lat));
+  const sin = Math.sin(la * Math.PI / 180);
+  return {
+    x: (lon + 180) / 360 * scale,
+    y: (0.5 - Math.log((1 + sin) / (1 - sin)) / (4 * Math.PI)) * scale
+  };
+}
+function fitZoom(bbox) {
+  const box = document.getElementById('map');
+  const width = Math.max(160, (box?.clientWidth || window.innerWidth) - 420);
+  const height = Math.max(160, (box?.clientHeight || window.innerHeight) - 120);
+  let zoom = 3;
+  for (let z = 3; z <= 18; z += 1) {
+    const tl = project(bbox[0], bbox[3], z);
+    const br = project(bbox[2], bbox[1], z);
+    if (br.x - tl.x > width || br.y - tl.y > height) break;
+    zoom = z;
+  }
+  return zoom;
+}
+function loadAmap() {
+  const cfg = window.WMTS_MAP_CONFIG;
+  if (!cfg?.amap?.key) return Promise.reject(new Error('缺少高德 Key（wmts_map_config.js）'));
+  window._AMapSecurityConfig = { securityJsCode: cfg.amap.securityJsCode };
+  if (window.AMap) return Promise.resolve(window.AMap);
+  if (amapPromise) return amapPromise;
+  amapPromise = new Promise((resolve, reject) => {
+    const cb = `initAmap_${Date.now()}`;
+    const script = document.createElement('script');
+    let settled = false;
+    const timer = setTimeout(() => finish(new Error('高德地图加载超时（检查 Key 白名单/网络）')), 15000);
+    function finish(err) {
+      if (settled) return;
+      settled = true; clearTimeout(timer); delete window[cb];
+      if (err) reject(err);
+      else if (window.AMap) resolve(window.AMap);
+      else reject(new Error('AMap 脚本已返回但对象不可用'));
+    }
+    window[cb] = () => finish();
+    script.onload = () => finish();
+    script.onerror = () => finish(new Error('高德脚本加载失败'));
+    script.src = `https://webapi.amap.com/maps?v=2.0&key=${encodeURIComponent(cfg.amap.key)}`
+      + `&callback=${encodeURIComponent(cb)}`;
+    document.head.appendChild(script);
+  }).catch((e) => { amapPromise = null; throw e; });
+  return amapPromise;
+}
+function tiandituTemplate(name, token) {
+  return `https://t{0,1,2,3,4,5,6,7}.tianditu.gov.cn/${name}_w/wmts?`
+    + `SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=${name}`
+    + `&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILECOL=[x]`
+    + `&TILEROW=[y]&TILEMATRIX=[z]&tk=${encodeURIComponent(token)}`;
+}
+function directChildText(parent, ns, tag) {
+  const node = Array.from(parent.children).find((c) => c.namespaceURI === ns && c.localName === tag);
+  return node?.textContent.trim() || '';
+}
+function parseCapabilities(xmlText) {
+  const doc = new DOMParser().parseFromString(xmlText, 'application/xml');
+  if (doc.querySelector('parsererror')) throw new Error('Capabilities XML 解析失败');
+  const layer = doc.getElementsByTagNameNS(WMTS_NS, 'Layer')[0];
+  const matrixSet = Array.from(doc.getElementsByTagNameNS(WMTS_NS, 'TileMatrixSet'))
+    .find((n) => n.getElementsByTagNameNS(WMTS_NS, 'TileMatrix').length > 0);
+  if (!layer || !matrixSet) throw new Error('Capabilities 结构不完整');
+  const matrixSetName = directChildText(matrixSet, OWS_NS, 'Identifier');
+  const zooms = Array.from(matrixSet.getElementsByTagNameNS(WMTS_NS, 'TileMatrix'))
+    .map((n) => Number(directChildText(n, OWS_NS, 'Identifier')))
+    .filter(Number.isFinite).sort((a, b) => a - b);
+  const resources = Array.from(layer.getElementsByTagNameNS(WMTS_NS, 'ResourceURL'));
+  const resource = resources.find((n) => n.getAttribute('resourceType') === 'tile'
+    && n.getAttribute('format') === 'image/png' && !n.getAttribute('template').includes('layer='))
+    || resources.find((n) => n.getAttribute('resourceType') === 'tile');
+  if (!resource) throw new Error('未找到瓦片 URL 模板');
+  const template = resource.getAttribute('template')
+    .replace('{TileMatrixSet}', matrixSetName)
+    .replace('{TileMatrix}', '[z]').replace('{TileRow}', '[y]').replace('{TileCol}', '[x]');
+  return { template, minZoom: zooms[0], maxZoom: zooms.at(-1) };
+}
+function applyBasemapState() {
+  if (amapLayer) state.amap ? amapLayer.show() : amapLayer.hide();
+  [tiandituVec, tiandituCva].forEach((l) => l && (state.tianditu ? l.show() : l.hide()));
+  if (wmtsLayer) state.wmts ? wmtsLayer.show() : wmtsLayer.hide();
+  ui.amapToggle.classList.toggle('active', state.amap);
+  ui.amapToggle.textContent = state.amap ? '高德：开' : '高德：关';
+  ui.tiandituToggle.classList.toggle('active', state.tianditu);
+  ui.tiandituToggle.textContent = state.tianditu ? '天地图：开' : '天地图：关';
+  ui.wmtsToggle.classList.toggle('active', wmtsReady && state.wmts);
+  ui.wmtsToggle.textContent = wmtsReady
+    ? (state.wmts ? 'WMTS：开' : 'WMTS：关')
+    : 'WMTS：不可用';
+}
+async function initMap() {
+  const item = currentItem();
+  const bbox = item?.bbox || DATA.requestBbox || [115.814, 39.637, 116.816, 40.423];
+  const center = [(bbox[0] + bbox[2]) / 2, (bbox[1] + bbox[3]) / 2];
+  const AMap = await loadAmap();
+  AMapNS = AMap;
+  map = new AMap.Map('map', {
+    viewMode: '2D', zoom: fitZoom(bbox), center, layers: [],
+    resizeEnable: true, showIndoorMap: false
+  });
+  const cred = window.WMTS_MAP_CONFIG;
+  amapLayer = AMap.createDefaultLayer({ zooms: [2, 20], zIndex: Z_INDEX.amap, opacity: Number(ui.amapOpacity.value) / 100, visible: state.amap });
+  tiandituVec = new AMap.TileLayer({
+    tileUrl: tiandituTemplate('vec', cred.tianditu.token), tileSize: TILE_SIZE,
+    zooms: [2, 18], dataZooms: [2, 18], zIndex: Z_INDEX.tianditu,
+    opacity: Number(ui.tiandituOpacity.value) / 100, visible: state.tianditu
+  });
+  tiandituCva = new AMap.TileLayer({
+    tileUrl: tiandituTemplate('cva', cred.tianditu.token), tileSize: TILE_SIZE,
+    zooms: [2, 18], dataZooms: [2, 18], zIndex: Z_INDEX.tiandituLabel,
+    opacity: Number(ui.tiandituOpacity.value) / 100, visible: state.tianditu
+  });
+  map.setLayers([amapLayer, tiandituVec, tiandituCva]);
+  applyBasemapState();
+  setOverlay(item);
+  ui.fallback.style.display = 'none';
+  setStatus('地图就绪：迅腾算法出图', 'ok');
+
+  try {
+    const resp = await fetch(WMTS_CAPABILITIES_URL, { cache: 'no-store' });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    wmtsConfig = parseCapabilities(await resp.text());
+    wmtsLayer = new AMap.TileLayer({
+      getTileUrl: (x, y, z) => wmtsConfig.template
+        .replace('[z]', String(z)).replace('[y]', String(y)).replace('[x]', String(x)),
+      tileSize: TILE_SIZE, zooms: [wmtsConfig.minZoom, wmtsConfig.maxZoom],
+      dataZooms: [wmtsConfig.minZoom, wmtsConfig.maxZoom],
+      opacity: Number(ui.wmtsOpacity.value) / 100, zIndex: Z_INDEX.wmts, visible: state.wmts
+    });
+    map.add(wmtsLayer);
+    wmtsReady = true;
+    applyBasemapState();
+  } catch (e) {
+    console.warn('WMTS 不可用:', e);
+    wmtsReady = false;
+    ui.wmtsToggle.disabled = true;
+    ui.wmtsToggle.title = String(e.message || e);
+    applyBasemapState();
+  }
+}
+
+/* ---------------- 叠加图层 ---------------- */
+function setOverlay(item) {
+  if (!map || !AMapNS) return;
+  if (overlayLayer) { map.remove(overlayLayer); overlayLayer = null; }
+  if (!item) return;
+  overlayLayer = new AMapNS.ImageLayer({
+    url: item.png,
+    bounds: new AMapNS.Bounds(
+      new AMapNS.LngLat(item.bbox[0], item.bbox[1]),
+      new AMapNS.LngLat(item.bbox[2], item.bbox[3])),
+    zooms: [2, 20],
+    opacity: Number(ui.overlayOpacity.value) / 100,
+    zIndex: Z_INDEX.overlay
+  });
+  map.add(overlayLayer);
+  ui.fallbackImg.src = item.png;
+}
+function fitToItem() {
+  const item = currentItem();
+  if (!map || !item) return;
+  const bbox = item.bbox;
+  map.setZoomAndCenter(fitZoom(bbox),
+    [(bbox[0] + bbox[2]) / 2, (bbox[1] + bbox[3]) / 2], false);
+}
+function renderLegend() {
+  const meta = currentLayerMeta();
+  ui.legend.innerHTML = '<div class="legend-list"></div>';
+  if (!meta) return;
+  const labels = meta.legendLabels || null;
+  const asc = meta.legendOrder === 'asc';       // 降水量的平台图例是"小到大"自上而下
+  ui.legendHint.textContent = `${meta.name}${meta.unit ? ` / ${meta.unit}` : ''}`
+    + `（${asc ? '低→高' : '高→低'}）`;
+  const list = ui.legend.querySelector('.legend-list');
+  if (labels && labels.some((t) => String(t).length > 7)) list.classList.add('legend-col');
+  const order = asc
+    ? [...meta.breaks.keys()]
+    : [...meta.breaks.keys()].reverse();
+  order.forEach((i) => {
+    const row = document.createElement('div');
+    row.className = 'row';
+    const transp = String(meta.colors[i] || '').toUpperCase().endsWith('00');
+    const text = (labels ? labels[i] : `${meta.breaks[i]}${meta.unit ? ` ${meta.unit}` : ''}`)
+      + (transp && !showWhiteBand ? '（透明）' : '');
+    row.innerHTML = `<span class="sw${transp && !showWhiteBand ? ' sw-transparent' : ''}"`
+      + ` style="background:${transp && !showWhiteBand ? 'transparent' : meta.colors[i]}"></span>`
+      + `<span>${text}</span>`;
+    list.appendChild(row);
+  });
+}
+function updateMeta() {
+  const meta = currentLayerMeta();
+  const frame = currentFrame();
+  const item = currentItem();
+  if (!meta || !frame) return;
+  const ap = meta.algoParams;
+  setText('metaLayer', `${meta.name}（${ui.layerSelect.value}）`);
+  setText('metaTime', frame.time);
+  setText('metaSource', algoInfo());
+  setText('metaBbox', item ? item.bbox.map((v) => v.toFixed(4)).join(', ') : '—');
+  setText('metaParams', frame.inputMode === 'grid'
+    ? '接口格网（无站点散点）'
+    : (ap ? `IDW k=${ap.k}, p=${ap.power}，格距 ${ap.cellKm} km，外扩 ${ap.pad}°` : '—'));
+  setText('metaPng', item ? item.png : '—');
+}
+function applyFrame() {
+  const frame = currentFrame();
+  ui.timeLabel.textContent = frame ? frame.time.slice(11) : '—';
+  setOverlay(currentItem());
+  if (frame?.inputMode === 'grid') {
+    setStatus('该时刻无站点散点，迅腾算法改用接口格网出图（等值面环节相同）', '');
+  } else {
+    setStatus('地图就绪：迅腾算法出图', 'ok');
+  }
+  renderLegend();
+  updateMeta();
+}
+function rebuildTimeAxis() {
+  const meta = currentLayerMeta();
+  currentFrames = meta ? meta.frames.slice().sort((a, b) => a.dtms - b.dtms) : [];
+  ui.timeRange.min = 0;
+  ui.timeRange.max = Math.max(0, currentFrames.length - 1);
+  const noon = currentFrames.findIndex((f) => f.time.endsWith('12:00'));
+  ui.timeRange.value = noon >= 0 ? noon : Math.max(0, currentFrames.length - 1);
+  ui.dateHint.textContent = DATA.date ? `${DATA.date}（${currentFrames.length} 个时刻）` : `${currentFrames.length} 个时刻`;
+  const hasWhite = layerHasWhiteBand();
+  ui.whiteBandChk.disabled = !hasWhite;
+  if (!hasWhite) { ui.whiteBandChk.checked = false; showWhiteBand = false; }
+  applyFrame();
+}
+
+/* ---------------- 参考截图 ---------------- */
+function showRef(src, label) {
+  ui.refImg.src = src;
+  ui.refImg.style.display = 'block';
+  ui.refEmpty.style.display = 'none';
+  ui.openRef.dataset.src = src;
+  setText('metaRef', label || '本地文件');
+  setStatus(`参考图：${label || '已载入'}`, 'ok');
+}
+function initRefs() {
+  const refs = DATA.refs || [];
+  ui.refSelect.innerHTML = '';
+  if (!refs.length) {
+    ui.refSelect.innerHTML = '<option>（references/ 中暂无匹配）</option>';
+    ui.refSelect.disabled = true;
+    ui.refEmpty.style.display = 'block';
+    ui.refImg.style.display = 'none';
+  } else {
+    refs.forEach((r, i) => {
+      const opt = document.createElement('option');
+      opt.value = String(i);
+      opt.textContent = `${r.layer} · ${r.name}`;
+      ui.refSelect.appendChild(opt);
+    });
+    const pick = () => {
+      const r = refs[Number(ui.refSelect.value) || 0];
+      if (r) showRef(r.file, r.name);
+    };
+    ui.refSelect.addEventListener('change', pick);
+    pick();
+  }
+  ui.refPickBtn.addEventListener('click', () => ui.refFile.click());
+  ui.refFile.addEventListener('change', (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => showRef(reader.result, file.name);
+    reader.readAsDataURL(file);
+  });
+  ui.openRef.addEventListener('click', () => {
+    const src = ui.openRef.dataset.src || (ui.refImg.style.display !== 'none' ? ui.refImg.src : '');
+    if (src) window.open(src, '_blank');
+  });
+  const comps = DATA.compareImages || [];
+  ui.thumbsEmpty.style.display = comps.length ? 'none' : 'block';
+  comps.forEach((src) => {
+    const img = document.createElement('img');
+    img.src = src;
+    img.title = `${src}（左：参考截图，右：算法出图）`;
+    img.addEventListener('click', () => showRef(src, src));
+    ui.compareThumbs.appendChild(img);
+  });
+}
+
+/* ---------------- 事件绑定 ---------------- */
+function bindEvents() {
+  const codes = Object.keys(DATA.layers);
+  ui.layerSelect.innerHTML = '';
+  codes.forEach((code) => {
+    const opt = document.createElement('option');
+    opt.value = code;
+    opt.textContent = `${code} · ${DATA.layers[code].name}`;
+    ui.layerSelect.appendChild(opt);
+  });
+  if (!codes.length) {
+    setStatus('precip_layers.js 无数据，请先运行 export_web.py', 'err');
+    return;
+  }
+  ui.layerSelect.addEventListener('change', rebuildTimeAxis);
+  ui.timeRange.addEventListener('input', applyFrame);
+
+  ui.amapToggle.addEventListener('click', () => { state.amap = !state.amap; applyBasemapState(); });
+  ui.tiandituToggle.addEventListener('click', () => { state.tianditu = !state.tianditu; applyBasemapState(); });
+  ui.wmtsToggle.addEventListener('click', () => {
+    if (!wmtsReady) return;
+    state.wmts = !state.wmts;
+    applyBasemapState();
+  });
+
+  const bindSlider = (input, output, apply) => {
+    input.addEventListener('input', () => {
+      const v = Number(input.value);
+      output.textContent = `${v}%`;
+      apply(v / 100);
+    });
+  };
+  bindSlider(ui.amapOpacity, ui.amapOpacityValue, (o) => amapLayer?.setOpacity(o));
+  bindSlider(ui.tiandituOpacity, ui.tiandituOpacityValue, (o) => {
+    [tiandituVec, tiandituCva].forEach((l) => l?.setOpacity(o));
+  });
+  bindSlider(ui.wmtsOpacity, ui.wmtsOpacityValue, (o) => wmtsLayer?.setOpacity(o));
+  bindSlider(ui.overlayOpacity, ui.overlayOpacityValue, (o) => {
+    if (overlayLayer?.setOpacity) overlayLayer.setOpacity(o);
+    else setOverlay(currentItem());
+  });
+  ui.whiteBandChk.addEventListener('change', () => {
+    showWhiteBand = ui.whiteBandChk.checked;
+    applyFrame();
+  });
+
+  ui.reloadBtn.addEventListener('click', () => {
+    setStatus('正在重新加载…', '');
+    setOverlay(currentItem());
+    fitToItem();
+    setStatus('已重新加载叠加图层并缩放至其范围', 'ok');
+  });
+  ui.openOverlayBtn.addEventListener('click', () => {
+    const item = currentItem();
+    if (item) window.open(item.png, '_blank');
+  });
+
+  ui.panelCollapse.addEventListener('click', () => toggleCollapse(
+    document.getElementById('controlPanel'), ui.panelCollapse, ui.panelBody));
+  ui.refCollapse.addEventListener('click', () => toggleCollapse(ui.refPanel, ui.refCollapse, ui.refBody));
+  bindPanelDrag(ui.panelDragHandle, document.getElementById('controlPanel'));
+  bindPanelDrag(ui.refDragHandle, ui.refPanel);
+
+  if (location.protocol === 'https:' && WMTS_CAPABILITIES_URL.startsWith('http:')) {
+    ui.warning.textContent = '当前页面为 HTTPS，而 WMTS 仅提供 HTTP，浏览器会拦截混合内容。';
+    ui.warning.style.display = 'block';
+  }
+}
+
+/* ---------------- 启动 ---------------- */
+function applyUrlParams() {
+  const q = new URLSearchParams(location.search);
+  const layer = q.get('layer');
+  if (layer && DATA.layers[layer]) { ui.layerSelect.value = layer; rebuildTimeAxis(); }
+  const time = q.get('time');
+  if (time) {
+    const idx = currentFrames.findIndex((f) => f.time.endsWith(time));
+    if (idx >= 0) ui.timeRange.value = idx;
+  }
+  applyFrame();
+}
+
+window.addEventListener('error', (e) => setStatus(`JS 错误：${e.message}`, 'err'));
+window.addEventListener('unhandledrejection', (e) => setStatus(`Promise 错误：${e.reason?.message || e.reason}`, 'err'));
+
+bindEvents();
+initRefs();
+// 若清单里带了引擎信息（export_web_reference 用忠实移植版出图时会带），把算法说明写准
+if (DATA.engine) {
+  document.getElementById('algoNote').textContent =
+    `等值面追踪：${DATA.engine.name}（与原始 Java 逐行等价） · `
+    + '站点散点 → 包围盒外扩 0.07° → 1km 格网 → IDW(3 近邻) → 等值面填色 → PNG；'
+    + '无站点散点的要素（如小时降水量）由接口格网直接进入等值面环节，同一套代码。';
+}
+rebuildTimeAxis();
+applyUrlParams();
+initMap().catch((err) => {
+  console.error(err);
+  setStatus(`底图不可用：${err.message}（已改为直接显示叠加图）`, 'err');
+  const item = currentItem();
+  ui.fallback.style.display = 'flex';
+  if (item) ui.fallbackImg.src = item.png;
+});
+</script>
+</body>
+</html>

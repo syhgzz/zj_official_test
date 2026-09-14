@@ -1,0 +1,42 @@
+{
+ "ok": true,
+ "layer": "XTSKPWV",
+ "layerName": "大气可降水量(10分钟)",
+ "unit": "mm",
+ "time": "2026-08-28 06:50",
+ "target_ms": 1787871000000,
+ "cols": 198,
+ "rows": 192,
+ "bbox": [
+  115.328154013575,
+  39.37649512177754,
+  117.62405180611998,
+  41.097765196719216
+ ],
+ "clip": false,
+ "n_nan_filled": 0,
+ "n_valid": 38016,
+ "vmin": 34.31976771965636,
+ "vmax": 64.40746091965515,
+ "vmean": 47.51063713287018,
+ "n_polygons": 18,
+ "n_drawn": 18,
+ "img": "precipitation_xunteng\\output\\xunteng_png_pwv\\XTSKPWV_2026-08-28_0650.png",
+ "elapsed": 2.087,
+ "breaks": [
+  20.0,
+  25.0,
+  30.0,
+  35.0,
+  40.0,
+  45.0,
+  50.0,
+  55.0,
+  60.0,
+  65.0,
+  70.0,
+  75.0
+ ],
+ "notes": [],
+ "preview": "precipitation_xunteng\\output\\xunteng_png_pwv\\XTSKPWV_2026-08-28_0650_preview1024.png"
+}

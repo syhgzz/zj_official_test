@@ -1,0 +1,8 @@
+# run_parity.py 的运行产物：用例、Java 真值、编译中间件（都可由 run_parity.py 重新生成）
+_parity_run/
+
+# analyze_contour_closure.py 的输出
+contour_closure.json
+
+__pycache__/
+*.pyc
