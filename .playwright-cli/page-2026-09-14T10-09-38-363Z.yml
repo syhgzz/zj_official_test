@@ -1,0 +1,56 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2] [cursor=pointer]:
+    - iframe [ref=e3]
+    - generic [ref=e5]:
+      - generic:
+        - generic [ref=e9]: 乌鲁木齐
+        - generic [ref=e13]: 南宁
+        - generic [ref=e17]: 珠海
+    - generic [ref=e19]: © 2026 AutoNavi - GS(2025)5996号
+  - generic [ref=e20]: 底图：高德 · 框+中心标点
+  - generic [ref=e21]:
+    - generic [ref=e22]:
+      - heading "城市经纬度范围标点" [level=1] [ref=e23]
+      - paragraph [ref=e24]: 按经纬度把三个城市的范围框和中心点标在高德底图上，点框/点圆点看四至坐标。
+    - generic [ref=e25]:
+      - generic [ref=e26]: 高德底图已加载：3 个城市范围框 + 中心标点已画出（乌鲁木齐橙 / 南宁蓝 / 珠海绿）。
+      - generic [ref=e29]:
+        - generic [ref=e30]:
+          - generic [ref=e31]: 定位
+          - generic [ref=e32]: 点城市飞到它的范围
+        - generic [ref=e33]:
+          - button "全部（全国视图）" [ref=e34] [cursor=pointer]
+          - button "乌鲁木齐" [ref=e35] [cursor=pointer]
+          - button "南宁" [ref=e37] [cursor=pointer]
+          - button "珠海" [ref=e39] [cursor=pointer]
+      - generic [ref=e41]:
+        - generic [ref=e42]:
+          - generic [ref=e43]: 经纬度范围
+          - generic [ref=e44]: 左下 → 右上
+        - table [ref=e45]:
+          - rowgroup [ref=e46]:
+            - row [ref=e47]:
+              - columnheader "城市" [ref=e48]
+              - columnheader "范围中心" [ref=e49]
+              - columnheader "跨度" [ref=e50]
+              - columnheader "范围（°，左下→右上）" [ref=e51]
+          - rowgroup [ref=e52]:
+            - row [ref=e53] [cursor=pointer]:
+              - cell "乌鲁木齐" [ref=e54]
+              - cell "87.4610 43.4094" [ref=e56]: 87.461043.4094
+              - cell "107.5 × 86.3 km" [ref=e57]
+              - cell "86.7953 ~ 88.1267 43.0214 ~ 43.7975" [ref=e58]: 86.7953 ~ 88.126743.0214 ~ 43.7975
+            - row [ref=e59] [cursor=pointer]:
+              - cell "南宁" [ref=e60]
+              - cell "108.1614 22.6000" [ref=e62]: 108.161422.6000
+              - cell "37.2 × 58.6 km" [ref=e63]
+              - cell "107.9803 ~ 108.3424 22.3364 ~ 22.8636" [ref=e64]: 107.9803 ~ 108.342422.3364 ~ 22.8636
+            - row [ref=e65] [cursor=pointer]:
+              - cell "珠海" [ref=e66]
+              - cell "113.8032 22.1690" [ref=e68]: 113.803222.1690
+              - cell "1.80 × 2.01 km" [ref=e69]
+              - cell "113.7944 ~ 113.8119 22.1600 ~ 22.1780" [ref=e70]: 113.7944 ~ 113.811922.1600 ~ 22.1780
+      - generic [ref=e71]:
+        - text: 数据顺序：
+        - code [ref=e72]: minLng, minLat, maxLng, maxLat
+        - text: （左下经度、左下纬度、右上经度、右上纬度）。 范围框按四角画在地图上，中心圆点 = 范围几何中心；跨度按 Haversine 球面距离算。

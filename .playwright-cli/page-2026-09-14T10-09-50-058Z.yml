@@ -1,0 +1,94 @@
+- generic [active] [ref=f2e1]:
+  - generic "讯腾降水图 · 高德底图对照" [ref=f2e2]:
+    - generic: 图层顺序：高德 → 天地图 → WMTS → 叠加图层
+    - iframe [ref=f2e3]
+    - generic [ref=f2e7]: © 2026 AutoNavi - GS(2025)5996号
+  - generic [ref=f2e8]:
+    - generic "拖动窗口" [ref=f2e9]:
+      - generic [ref=f2e10]:
+        - heading "讯腾降水图 · 对照控制台" [level=1] [ref=f2e11]
+        - paragraph [ref=f2e12]: 算法出图叠加在高德底图上，按图层与时刻逐帧切换。
+      - button "收起" [expanded] [ref=f2e13] [cursor=pointer]
+    - generic [ref=f2e14]:
+      - generic [ref=f2e15]: 叠加图已加载：layers/XTSKJSXS_1200_ref.png
+      - generic [ref=f2e18]:
+        - term [ref=f2e19]: 图层
+        - definition [ref=f2e20]: 小时降水量（XTSKJSXS）
+        - term [ref=f2e21]: 时刻
+        - definition [ref=f2e22]: 2026-08-28 12:00
+        - term [ref=f2e23]: 算法
+        - definition [ref=f2e24]: 复刻迅腾算法（本时刻无站点散点）
+        - term [ref=f2e25]: 地图范围
+        - definition [ref=f2e26]: 115.3282, 39.3765, 117.6241, 41.0978
+        - term [ref=f2e27]: 算法参数
+        - definition [ref=f2e28]: 等值面引擎：wcontour-1.6.1-port（色带 auto，不裁剪）
+        - term [ref=f2e29]: 叠加图
+        - definition [ref=f2e30]: layers/XTSKJSXS_1200_ref.png
+      - generic [ref=f2e31]:
+        - generic [ref=f2e32]:
+          - generic [ref=f2e33]: 图层与时刻
+          - generic [ref=f2e34]: 2026-08-28（13 个时刻）
+        - generic [ref=f2e35]:
+          - generic [ref=f2e36]: 要素图层
+          - combobox "要素图层" [ref=f2e37]:
+            - option "XTSKJSXS · 小时降水量" [selected]
+            - option "XTSKPWV · 大气可降水量(10分钟)"
+        - generic [ref=f2e38]:
+          - generic [ref=f2e39]: 时刻
+          - slider "时刻" [ref=f2e40]: "12"
+          - status [ref=f2e41]: 12:00
+      - generic [ref=f2e42]:
+        - generic [ref=f2e43]:
+          - generic [ref=f2e44]: 图层源
+          - generic [ref=f2e45]: 两个可切换
+        - generic [ref=f2e46]:
+          - button "复刻迅腾算法" [pressed] [ref=f2e47] [cursor=pointer]
+          - button "接口格网" [ref=f2e48] [cursor=pointer]
+        - generic [ref=f2e49]: 复刻迅腾算法：站点散点 → 包围盒外扩 0.07° → 1km 格网 → IDW(3 近邻) → 等值面填色 → PNG（txt 段A+段B） 接口格网：接口返回的服务端场 → 等值面填色 → PNG（txt 段B）
+      - generic [ref=f2e50]:
+        - generic [ref=f2e51]:
+          - generic [ref=f2e52]: 底图与透明度
+          - generic [ref=f2e53]: 支持同时显示
+        - generic [ref=f2e54]:
+          - button "高德：开" [pressed] [ref=f2e55] [cursor=pointer]
+          - button "天地图：关" [ref=f2e56] [cursor=pointer]
+          - button "WMTS：不可用" [disabled] [ref=f2e57]
+        - generic [ref=f2e59]:
+          - generic [ref=f2e60]: 高德透明度
+          - slider "高德透明度" [ref=f2e61]: "100"
+          - status [ref=f2e62]: 100%
+        - generic [ref=f2e63]:
+          - generic [ref=f2e64]: 天地图透明度
+          - slider "天地图透明度" [ref=f2e65]: "70"
+          - status [ref=f2e66]: 70%
+        - generic [ref=f2e67]:
+          - generic [ref=f2e68]: WMTS 透明度
+          - slider "WMTS 透明度" [ref=f2e69]: "80"
+          - status [ref=f2e70]: 80%
+        - generic [ref=f2e71]:
+          - generic [ref=f2e72]: 叠加层透明度
+          - slider "叠加层透明度" [ref=f2e73]: "90"
+          - status [ref=f2e74]: 90%
+        - generic [ref=f2e75]:
+          - button "叠加方式：地图图层" [pressed] [ref=f2e76] [cursor=pointer]
+          - button "改用 DOM 覆盖" [ref=f2e77] [cursor=pointer]
+        - generic [ref=f2e78]: 看不到叠加图时点「改用 DOM 覆盖」：这一路不经过高德图层系统，直接把图按 bbox 贴在地图上，一定能显示。
+        - generic [ref=f2e79] [cursor=pointer]:
+          - checkbox "显示 0~0.1 白色档（零至小雨；不勾选=透明隐藏）" [ref=f2e80]
+          - generic [ref=f2e81]: 显示 0~0.1 白色档（零至小雨；不勾选=透明隐藏）
+      - generic [ref=f2e82]:
+        - button "重新加载" [ref=f2e83] [cursor=pointer]
+        - button "打开叠加图" [ref=f2e84] [cursor=pointer]
+      - button "自检（叠图显示不出来时点这个）" [ref=f2e86] [cursor=pointer]
+      - generic [ref=f2e87]:
+        - generic [ref=f2e88]:
+          - generic [ref=f2e89]: 色阶图例
+          - generic [ref=f2e90]: 小时降水量 / mm（低→高）
+        - generic [ref=f2e92]:
+          - generic [ref=f2e93]: 0~0.1 零至小雨（透明）
+          - generic [ref=f2e96]: 0.1~1.6 小雨
+          - generic [ref=f2e99]: 1.6~7.0 中雨
+          - generic [ref=f2e102]: 7.0~15.0 大雨
+          - generic [ref=f2e105]: 15.0~40.0 暴雨
+          - generic [ref=f2e108]: 40.0~50.0 大暴雨
+          - generic [ref=f2e111]: ≥50.0 特大暴雨
