@@ -1,0 +1,455 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>城市经纬度范围标点图</title>
+<style>
+  :root {
+    color-scheme: light;
+    font-family: Inter, "PingFang SC", "Microsoft YaHei", sans-serif;
+    color: #172033;
+    background: #dbe3ed;
+  }
+  * { box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; margin: 0; }
+  body { overflow: hidden; }
+  #map { position: absolute; inset: 0; width: 100%; height: 100%; background: #dbe3ed; }
+
+  /* ---------------- 左侧控制面板（与 precip_compare.html 同风格） ---------------- */
+  .panel {
+    position: fixed; top: 16px; left: 16px; z-index: 1000;
+    display: flex; flex-direction: column;
+    width: min(392px, calc(100vw - 32px));
+    max-height: calc(100vh - 32px);
+    overflow: hidden;
+    border: 1px solid rgba(148, 163, 184, 0.38);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 16px 42px rgba(15, 23, 42, 0.16);
+    backdrop-filter: blur(12px);
+  }
+  .panel-header { flex: 0 0 auto; padding: 14px 16px 12px; }
+  h1 { margin: 0 0 4px; font-size: 17px; line-height: 1.35; }
+  .subtitle { margin: 0; color: #64748b; font-size: 12px; line-height: 1.6; }
+  .panel-body { flex: 1 1 auto; overflow: auto; padding: 0 16px 16px; }
+
+  .status-row {
+    display: flex; align-items: flex-start; gap: 8px;
+    margin: 0 0 12px; padding: 9px 11px;
+    border: 1px solid #e2e8f0; border-radius: 10px; background: #f8fafc;
+    font-size: 12px; line-height: 1.55; color: #334155;
+  }
+  .status-dot {
+    flex: 0 0 auto; width: 9px; height: 9px; margin-top: 4px;
+    border-radius: 50%; background: #f59e0b;
+  }
+  .status-row.ok .status-dot { background: #16a34a; }
+  .status-row.warn .status-dot { background: #dc2626; }
+
+  .section { margin-top: 14px; }
+  .section-title {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+    margin-bottom: 7px; font-size: 12px; font-weight: 600; color: #0f172a;
+  }
+  .section-title small { font-weight: 400; color: #94a3b8; }
+
+  .btn-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+  button {
+    padding: 8px 10px; font: inherit; font-size: 12.5px; color: #172033;
+    border: 1px solid #cbd5e1; border-radius: 9px; background: #fff;
+    cursor: pointer; transition: background 120ms ease, border-color 120ms ease;
+  }
+  button:hover { background: #f1f5f9; }
+  button.active { color: #fff; border-color: transparent; background: #1d4ed8; }
+  button .swatch {
+    display: inline-block; width: 9px; height: 9px; margin-right: 6px;
+    border-radius: 2px; vertical-align: baseline;
+  }
+
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th, td { padding: 5px 6px; text-align: left; border-bottom: 1px solid #eef2f7; vertical-align: top; }
+  th { color: #64748b; font-weight: 600; }
+  td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  tbody tr { cursor: pointer; }
+  tbody tr:hover { background: #f8fafc; }
+  tbody tr.active { background: #eff6ff; }
+
+  .algo-note {
+    margin-top: 8px; padding: 9px 11px;
+    border: 1px solid #e2e8f0; border-radius: 10px; background: #f8fafc;
+    font-size: 11.5px; line-height: 1.65; color: #475569;
+  }
+  .algo-note code { padding: 1px 4px; border-radius: 4px; background: #e2e8f0; font-size: 11px; }
+
+  /* 标点：固定像素大小，珠海那种 2km 的框在全国视图下也看得见 */
+  .city-dot {
+    width: 14px; height: 14px; border: 2px solid #fff; border-radius: 50%;
+    box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.35), 0 1px 4px rgba(15, 23, 42, 0.4);
+  }
+
+  /* ---------------- 离线兜底视图（高德不可用时） ---------------- */
+  #offline { position: absolute; inset: 0; overflow: hidden; background: #eef3f9; }
+  #offline svg { display: block; width: 100%; height: 100%; }
+  #offline text { font-family: Inter, "PingFang SC", "Microsoft YaHei", sans-serif; }
+
+  .map-badge {
+    position: absolute; right: 16px; bottom: 16px; z-index: 900;
+    padding: 7px 11px; border: 1px solid rgba(148, 163, 184, 0.38); border-radius: 10px;
+    background: rgba(255, 255, 255, 0.92); box-shadow: 0 8px 22px rgba(15, 23, 42, 0.12);
+    font-size: 12px; color: #334155;
+  }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body data-view="pending">
+<div id="map"></div>
+<div id="offline" hidden></div>
+<div class="map-badge" id="badge">底图：加载中…</div>
+
+<section class="panel">
+  <header class="panel-header">
+    <h1>城市经纬度范围标点</h1>
+    <p class="subtitle">按经纬度把三个城市的范围框和中心点标在高德底图上，点框/点圆点看四至坐标。</p>
+  </header>
+
+  <div class="panel-body">
+    <div id="status" class="status-row"><span class="status-dot"></span><span id="statusText">正在加载高德底图…</span></div>
+
+    <div class="section">
+      <div class="section-title"><span>定位</span><small>点城市飞到它的范围</small></div>
+      <div class="btn-grid" id="focusBtns"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><span>经纬度范围</span><small>左下 → 右上</small></div>
+      <table>
+        <thead>
+          <tr><th>城市</th><th>范围中心</th><th>跨度</th><th>范围（°，左下→右上）</th></tr>
+        </thead>
+        <tbody id="cityRows"></tbody>
+      </table>
+    </div>
+
+    <div class="algo-note" id="note">
+      数据顺序：<code>minLng, minLat, maxLng, maxLat</code>（左下经度、左下纬度、右上经度、右上纬度）。<br>
+      范围框按四角画在地图上，中心圆点 = 范围几何中心；跨度按 Haversine 球面距离算。
+    </div>
+  </div>
+</section>
+
+<script src="./wmts_map_config.js"></script>
+<script>
+/* ============================================================================
+ * 城市经纬度范围标点图
+ *
+ * CITIES[i].bbox = [minLng, minLat, maxLng, maxLat]
+ *                  左下经度, 左下纬度, 右上经度, 右上纬度
+ * 改城市 / 改坐标只动这个数组（页面不联网取数，全部数据就在这一处）。
+ * ==========================================================================*/
+const CITIES = [
+  {
+    name: '乌鲁木齐',
+    bbox: [86.795313038542, 43.02136844639, 88.126722457217, 43.797498673138],
+    color: '#e8590c',
+  },
+  {
+    name: '南宁',
+    bbox: [107.9803363766, 22.33644464601, 108.34238072285, 22.86358589179],
+    color: '#1c7ed6',
+  },
+  {
+    name: '珠海',
+    bbox: [113.79442552388, 22.159984381031, 113.81188044943, 22.178028407917],
+    color: '#2f9e44',
+  },
+];
+
+const R_EARTH_KM = 6371.0088;
+const toRad = (d) => (d * Math.PI) / 180;
+
+/** Haversine 球面距离（km） */
+function havKm(lng1, lat1, lng2, lat2) {
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a = Math.sin(dLat / 2) ** 2
+    + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return 2 * R_EARTH_KM * Math.asin(Math.min(1, Math.sqrt(a)));
+}
+
+/** 由 bbox 推出中心点、东西/南北跨度、四角坐标 */
+function geom(city) {
+  const [w, s, e, n] = city.bbox;
+  const center = [(w + e) / 2, (s + n) / 2];
+  return {
+    ...city,
+    w, s, e, n,
+    center,
+    widthKm: havKm(w, center[1], e, center[1]),
+    heightKm: havKm(center[0], s, center[0], n),
+    corners: [[w, s], [e, s], [e, n], [w, n]],
+  };
+}
+const GEOMS = CITIES.map(geom);
+const byName = (name) => GEOMS.find((g) => g.name === name);
+
+const ui = {
+  status: document.getElementById('status'),
+  statusText: document.getElementById('statusText'),
+  focusBtns: document.getElementById('focusBtns'),
+  cityRows: document.getElementById('cityRows'),
+  badge: document.getElementById('badge'),
+  offline: document.getElementById('offline'),
+  note: document.getElementById('note'),
+};
+
+function say(text, kind) {
+  ui.statusText.textContent = text;
+  ui.status.className = 'status-row' + (kind ? ' ' + kind : '');
+}
+
+const fmt = (v, d = 6) => Number(v).toFixed(d);
+const sizeText = (g) => (g.widthKm < 10 || g.heightKm < 10
+  ? `${g.widthKm.toFixed(2)} × ${g.heightKm.toFixed(2)} km`
+  : `${g.widthKm.toFixed(1)} × ${g.heightKm.toFixed(1)} km`);
+
+/** 弹窗/提示里显示的明细 */
+function detailHtml(g) {
+  return `<div style="min-width:210px;font-size:12.5px;line-height:1.75">
+    <b style="color:${g.color}">${g.name}</b><br>
+    左下(minLng, minLat)：${fmt(g.w)}, ${fmt(g.s)}<br>
+    右上(maxLng, maxLat)：${fmt(g.e)}, ${fmt(g.n)}<br>
+    范围中心：${fmt(g.center[0])}, ${fmt(g.center[1])}<br>
+    跨度：${sizeText(g)}
+  </div>`;
+}
+
+/* ---------------------------------------------------------------- 左侧列表 */
+function buildPanel(onFocus) {
+  ui.focusBtns.innerHTML = '';
+  const all = document.createElement('button');
+  all.type = 'button';
+  all.textContent = '全部（全国视图）';
+  all.className = 'active';
+  all.dataset.city = '__all__';
+  all.addEventListener('click', () => onFocus(null));
+  ui.focusBtns.appendChild(all);
+
+  GEOMS.forEach((g) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.dataset.city = g.name;
+    b.innerHTML = `<span class="swatch" style="background:${g.color}"></span>${g.name}`;
+    b.addEventListener('click', () => onFocus(g));
+    ui.focusBtns.appendChild(b);
+  });
+
+  ui.cityRows.innerHTML = GEOMS.map((g) => `<tr data-city="${g.name}">
+      <td><span class="swatch" style="background:${g.color};display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px"></span>${g.name}</td>
+      <td class="num">${fmt(g.center[0], 4)}<br>${fmt(g.center[1], 4)}</td>
+      <td class="num">${sizeText(g)}</td>
+      <td class="num">${fmt(g.w, 4)} ~ ${fmt(g.e, 4)}<br>${fmt(g.s, 4)} ~ ${fmt(g.n, 4)}</td>
+    </tr>`).join('');
+  [...ui.cityRows.querySelectorAll('tr')].forEach((tr) => {
+    tr.addEventListener('click', () => onFocus(byName(tr.dataset.city)));
+  });
+}
+
+function markActive(name) {
+  [...ui.focusBtns.querySelectorAll('button')].forEach((b) => {
+    b.classList.toggle('active', b.dataset.city === (name || '__all__'));
+  });
+  [...ui.cityRows.querySelectorAll('tr')].forEach((tr) => {
+    tr.classList.toggle('active', tr.dataset.city === name);
+  });
+}
+
+/* -------------------------------------------------------------- 高德地图 */
+function loadAmap() {
+  return new Promise((resolve, reject) => {
+    const cfg = window.WMTS_MAP_CONFIG;
+    if (!cfg || !cfg.amap || !cfg.amap.key) {
+      reject(new Error('缺少高德 Key（web/wmts_map_config.js）'));
+      return;
+    }
+    window._AMapSecurityConfig = { securityJsCode: cfg.amap.securityJsCode };
+    if (window.AMap) { resolve(window.AMap); return; }
+
+    let settled = false;
+    const done = (fn, arg) => { if (!settled) { settled = true; fn(arg); } };
+    const script = document.createElement('script');
+    script.src = `https://webapi.amap.com/maps?v=2.0&key=${encodeURIComponent(cfg.amap.key)}`;
+    script.onload = () => (window.AMap
+      ? done(resolve, window.AMap)
+      : done(reject, new Error('AMap 脚本已返回但对象不可用')));
+    script.onerror = () => done(reject, new Error('AMap 脚本加载失败（网络/Key 白名单）'));
+    document.head.appendChild(script);
+    setTimeout(() => done(reject, new Error('AMap 加载超时（12s）')), 12000);
+  });
+}
+
+function initAmap(AMap) {
+  const map = new AMap.Map('map', {
+    viewMode: '2D',
+    zoom: 4,
+    center: [104.5, 35.5],
+    resizeEnable: true,
+  });
+  const info = new AMap.InfoWindow({ offset: new AMap.Pixel(0, -14), isCustom: false });
+  const overlays = {};
+  document.body.dataset.view = 'amap';
+  window.__CITY_MAP_READY__ = { view: 'amap', cities: GEOMS.map((g) => g.name) };
+
+  GEOMS.forEach((g) => {
+    const polygon = new AMap.Polygon({
+      path: g.corners,
+      strokeColor: g.color,
+      strokeWeight: 2,
+      strokeOpacity: 0.95,
+      fillColor: g.color,
+      fillOpacity: 0.18,
+      zIndex: 60,
+      cursor: 'pointer',
+    });
+    // 珠海这类 2km 的框在全国视图下太小，补一圈"最小可见"的描边点
+    const dot = new AMap.Marker({
+      position: g.center,
+      offset: new AMap.Pixel(-7, -7),
+      zIndex: 80,
+      cursor: 'pointer',
+      content: `<div class="city-dot" style="background:${g.color}"></div>`,
+    });
+    const label = new AMap.Text({
+      text: g.name,
+      position: [g.center[0], g.n],
+      anchor: 'bottom-center',
+      offset: new AMap.Pixel(0, -10),
+      zIndex: 90,
+      cursor: 'pointer',
+      style: {
+        'padding': '2px 8px',
+        'border': `1px solid ${g.color}`,
+        'border-radius': '8px',
+        'background': 'rgba(255,255,255,0.94)',
+        'color': g.color,
+        'font-size': '12px',
+        'font-weight': '600',
+        'white-space': 'nowrap',
+        'box-shadow': '0 2px 8px rgba(15,23,42,0.16)',
+      },
+    });
+    [polygon, dot, label].forEach((ov) => {
+      ov.on('click', () => {
+        info.setContent(detailHtml(g));
+        info.open(map, g.center);
+        markActive(g.name);
+      });
+    });
+    overlays[g.name] = [polygon, dot, label];
+    map.add([polygon, dot, label]);
+  });
+
+  const allOverlays = Object.values(overlays).flat();
+  // 避让区 avoid = [上, 下, 左, 右]（实测确认：传 [10,200,30,400] 得到
+  // top=10 / bottom=200 / left≈30 / right≈400，不是 CSS 那种 [上,右,下,左]）。
+  // 左边按控制面板宽度留位：不留位时"全部"视图里最西边的乌鲁木齐会整块躲到面板底下，
+  // 看着像没画出来；写错位置（放第 4 位）则等于加在右边，内容会整体左移。
+  const PANEL_W = 410;                                   // 16px 边距 + 392px 面板
+  const AVOID_ALL = [80, 80, PANEL_W + 40, 80];
+  const AVOID_CITY = [90, 90, PANEL_W + 50, 90];
+  // 一律用 immediately=true（不带动画）：带动画时平移会被动画中断卡在半路，
+  // 出现"缩放到位、中心没过去"的错位（无头浏览器里必现，肉眼也可能碰上）。
+  const focus = (g) => {
+    markActive(g ? g.name : null);
+    if (g) {
+      map.setFitView(overlays[g.name], true, AVOID_CITY, 16);
+      info.setContent(detailHtml(g));
+      info.open(map, g.center);
+    } else {
+      info.close();
+      map.setFitView(allOverlays, true, AVOID_ALL, 12);
+    }
+  };
+  buildPanel(focus);
+
+  map.on('complete', () => {
+    say(`高德底图已加载：3 个城市范围框 + 中心标点已画出（乌鲁木齐橙 / 南宁蓝 / 珠海绿）。`, 'ok');
+    ui.badge.textContent = '底图：高德 · 框+中心标点';
+  });
+  // 调试钩子：控制台里可查 center/zoom/各点像素位置（排"框画到哪去了"这类问题用）
+  window.__CITY_MAP__ = { map, overlays, GEOMS, AMap };
+  map.on('error', (e) => say(`高德底图报错：${(e && e.message) || e}`, 'warn'));
+  map.setFitView(allOverlays, true, AVOID_ALL, 12);
+  say('高德底图已就绪，正在铺底图瓦片…', 'ok');
+}
+
+/* ------------------------------------------------- 离线兜底：经纬网 + 框 */
+function renderOffline(reason) {
+  document.getElementById('map').hidden = true;
+  ui.offline.hidden = false;
+  document.body.dataset.view = 'offline';
+  ui.badge.textContent = '底图：离线经纬网（高德不可用）';
+  say(`高德底图不可用：${reason} → 已切到离线经纬网视图（范围框与中心标点照常显示）。`, 'warn');
+
+  const pad = (a, b) => (b - a) * 0.12;
+  let w = Math.min(...GEOMS.map((g) => g.w));
+  let e = Math.max(...GEOMS.map((g) => g.e));
+  let s = Math.min(...GEOMS.map((g) => g.s));
+  let n = Math.max(...GEOMS.map((g) => g.n));
+  const dx = pad(w, e) || 1;
+  const dy = pad(s, n) || 1;
+  w -= dx; e += dx; s -= dy; n += dy;
+  // 左边再留一条空带：控制面板浮在左上角，乌鲁木齐在最西边，不留位会被面板压住
+  w -= (e - w) * 0.34;
+
+  const W = 1200;
+  const kx = W / (e - w);
+  const ky = kx / Math.cos(toRad((s + n) / 2));   // 等距圆柱 + 纬度收敛修正
+  const H = Math.round((n - s) * ky);
+  const X = (lng) => (lng - w) * kx;
+  const Y = (lat) => (n - lat) * ky;
+  const parts = [];
+
+  for (let lng = Math.ceil(w / 5) * 5; lng <= e; lng += 5) {
+    parts.push(`<line x1="${X(lng)}" y1="0" x2="${X(lng)}" y2="${H}" stroke="#cbd5e1" stroke-width="1"/>`,
+      `<text x="${X(lng) + 3}" y="14" font-size="12" fill="#94a3b8">${lng}°E</text>`);
+  }
+  for (let lat = Math.ceil(s / 5) * 5; lat <= n; lat += 5) {
+    parts.push(`<line x1="0" y1="${Y(lat)}" x2="${W}" y2="${Y(lat)}" stroke="#cbd5e1" stroke-width="1"/>`,
+      `<text x="4" y="${Y(lat) - 3}" font-size="12" fill="#94a3b8">${lat}°N</text>`);
+  }
+  GEOMS.forEach((g) => {
+    const x = X(g.w); const y = Y(g.n);
+    const bw = X(g.e) - x; const bh = Y(g.s) - y;
+    parts.push(`<rect x="${x}" y="${y}" width="${Math.max(bw, 0.5)}" height="${Math.max(bh, 0.5)}"
+        fill="${g.color}" fill-opacity="0.22" stroke="${g.color}" stroke-width="2"/>`,
+      `<circle cx="${X(g.center[0])}" cy="${Y(g.center[1])}" r="6"
+        fill="${g.color}" stroke="#fff" stroke-width="2"/>`,
+      `<text x="${X(g.center[0]) + 10}" y="${Y(g.center[1]) + 5}" font-size="15" font-weight="700"
+        fill="${g.color}" stroke="#fff" stroke-width="3" paint-order="stroke">${g.name}（${sizeText(g)}）</text>`);
+  });
+  parts.push(`<text x="12" y="${H - 14}" font-size="13" fill="#dc2626">离线视图（高德不可用：${reason}）</text>`);
+
+  ui.offline.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">
+    <rect width="${W}" height="${H}" fill="#f1f5f9"/>${parts.join('')}</svg>`;
+  window.__CITY_MAP_READY__ = { view: 'offline', reason, cities: GEOMS.map((g) => g.name) };
+}
+
+/* ------------------------------------------------------------------ 启动 */
+async function main() {
+  buildPanel((g) => markActive(g ? g.name : null));   // 先渲染列表，高德挂了也能看到数据
+  if (location.protocol === 'file:') {
+    say('当前是 file:// 打开：高德底图通常不渲染，请用 HTTP 访问（serve_web.py --dir web）。', 'warn');
+  }
+  try {
+    initAmap(await loadAmap());
+  } catch (err) {
+    renderOffline(err.message || String(err));
+  }
+}
+main();
+</script>
+</body>
+</html>

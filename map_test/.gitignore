@@ -1,0 +1,20 @@
+# ============================================================================
+# map_test/ —— 两个独立的静态 HTML 页面，目录里只有 3 个文件（+ 本文件）
+#
+#   precipitation_xunteng/map_view_template.html   自包含降水图（306KB，数据已内联）
+#   urban_area/web/city_bbox_map.html              城市经纬度范围标点图
+#   urban_area/web/wmts_map_config.js              高德 Key（上面那个页面依赖它）
+#
+# 没有 Python、没有构建步骤、没有运行产物，所以规则很少。
+# ============================================================================
+
+# 浏览器会话目录（playwright 用 --user-data-dir 跑页面时落下的垃圾：
+# 证书吊销列表、GPU shader 缓存、LevelDB、Cookie 库等）
+**/chrome_profile/
+
+# 若用 Python 起本地静态服务时留下的字节码
+__pycache__/
+*.py[cod]
+
+# 手动保存的接口响应（本项目不再使用，防止误提交大 JSON）
+*precipitation_layers*.json
